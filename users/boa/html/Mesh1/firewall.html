@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
+		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<script src="js/util_gw.js"></script>
+	</head>
+	<body onload="Load_Setting();">
+		<div class="guest_net_parent">
+			
+			<div>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterAdd">
+				<div class="form-group" style="margin-bottom: 10px;">
+					<!--<label style="width: 50px;"></label>-->
+					<div class="intell guest_mode i18n" name="macfilter_firewall"></div>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch checkbox_switch1" data-size="mini" />
+					</div>
+				</div>
+				<div class="form-group_smart"><p class="p_tips i18n" name="tips1_for_firewall"></p></div>
+				<!--<div class="up_dowm">
+			        <input type="checkbox"><span class="i18n" name="openMacFilter_firewall"></span>
+				</div>-->
+				<div class="form-group_smart firewall"><label class="i18n" name="macAddr_firewall"></label><input class="form_input" type="text" name="mac"/></div>
+				<div class="form-group_smart firewall"><label class="i18n" name="annotation_firewall"></label><input class="form_input" type="text" name="comment" /></div>
+				<div class="form-group form-group-btn firewall">
+					<button class="i18n" type="submit" value="Save" name="addFilterMac" onClick="return addClick()"></button><button class="i18n" type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" ></button><button  class="i18n" type="reset" value="Reset" name="reset"></button>
+				</div>
+				</form>
+				<form  action="/boafrm/formFilter" method="POST" name="formFilterDel">
+				<div>
+					<p class="current_table i18n" name="Current_filter_table_firewall"></p>
+					<div class="table-responsive"> 　　　　　　　　 			    		
+						<table class="table table-bordered">
+							<!--<% macFilterList(); %>-->
+						  	<thead>
+						    	<tr>
+						      		<th class="i18n" name="th_MACAddr_firewall"></th>
+						      		<th class="i18n" name="th_note_firewall"></th>
+						      		<th class="i18n" name="th_select_firewall"></th>
+						    	</tr>
+						  	</thead>
+						  	<tbody>
+							    <tr>
+							      	<td>7H:8D:45:9F</td>
+							      	<td>Bangalore</td>
+							      	<td></td>
+							    </tr>
+							    <tr>
+							      	<td>7H:8D:45:9F</td>
+							      	<td>Bangalore</td>
+							      	<td></td>
+							    </tr>
+							    <tr>
+							      	<td>7H:8D:45:9F</td>
+							      	<td>Bangalore</td>
+							      	<td></td>
+							    </tr>
+						  	</tbody>
+						</table>						 
+			    	</div>
+			    	<div class="form-group form-group-btn firewall">
+						<button type="submit" value="Delete Selected" name="deleteSelFilterMac" onClick="return deleteClick()" class="i18n"></button><button  type="submit" value="Delete All" name="deleteAllFilterMac" onClick="return deleteAllClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+					</div>
+			    </div>
+			    </form>
+			</div>
+			
+			<hr class="ip_filter_hr"/>
+			<div class="IpFilter">
+				<form action="/boafrm/formFilter" method="POST" name="formFilterAdd">
+				<div class="form-group" style="margin-bottom: 10px;">
+					<!--<label style="width: 50px;"></label>-->
+					<div class="intell guest_mode i18n" name="ipFilter_firewall"></div>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch checkbox_switch2" data-size="mini"/>
+					</div>
+				</div>
+				<div class="form-group_smart"><p class="p_tips i18n" name="tips2_for_firewall"></p></div>
+				<!--<div class="up_dowm">
+			        <input type="checkbox"><span class="i18n" name="open_ipfilter_firewall"></span>
+				</div>-->
+				<div class="form-group_smart ip_filter"><label class="i18n" name="OriginipAddr_firewall"></label><input class="form_input" type="text" placeholder="" /></div>
+				<div class="longTime form-group ip_filter">
+					<label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="protocol_firewall"></label>
+					<select name="protocol">
+						<option value="0">Both</option>
+						<option value="1">TCP</option>
+						<option value="2">UDP</option>
+					</select>
+					<i class="fa fa-caret-down type_down"></i>
+				</div>
+				<div class="form-group_smart firewall ip_filter"><label class="i18n" name="annotation_firewall"></label><input class="form_input" type="text"  name="comment" /></div>
+				<div class="form-group form-group-btn firewall">
+					<button type="submit" value="Save" name="addFilterIp" onClick="return addClick()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" class="i18n"></button><button  type="reset" value="Reset" name="reset" class="i18n"></button>
+				</div>
+				</form>
+				<form action="/boafrm/formFilter" method="POST " name="formFilterDel">
+				<div>
+					<p class="current_table i18n" name="Current_filter_table_firewall"></p>
+					<div class="table-responsive"> 　　　　　　　　 			    		
+						<table class="table table-bordered">
+							<!--<% ipFilterList(); %>-->
+						  	<thead>
+						    	<tr>
+						      		<th class="i18n" name="th_originipAddr2_firewall"></th>
+						      		<th class="i18n" name="th_protocol2_firewall"></th>
+						      		<th class="i18n" name="th_annotation_firewall"></th>
+						      		<th class="i18n" name="th_select_firewall"></th>
+						    	</tr>
+						  	</thead>
+						  	<tbody>
+							    <tr>
+							      	<td>192.168.1.100</td>
+							      	<td>UDP</td>
+							      	<td>Bangalore</td>
+							      	<td></td>
+							    </tr>
+							    <tr>
+							      	<td>192.168.1.100</td>
+							      	<td>UDP</td>
+							      	<td>Bangalore</td>
+							      	<td></td>
+							    </tr>
+							    <tr>
+							      	<td>192.168.1.100</td>
+							      	<td>TCP</td>
+							      	<td>Bangalore</td>
+							      	<td></td>
+							    </tr>
+						  	</tbody>
+						</table>						 
+			    	</div>
+			    	<div class="form-group form-group-btn firewall">
+						<button type="submit" value="Delete Selected" name="deleteSelFilterIp" onClick="return deleteClick()" class="i18n"></button><button type="submit" value="Delete All" name="deleteAllFilterIp" onClick="return deleteAllClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+					</div>
+			    </div>
+			    </form>
+			</div>
+			<hr class="ip_filter_hr"/>
+			<div>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterAdd">
+					<input type="hidden" name="urlFilterMode">
+					<%getIndex("usrSpecificUrlCommand_start");%>
+					<input type="hidden" name="urlFilterUserMode">
+					<%getIndex("usrSpecificUrlCommand_end");%>
+				<div class="form-group" style="margin-bottom: 10px;">
+					<!--<label style="width: 50px;"></label>-->
+					<div class="intell guest_mode i18n" name="URLFilter_firewall"></div>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch checkbox_switch3" data-size="mini" />
+					</div>
+				</div>
+				<div class="form-group_smart"><p class="p_tips i18n" name="tips3_for_firewall"></p></div>
+				<!--<div class="up_dowm">
+			        <input type="checkbox"><span class="i18n" name="openURLFilter_firewall"></span>
+				</div>-->
+				<div class="up_dowm">
+			        <input type="radio" value="blackList" name="urlFilterBlack" onClick="urlFilterModeBlack()"><span class="i18n" name="deny_url_address_black_firewall"></span>
+				</div>
+				<div class="up_dowm">
+			        <input type="radio" value="whiteList" name="urlFilterWhite" onClick="urlFilterModeWhite()"><span class="i18n" name="open_url_address_white_firewall"></span>
+				</div>
+				<div class="form-group_smart firewall"><label class="i18n" name="URLAddr_firewall"></label><input class="form_input" type="text" placeholder="" name="url" /></div>
+				<div class="form-group form-group-btn firewall">
+					<button type="submit" value="Save" name="addFilterUrl" onClick="return addClick()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" class="i18n"></button><button type="reset" value="Reset" name="reset"class="i18n"></button>
+				</div>
+				
+				</form>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterDel">
+				<div>
+					<p class="current_table i18n" name="Current_filter_table_firewall"></p>
+					<div class="table-responsive"> 　　　　　　　　 			    		
+						<table class="table table-bordered">
+							<!--<% urlFilterList(); %>-->
+						  	<thead>
+						    	<tr>
+						      		<th class="i18n" name="th_URLAddr_firewall"></th>
+						      		<th class="i18n" name="th_select_firewall"></th>
+						    	</tr>
+						  	</thead>
+						  	<tbody>
+							    <tr>
+							      	<td>http://www.baidu.com</td>
+							      	<td></td>
+							    </tr>
+							    <tr>
+							      	<td>http://www.baidu.com</td>
+							      	<td></td>
+							    </tr>
+							    <tr>
+							      	<td>http://www.baidu.com</td>
+							      	<td></td>
+							    </tr>
+						  	</tbody>
+						</table>						 
+			    	</div>
+			    	<div class="form-group form-group-btn firewall" style="margin-bottom: 50px;">
+						<button type="submit" value="Delete Selected" name="deleteSelFilterUrl" onClick="return deleteClick()" class="i18n"></button><button type="submit" value="Delete All" name="deleteAllFilterUrl" onClick="return deleteAllClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+					</div>
+			    </div>
+			   </form>
+			</div>
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+		<script>
+			$(document).ready(function(){
+				var switch_status=$('.checkbox_switch1').bootstrapSwitch('state');
+				var switch_status2=$('.checkbox_switch2').bootstrapSwitch('state');
+				var switch_status3=$('.checkbox_switch3').bootstrapSwitch('state');
+				//开关按钮
+				//mac过滤
+				$('.checkbox_switch1').bootstrapSwitch({
+					onText: "",
+					offText: "",
+					onColor: "success",
+					offColor: "info",
+					size: "small",
+					onSwitchChange: function(event, state) {
+						if (state == true) {
+							//关闭
+							disableTextField(document.formFilterAdd.mac);
+							disableTextField(document.formFilterAdd.comment);
+						} else {
+							//打开
+							enableTextField(document.formFilterAdd.mac);
+							enableTextField(document.formFilterAdd.comment);
+						}
+					}
+	
+				});
+				
+				
+				//ip过滤
+				$('.checkbox_switch2').bootstrapSwitch({
+					onText: "",
+					offText: "",
+					onColor: "success",
+					offColor: "info",
+					size: "small",
+					onSwitchChange: function(event, state) {
+						if (state == true) {
+							//关闭
+							disableTextField(document.formFilterAdd.ip);
+						  	disableTextField(document.formFilterAdd.protocol);
+							disableTextField(document.formFilterAdd.comment);
+							
+						} else {
+							//打开
+							enableTextField(document.formFilterAdd.ip);
+							enableTextField(document.formFilterAdd.protocol);
+							enableTextField(document.formFilterAdd.comment);
+						}
+					}
+	
+				});
+				//URL过滤
+				$('.checkbox_switch3').bootstrapSwitch({
+					onText: "",
+					offText: "",
+					onColor: "success",
+					offColor: "info",
+					size: "small",
+					onSwitchChange: function(event, state) {
+						if (state == true) {
+							//关闭
+							disableTextField(document.formFilterAdd.url); 
+							disableTextField(document.formFilterAdd.urlFilterWhite); 
+							disableTextField(document.formFilterAdd.urlFilterBlack);
+							
+						} else {
+							//打开
+							enableTextField(document.formFilterAdd.url);  
+							enableTextField(document.formFilterAdd.urlFilterWhite); 
+							enableTextField(document.formFilterAdd.urlFilterBlack); 
+						}
+					}
+	
+				});
+			});
+			//初始化
+			function Load_Setting()
+			{
+				if ( <% getIndex("macFilterEnabled"); %> || <% getIndex("ipFilterEnabled"); %>|| <% getIndex("urlFilterEnabled"); %>){
+					$('.checkbox_switch1').bootstrapSwitch('state',true);
+					$('.checkbox_switch2').bootstrapSwitch('state',true);
+					$('.checkbox_switch3').bootstrapSwitch('state',true);
+				}else{
+					$('.checkbox_switch1').bootstrapSwitch('state',false);
+					$('.checkbox_switch2').bootstrapSwitch('state',false);
+					$('.checkbox_switch3').bootstrapSwitch('state',false);
+				}
+				//根据开关按钮的状态设置对应的输入框的状态，比如开关按钮是关闭的，则输入框为不可编辑状态	
+				updateState();
+			}
+			//保存、保存并应用事件
+			function addClick()
+			{
+			  if (!switch_status||!switch_status2||!switch_status3)
+			  	return true;
+			
+			  if (document.formFilterAdd.mac.value=="" && document.formFilterAdd.comment.value=="" )
+				return true;
+			
+			  var str = document.formFilterAdd.mac.value;
+			  if ( str.length < 12) {
+				alert(macfilter_macaddr_nocomplete);
+				document.formFilterAdd.mac.focus();
+				return false;
+			  }
+			
+			  // add for "All MAC Address field can't reject 00:00:00:00:00:00/ff:ff:ff:ff:ff:ff MAC Address" issue
+			  with(document.formFilterAdd)
+			  {
+				if(!checkMacAddr(mac,macfilter_macaddr_invalid))
+					return false;
+			  }
+			  
+			  //ipfilter
+			   if (document.formFilterAdd.ip.value=="" && document.formFilterAdd.comment.value=="" )
+				return true;
+			
+			  if( checkHostIPValid(document.formFilterAdd.ip,document.formFilterAdd.lan_mask, ipfilter_ipaddr_invalid) == false)
+			  	return false;
+			  	//url filter
+			  	 var str = document.formFilterAdd.url.value;
+			  	if(document.formFilterAdd.urlFilterWhite.checked == true)
+					document.formFilterAdd.urlFilterMode.value = 1;
+				else
+					document.formFilterAdd.urlFilterMode.value = 0;
+				for (var i=0; i<str.length; i++) {
+			     		if ( str.charAt(i) == ';')
+			     		{
+			     			alert(urlfilter_apply_error);
+						return false;
+			     		}
+				}			  	
+						
+			  if (document.formFilterAdd.url.value=="")
+				return true;
+			  	
+			  	
+			  return true;
+			}
+			//删除选中项事件
+			function deleteClick()
+			{
+			  if ( !confirm(macfilter_delete_confirm)||!confirm(ipfilter_delete_selectconfm) ||!confirm(urlfilter_delete_confirm)) {
+				return false;
+			  }
+			  else
+				return true;
+			}
+			//删除选中所有事件
+			function deleteAllClick()
+			{
+			   if ( !confirm(macfilter_delete_all_confirm) ||!confirm(ipfilter_delete_allconfm)|| !confirm(urlfilter_delete_all_confirm)) {
+				return false;
+			  }
+			  else
+				return true;
+			}
+			if ( <% getIndex("macFilterNum"); %> == 0 ||<% getIndex("ipFilterNum"); %> == 0||<% getIndex("urlFilterNum"); %> == 0){
+				disableDelButton();
+			}
+			//当当前过滤表中没有数据时，删除选中项和删除所有按钮为不可编辑状态			
+			function disableDelButton()
+			{
+				disableButton(document.formFilterDel.deleteSelFilterMac);
+				disableButton(document.formFilterDel.deleteAllFilterMac);
+				disableButton(document.formFilterDel.deleteSelFilterIp);
+				disableButton(document.formFilterDel.deleteAllFilterIp);
+				disableButton(document.formFilterDel.deleteSelFilterUrl);
+				disableButton(document.formFilterDel.deleteAllFilterUrl);
+			}
+			//根据开关按钮状态设置输入框为显示或不可编辑状态
+			function updateState()
+			{
+			  if (!switch_status||!switch_status2||!switch_status3) {
+			  	enableTextField(document.formFilterAdd.mac);
+				enableTextField(document.formFilterAdd.comment);
+			 	enableTextField(document.formFilterAdd.ip);
+				enableTextField(document.formFilterAdd.protocol);
+				enableTextField(document.formFilterAdd.comment);
+				enableTextField(document.formFilterAdd.url);  
+				enableTextField(document.formFilterAdd.urlFilterWhite); 
+				enableTextField(document.formFilterAdd.urlFilterBlack); 
+			  }
+			  else {
+			  	disableTextField(document.formFilterAdd.mac);
+				disableTextField(document.formFilterAdd.comment);
+			 	disableTextField(document.formFilterAdd.ip);
+			  	disableTextField(document.formFilterAdd.protocol);
+				disableTextField(document.formFilterAdd.comment);
+				disableTextField(document.formFilterAdd.url);  
+				disableTextField(document.formFilterAdd.urlFilterWhite); 
+				disableTextField(document.formFilterAdd.urlFilterBlack); 
+			  }
+			}
+			function urlFilterModeBlack()//黑名单
+			{
+			  document.formFilterAdd.urlFilterMode.value=0;
+			  document.formFilterAdd.urlFilterWhite.checked = false;
+			  document.formFilterAdd.urlFilterBlack.checked = true;
+			}
+			function urlFilterModeWhite()//白名单
+			{
+			  document.formFilterAdd.urlFilterMode.value=1;
+			  document.formFilterAdd.urlFilterWhite.checked = true;
+			  document.formFilterAdd.urlFilterBlack.checked = false;
+			}			
+		</script>
+	</body>
+</html>

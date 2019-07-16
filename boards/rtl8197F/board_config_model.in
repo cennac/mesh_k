@@ -1,0 +1,3 @@
+config BOARD_CONFIG_MODEL
+string
+default 'RTL8197F_VG_V672_8812F_8367R_GW'

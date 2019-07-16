@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+	</head>
+	<body>
+		<canvas id="canvas" width="850" height="330" style="margin: 0 auto;"></canvas>
+		<script src="js/jquery.js"></script>
+		<script src="js/jtopo.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){					
+			var canvas = document.getElementById('canvas');
+			var stage = new JTopo.Stage(canvas);
+
+			var scene = new JTopo.Scene();
+			stage.add(scene);
+			
+			var cloudNode = new JTopo.Node();
+			cloudNode.setSize(64, 64);//设置根节点大小
+			cloudNode.setLocation(360,30);	//设置根节点位置
+			cloudNode.setImage('img/content_icon_machine.png');
+			cloudNode.layout = {type: 'tree', width:120, height: 200}//设置节点之间的高度和宽度
+			
+			scene.add(cloudNode);
+			
+			for(var i=1; i<6; i++){
+				var node = new JTopo.Node();
+				node.setSize(64, 64);	
+				node.setImage('img/content_icon_machine_blue@2x.png');
+				node.X=scene.width * 1.5;
+				node.Y=scene.height * 1.5;
+//				if(i==1||i==5){
+//					node.setLocation(scene.width * 1.5, scene.height * 1.5);
+//				}
+//				if(i==2||i==4){
+//					node.setLocation(scene.width * 2, scene.height * 2);
+//				}
+//				if(i==3){
+//					node.setLocation(scene.width * 2.5, scene.height * 2.5);
+//				}
+				
+				scene.add(node);								
+				var link = new JTopo.Link(cloudNode, node);
+				link.strokeColor='137,206,237';
+				link.dashedPattern = 18;//设置线的间隔，显示则是虚线形式，默认为实线
+				link.alpha=0.5;//设置线的透明度
+				scene.add(link);
+			}
+			JTopo.layout.layoutNode(scene, cloudNode, true);
+		});	
+		</script>
+	</body>
+</html>

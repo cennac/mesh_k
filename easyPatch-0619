@@ -1,0 +1,2554 @@
+diff -urN old/linux-3.10/drivers/net/wireless/rtl8192cd/8192cd_sme.c new/linux-3.10/drivers/net/wireless/rtl8192cd/8192cd_sme.c
+--- old/linux-3.10/drivers/net/wireless/rtl8192cd/8192cd_sme.c	2019-06-11 17:32:12.000000000 +0800
++++ new/linux-3.10/drivers/net/wireless/rtl8192cd/8192cd_sme.c	2019-05-22 19:31:07.000000000 +0800
+@@ -28288,8 +28288,8 @@
+                     goto OnProbeReqFail;
+             }
+         }
+-    }
+ #endif
++    }
+ #endif
+ 
+ #ifdef RTK_SMART_ROAMING
+@@ -33780,7 +33780,7 @@
+ 		, int* found_weitht,char* candidate_index,int multi_ap_target_exist
+ )
+ {
+-
++    struct wifi_mib *pmib = GET_MIB(priv);    //qw
+ 	int ssid_chk_ok = 0, bssid_chk_ok = 0, bsstype_chk_ok = 0;
+ 	int security_chk_ok = 0, networktype_chk_ok = 0;
+ 	int security_adhoc_chk_ok=0;
+@@ -33910,6 +33910,7 @@
+ 
+ void check_bss_info2(struct rtl8192cd_priv *priv,int multi_ap_target_exist)
+ {
++    struct wifi_mib *pmib = GET_MIB(priv);    //qw
+ 	int bssid_chk_ok = 0, bsstype_chk_ok = 0;
+ 	int security_chk_ok = 0, networktype_chk_ok = 0;
+ 
+@@ -33992,6 +33993,7 @@
+  */
+ void start_clnt_lookup(struct rtl8192cd_priv *priv, int rescan)
+ {
++    struct wifi_mib *pmib = GET_MIB(priv);  //qw
+ 	int multi_profile_chk = 0;
+ 	int idx=0;
+ #ifdef SMP_SYNC
+diff -urN old/linux-3.10/drivers/net/wireless/rtl8192cd/8192cd_sta_control.c new/linux-3.10/drivers/net/wireless/rtl8192cd/8192cd_sta_control.c
+--- old/linux-3.10/drivers/net/wireless/rtl8192cd/8192cd_sta_control.c	2019-06-11 17:24:37.000000000 +0800
++++ new/linux-3.10/drivers/net/wireless/rtl8192cd/8192cd_sta_control.c	2019-05-30 10:37:45.000000000 +0800
+@@ -256,7 +256,7 @@
+ 
+         }
+         #endif
+-        if(priv_sc->pmib->staControl.stactrl_groupID == priv->pmib->staControl.stactrl_groupID &&
++        if((priv_sc!=NULL) && priv_sc->pmib->staControl.stactrl_groupID == priv->pmib->staControl.stactrl_groupID &&
+              IS_DRV_OPEN(priv_sc) && 
+              priv_sc->pmib->staControl.stactrl_enable == 1 &&
+              (priv_sc->pmib->dot11OperationEntry.opmode & WIFI_AP_STATE) &&
+@@ -268,7 +268,7 @@
+     }
+ 
+     
+-    if(priv->stactrl.stactrl_priv_sc == NULL) { /*can not find other band with same groupID*/        
++    if(priv->stactrl.stactrl_priv_sc == NULL || priv_sc == NULL) { /*can not find other band with same groupID*/        
+         STACTRL_INIT_DEBUG("WARNING: not find available priv\n");
+         return;
+     }
+@@ -522,7 +522,7 @@
+ 					__FUNCTION__,__LINE__,priv->dev->name,
+ 					ent->mac[0],ent->mac[1],ent->mac[2],ent->mac[3],ent->mac[4],ent->mac[5]);*/
+ 			
+-            STACTRL_DEBUG(ent->mac, "block delete");    
++            STACTRL_DEBUG(ent->mac, "block delete");
+             
+             return 0;
+         }
+@@ -531,7 +531,7 @@
+     //panic_printk("[%s %d][%s]Block list NULL.\n", __FUNCTION__,__LINE__,priv->dev->name);    
+ 
+     
+-    return 1;
++	return 1;
+ 
+ }
+ 
+@@ -795,16 +795,16 @@
+ static struct stactrl_preferband_entry * stactrl_is_dualband(struct rtl8192cd_priv *priv, unsigned char *mac)
+ {
+     struct stactrl_preferband_entry *prefer_ent, *ret=NULL;
+-    
+-    
+ 
++    
++	
+     prefer_ent = stactrl_preferband_sta_lookup(priv, mac);	
+     if(prefer_ent && priv->assoc_num < NUM_STAT)
+     {
+ //20170321, return prefer_ent to check retry counter at non-prefer band    
+         ret = prefer_ent;
+     }
+-    
++
+     return ret;
+ }
+ 
+@@ -1272,9 +1272,51 @@
+ 		}
+ #endif
+ */
+-		if(!isMeshPoint(pstat) && pstat->rssi <= STACTRL_PREFERBAND_RSSI) 
++		if(
++#ifdef CONFIG_RTK_MESH
++!isMeshPoint(pstat) && 
++#endif 
++          pstat->rssi <= STACTRL_PREFERBAND_RSSI) 
+ 		{
+ 			if(pstat->stactrl_trigger_time >= STACTRL_TRIGGER_TIME) {
++#ifdef CONFIG_IEEE80211V
++				if(pstat->bssTransSupport == TRUE && pstat->bssTransPktSent < 10){
++					STACTRL_DEBUG(pstat->cmn_info.mac_addr, "sta support 11v, no band steering.");
++#ifdef RTK_MULTI_AP
++					set_11v_target_band(priv, pstat->cmn_info.mac_addr);
++#endif
++					pstat->bssTransPktSent++;
++					memcpy(priv->bssTransPara.bssid_mac, priv->stactrl.stactrl_priv_sc->pmib->dot11StationConfigEntry.dot11Bssid, MACADDRLEN);
++					priv->bssTransPara.channel = priv->stactrl.stactrl_priv_sc->pmib->dot11RFEntry.dot11channel;
++#ifndef RTK_MULTI_AP
++					priv->bssTransPara.FromUser = TRUE;
++#endif
++					if(issue_BSS_Trans_Req(priv, pstat->cmn_info.mac_addr, NULL, NULL, 0) == 0)
++					{
++						pstat->bssTransExpiredTime = 0;
++						pstat->bssTransTriggered = TRUE;
++						priv->startCounting = TRUE;
++
++						DOT11VDEBUG("Send BSS Trans Req to STA [SUCCESS]:[%02x][%02x][%02x][%02x][%02x][%02x] \n", 
++								pstat->cmn_info.mac_addr[0],
++								pstat->cmn_info.mac_addr[1],
++								pstat->cmn_info.mac_addr[2],
++								pstat->cmn_info.mac_addr[3],
++								pstat->cmn_info.mac_addr[4],
++								pstat->cmn_info.mac_addr[5]);
++					}
++					else
++					{
++						DOT11VDEBUG("BSS Trans Req for bandsteering failed! \n");
++					}
++#ifdef RTK_MULTI_AP
++					deleteEntryTransitionList(priv, pstat->cmn_info.mac_addr);
++#else
++					priv->bssTransPara.FromUser = FALSE;
++#endif			
++					continue;
++				}
++#endif
+ 				SAVE_INT_AND_CLI(flags);
+ 	    		SMP_LOCK_STACONTROL_LIST(flags);	
+ 			    ent1 = stactrl_preferband_sta_lookup(priv, pstat->cmn_info.mac_addr);		    
+@@ -1296,45 +1338,6 @@
+ 				}	
+ 				
+ 	            if(kickoff_prefer){
+-#ifdef CONFIG_IEEE80211V
+-			if(pstat->bssTransSupport == TRUE && pstat->bssTransPktSent < 10){
+-				STACTRL_DEBUG(pstat->cmn_info.mac_addr, "sta support 11v, no band steering.");
+-#ifdef RTK_MULTI_AP
+-						set_11v_target_band(priv, pstat->cmn_info.mac_addr);
+-#endif
+-				pstat->bssTransPktSent++;
+-#ifndef RTK_MULTI_AP
+-				memcpy(priv->bssTransPara.bssid_mac, priv->stactrl.stactrl_priv_sc->pmib->dot11StationConfigEntry.dot11Bssid, MACADDRLEN);
+-				priv->bssTransPara.FromUser = TRUE;
+-				priv->bssTransPara.channel = priv->stactrl.stactrl_priv_sc->pmib->dot11RFEntry.dot11channel;
+-#endif
+-				if(issue_BSS_Trans_Req(priv, pstat->cmn_info.mac_addr, NULL, NULL, 0) == 0)
+-				{
+-					pstat->bssTransExpiredTime = 0;
+-					pstat->bssTransTriggered = TRUE;
+-					priv->startCounting = TRUE;
+-
+-					DOT11VDEBUG("Send BSS Trans Req to STA [SUCCESS]:[%02x][%02x][%02x][%02x][%02x][%02x] \n", 
+-							pstat->cmn_info.mac_addr[0],
+-							pstat->cmn_info.mac_addr[1],
+-							pstat->cmn_info.mac_addr[2],
+-							pstat->cmn_info.mac_addr[3],
+-							pstat->cmn_info.mac_addr[4],
+-							pstat->cmn_info.mac_addr[5]);
+-				}
+-				else
+-				{
+-					DOT11VDEBUG("BSS Trans Req for bandsteering failed! \n");
+-				}
+-#ifdef RTK_MULTI_AP
+-						deleteEntryTransitionList(priv, pstat->cmn_info.mac_addr);
+-#else
+-						priv->bssTransPara.FromUser = FALSE;
+-#endif			
+-						continue;
+-					} else
+-#endif
+-					{
+ 						stactrl_hidden_ap(priv);
+ 						
+ 						STACTRL_DEBUG(pstat->cmn_info.mac_addr, "Deauth it on prefer band"); 
+@@ -1357,9 +1360,8 @@
+ 		               	//del_sta(priv, pstat->cmn_info.mac_addr);
+ 						issue_deauth(priv,	pstat->cmn_info.mac_addr, _RSON_DISAOC_STA_LEAVING_);
+ 						
+-							pstat->prepare_to_free = 1;
+-					}
+-		        }			          	
++						pstat->prepare_to_free = 1;
++					}		          	
+ 			} else {
+ 				pstat->stactrl_trigger_time++;
+ 			}
+@@ -1435,7 +1437,11 @@
+ 	{
+         kickoff= 0;
+ 		pstat = list_entry(plist, struct stat_info, asoc_list);
+-		if(!isMeshPoint(pstat) && pstat->rssi > STACTRL_NONPREFERBAND_RSSI) {
++		if(
++#ifdef CONFIG_RTK_MESH
++!isMeshPoint(pstat) && 
++#endif 
++					pstat->rssi > STACTRL_NONPREFERBAND_RSSI) {
+             if(pstat->stactrl_candidate == 1) {
+                 kickoff = 1;
+ 			}
+@@ -1650,91 +1656,89 @@
+ */
+ 		if(pstat->rssi > STACTRL_NONPREFERBAND_RSSI) 
+ 		{
+-            if(pstat->stactrl_candidate == 1)
+-                kickoff = 1; 
+-			if(kickoff == 0 && stactrl_is_kickoff(priv->stactrl.stactrl_priv_sc, pstat)) 
+-				kickoff = 1;
+-            
+-            //20170103
+-            //check if this client is kickoff more than threshold times
+-            if((stactrl_check_if_kickoff(priv, pstat->cmn_info.mac_addr) == 1) && (kickoff == 1)){
+-				kickoff = 0;
+-				panic_printk("[STA_CONTROL] mac:%02x:%02x:%02x:%02x:%02x:%02x is kickoff %d times already, do not kickoff again !!\n",
+-						pstat->cmn_info.mac_addr[0], pstat->cmn_info.mac_addr[1], pstat->cmn_info.mac_addr[2],
+-						pstat->cmn_info.mac_addr[3], pstat->cmn_info.mac_addr[4], pstat->cmn_info.mac_addr[5],
+-						STACTRL_KICKOFF_TIMES);
+-			}
+-			
+-            if(kickoff) { /*check if it is a dual-band client*/
+-            	if(pstat->stactrl_trigger_time >= STACTRL_TRIGGER_TIME) {
++			if(pstat->stactrl_trigger_time >= STACTRL_TRIGGER_TIME) {
+ #ifdef CONFIG_IEEE80211V
+-			if(pstat->bssTransSupport == TRUE && pstat->bssTransPktSent < 10){
+-				STACTRL_DEBUG(pstat->cmn_info.mac_addr, "sta support 11v, no band steering.");
++				if(pstat->bssTransSupport == TRUE && pstat->bssTransPktSent < 10){
++					STACTRL_DEBUG(pstat->cmn_info.mac_addr, "sta support 11v, no band steering.");
+ #ifdef RTK_MULTI_AP
+-						set_11v_target_band(priv, pstat->cmn_info.mac_addr);
++					set_11v_target_band(priv, pstat->cmn_info.mac_addr);
+ #endif
+-				pstat->bssTransPktSent++;
++					pstat->bssTransPktSent++;
++					memcpy(priv->bssTransPara.bssid_mac, priv->stactrl.stactrl_priv_sc->pmib->dot11StationConfigEntry.dot11Bssid, MACADDRLEN);
++					priv->bssTransPara.channel = priv->stactrl.stactrl_priv_sc->pmib->dot11RFEntry.dot11channel;
+ #ifndef RTK_MULTI_AP
+-				memcpy(priv->bssTransPara.bssid_mac, priv->stactrl.stactrl_priv_sc->pmib->dot11StationConfigEntry.dot11Bssid, MACADDRLEN);
+-				priv->bssTransPara.FromUser = TRUE;
+-				priv->bssTransPara.channel = priv->stactrl.stactrl_priv_sc->pmib->dot11RFEntry.dot11channel;
++					priv->bssTransPara.FromUser = TRUE;
+ #endif
+-				if(issue_BSS_Trans_Req(priv, pstat->cmn_info.mac_addr, NULL, NULL, 0) == SUCCESS)
+-				{
+-					pstat->bssTransExpiredTime = 0;
+-					pstat->bssTransTriggered = TRUE;
+-					priv->startCounting = TRUE;
+-
+-							DOT11VDEBUG("Send BSS Trans Req to STA [SUCCESS]:[%02x][%02x][%02x][%02x][%02x][%02x] \n", 
+-									pstat->cmn_info.mac_addr[0],
+-									pstat->cmn_info.mac_addr[1],
+-									pstat->cmn_info.mac_addr[2],
+-									pstat->cmn_info.mac_addr[3],
+-									pstat->cmn_info.mac_addr[4],
+-									pstat->cmn_info.mac_addr[5]);
+-						}
+-						else
+-						{
+-							DOT11VDEBUG("BSS Trans Req for bandsteering failed! \n");
+-						}
++					if(issue_BSS_Trans_Req(priv, pstat->cmn_info.mac_addr, NULL, NULL, 0) == SUCCESS)
++					{
++						pstat->bssTransExpiredTime = 0;
++						pstat->bssTransTriggered = TRUE;
++						priv->startCounting = TRUE;
++
++								DOT11VDEBUG("Send BSS Trans Req to STA [SUCCESS]:[%02x][%02x][%02x][%02x][%02x][%02x] \n", 
++										pstat->cmn_info.mac_addr[0],
++										pstat->cmn_info.mac_addr[1],
++										pstat->cmn_info.mac_addr[2],
++										pstat->cmn_info.mac_addr[3],
++										pstat->cmn_info.mac_addr[4],
++										pstat->cmn_info.mac_addr[5]);
++					}
++					else
++					{
++						DOT11VDEBUG("BSS Trans Req for bandsteering failed! \n");
++					}
+ #ifndef RTK_MULTI_AP
+-						priv->bssTransPara.FromUser = FALSE;
++					priv->bssTransPara.FromUser = FALSE;
+ #else
+-						deleteEntryTransitionList(priv, pstat->cmn_info.mac_addr);
++					deleteEntryTransitionList(priv, pstat->cmn_info.mac_addr);
+ #endif
+-						continue;
+-					} else
++					continue;
++				}
+ #endif
+-					
+-					{ //not support 11v or 11v request too many 
+-						#ifdef RTK_SMART_ROAMING
+-						notify_hidden_ap(priv, STACTRL_HIDDEN_AP);
+-						#endif
+-						stactrl_hidden_ap(priv);
+-		                STACTRL_DEBUG(pstat->cmn_info.mac_addr, "Deauth it on non-prefer band");
+-		                SMP_LOCK_STACONTROL_LIST(flags);
+-		                ent = stactrl_block_add(priv, pstat->cmn_info.mac_addr);
+-		                if(ent)   /*add success*/
+-		                {
+-		                    STACTRL_DEBUG(pstat->cmn_info.mac_addr, "block add success");
+-		                }
+-		                else
+-		                {
+-		                    STACTRL_DEBUG(pstat->cmn_info.mac_addr, "block add fail");
+-		                }
+-		                SMP_UNLOCK_STACONTROL_LIST(flags);					
+-
+-		                //issue_deauth(priv,	pstat->cmn_info.mac_addr, _RSON_DISAOC_STA_LEAVING_); //marked by tesia 
+-						//del_sta(priv, pstat->cmn_info.mac_addr);
+-						issue_deauth(priv, pstat->cmn_info.mac_addr, _RSON_DISAOC_STA_LEAVING_);
++				//not support 11v or 11v request too many 
++				if(pstat->stactrl_candidate == 1)
++					kickoff = 1; 
++				if(kickoff == 0 && stactrl_is_kickoff(priv->stactrl.stactrl_priv_sc, pstat)) 
++					kickoff = 1;
++				
++				//20170103
++				//check if this client is kickoff more than threshold times
++				if((stactrl_check_if_kickoff(priv, pstat->cmn_info.mac_addr) == 1) && (kickoff == 1)){
++					kickoff = 0;
++					panic_printk("[STA_CONTROL] mac:%02x:%02x:%02x:%02x:%02x:%02x is kickoff %d times already, do not kickoff again !!\n",
++							pstat->cmn_info.mac_addr[0], pstat->cmn_info.mac_addr[1], pstat->cmn_info.mac_addr[2],
++							pstat->cmn_info.mac_addr[3], pstat->cmn_info.mac_addr[4], pstat->cmn_info.mac_addr[5],
++							STACTRL_KICKOFF_TIMES);
++				}
++				
++				if(kickoff) 
++				{ /*check if it is a dual-band client*/
++							#ifdef RTK_SMART_ROAMING
++							notify_hidden_ap(priv, STACTRL_HIDDEN_AP);
++							#endif
++							stactrl_hidden_ap(priv);
++							STACTRL_DEBUG(pstat->cmn_info.mac_addr, "Deauth it on non-prefer band");
++							SMP_LOCK_STACONTROL_LIST(flags);
++							ent = stactrl_block_add(priv, pstat->cmn_info.mac_addr);
++							if(ent)   /*add success*/
++							{
++								STACTRL_DEBUG(pstat->cmn_info.mac_addr, "block add success");
++							}
++							else
++							{
++								STACTRL_DEBUG(pstat->cmn_info.mac_addr, "block add fail");
++							}
++							SMP_UNLOCK_STACONTROL_LIST(flags);					
++
++							//issue_deauth(priv,	pstat->cmn_info.mac_addr, _RSON_DISAOC_STA_LEAVING_); //marked by tesia 
++							//del_sta(priv, pstat->cmn_info.mac_addr);
++							issue_deauth(priv, pstat->cmn_info.mac_addr, _RSON_DISAOC_STA_LEAVING_);
+ 
+-						pstat->prepare_to_free = 1;
+-	            	}
+-	            }
+-				else {
+-					pstat->stactrl_trigger_time++;
++							pstat->prepare_to_free = 1;
+ 				}
+-			} 
++			} else {
++				pstat->stactrl_trigger_time++;
++			}
+ 		} else {
+ 			pstat->stactrl_trigger_time = 0;
+ 		}
+diff -urN old/linux-3.10/drivers/net/wireless/rtl8192cd/phydm/phydm_ccx.h new/linux-3.10/drivers/net/wireless/rtl8192cd/phydm/phydm_ccx.h
+--- old/linux-3.10/drivers/net/wireless/rtl8192cd/phydm/phydm_ccx.h	2019-06-11 17:24:37.000000000 +0800
++++ new/linux-3.10/drivers/net/wireless/rtl8192cd/phydm/phydm_ccx.h	2019-05-28 18:49:58.000000000 +0800
+@@ -240,6 +240,7 @@
+ 
+ /*@NHM*/
+ #ifdef NHM_SUPPORT
++void phydm_nhm_init(void *dm_void);  //qw
+ void phydm_nhm_dbg(void *dm_void, char input[][16], u32 *_used, char *output,
+ 		   u32 *_out_len);
+ u8 phydm_get_igi(void *dm_void, enum bb_path path);
+diff -urN old/users/boa/apmib/apmib.h new/users/boa/apmib/apmib.h
+--- old/users/boa/apmib/apmib.h	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/apmib/apmib.h	2019-05-14 14:28:42.000000000 +0800
+@@ -2540,6 +2540,14 @@
+ #endif //#ifdef RTK_CAPWAP
+ /* ==== CAPWAP end =======*/
+ 
++#ifdef RTK_MULTI_AP
++#define MIB_MAP_CONTROLLER         2386
++#define MIB_MAP_CONFIGURED_BAND    2387
++#define MIB_WLAN_MAP_BSS_TYPE      2388
++#define MIB_MAP_DEVICE_NAME        2389
++#define MAX_MAP_DEVICE_NAME_LEN    30
++#endif
++
+ /* ==== NASFILTER START ==== */
+ #define CUSTOMER_ID					3300
+ #define MIB_NASFILTER_ENABLED		CUSTOMER_ID + 0
+@@ -3280,7 +3288,9 @@
+ //#define CONFIG_COMBINE_TWO_WPS_DEAMON_FOR_CLIENT //combine two client mode deamon into one
+ #if defined(UNIVERSAL_REPEATER)
+ #define CONFIG_SMART_REPEATER
+-//#define CONFIG_REPEATER_WPS_SUPPORT
++#if defined(RTK_MULTI_AP)
++#define CONFIG_REPEATER_WPS_SUPPORT
++#endif
+ //#define CONFIG_WPS_EITHER_AP_OR_VXD //either one. When enable repeater, the wps is working for virtual client. Otherwise wps is working for root AP.
+ //#define CONFIG_ONLY_SUPPORT_CLIENT_REPEATER_WPS //if and only if root is client mode, the virtual vxd support wps
+ #endif
+@@ -3825,8 +3835,8 @@
+ //=========add for MESH=========
+ 
+ typedef enum { INFRASTRUCTURE=0, ADHOC=1 } NETWORK_TYPE_T;
+-typedef enum { BAND_11B=1, BAND_11G=2, BAND_11BG=3, BAND_11A=4, BAND_11N=8, BAND_5G_11AN=12, 
+-	BAND_5G_11AC=64,BAND_5G_11AAC=68,BAND_5G_11NAC=72,BAND_5G_11ANAC=76} BAND_TYPE_T;
++typedef enum { BAND_11B=1, BAND_11G=2, BAND_11BG=3, BAND_11A=4, BAND_11N=8, BAND_11BGN=11, BAND_5G_11AN=12,
++	BAND_5G_11AC=64, BAND_5G_11AAC=68, BAND_5G_11NAC=72, BAND_11BGNAC=75, BAND_5G_11ANAC=76} BAND_TYPE_T;
+ typedef enum { DISABLED=0, A_MPDU=1, A_MSDU=2, A_MIXED=3} AGGREGATION_MODE_T;	// GANTOE & epopen: DISABLED=0 original is DISABLE=0, Because conflict with ../../auth/include/1x_common.h in AP/net-snmp-5.x.x
+ typedef enum { PHYBAND_OFF=0, PHYBAND_2G=1, PHYBAND_5G=2 } PHYBAND_TYPE_T;
+ typedef enum { SMACSPHY=0, DMACSPHY=1, DMACDPHY=2 } MACPHYMODE_TYPE_T;
+diff -urN old/users/boa/apmib/list.h new/users/boa/apmib/list.h
+--- old/users/boa/apmib/list.h	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/apmib/list.h	2019-03-07 17:35:54.000000000 +0800
+@@ -29,6 +29,7 @@
+ #ifndef _LINUX_LIST_H_
+ #define _LINUX_LIST_H_
+ 
++#ifndef _STDBOOL_H
+ #ifndef _DEF_BOOL_
+ // in case of multiple definition of bool. Also defined in cwmp-tr069_v2/cwmpClient/udp.h
+ #define _DEF_BOOL_
+@@ -39,7 +40,7 @@
+ typedef enum {false = 0, true = 1} bool;
+ #endif
+ #endif
+-
++#endif
+ 
+ #define	prefetch(x)
+ 
+diff -urN old/users/boa/apmib/mibdef.h new/users/boa/apmib/mibdef.h
+--- old/users/boa/apmib/mibdef.h	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/apmib/mibdef.h	2019-05-16 10:02:25.000000000 +0800
+@@ -1090,6 +1090,12 @@
+ MIBDEF(char,			defaultFwId, [MAX_CAPWAP_FWID_BUF_SIZE], CAPWAP_WTP_DEFAULT_FWID, STRING_T, APMIB_T, 0, 0,0,0)
+ #endif // #ifdef RTK_CAPWAP
+ 
++#ifdef RTK_MULTI_AP
++MIBDEF(unsigned char, mapController,     , MAP_CONTROLLER,      BYTE_T, APMIB_T, 0, 0,0,0)
++MIBDEF(unsigned char, mapConfiguredBand, , MAP_CONFIGURED_BAND, BYTE_T, APMIB_T, 0, 0,0,0)
++MIBDEF(char, mapDeviceName,  [MAX_MAP_DEVICE_NAME_LEN]  , MAP_DEVICE_NAME,    STRING_T, APMIB_T, 0, 0,0,0)
++#endif
++
+ #ifdef CONFIG_RTL_AIRTIME
+ MIBDEF(unsigned char,  airTimeEnabled ,    , AIRTIME_ENABLED , BYTE_T,  APMIB_T, 0, 0,0,0)
+ MIBDEF(unsigned char,  airTimeMode    ,    , AIRTIME_MODE    , BYTE_T,  APMIB_T, 0, 0,0,0)
+@@ -2140,6 +2146,10 @@
+ #endif
+ #endif // #ifdef WIFI_SIMPLE_CONFIG
+ 
++#ifdef RTK_MULTI_AP
++MIBDEF(unsigned char, mapBssType,        , MAP_BSS_TYPE,        BYTE_T, CONFIG_WLAN_SETTING_T, 0, 0,DECISION_WLAN_PROPERTY_FUNC_ID,REINIT_NULL_FUNC_ID)
++#endif
++
+ #ifdef WLAN_HS2_CONFIG
+ MIBDEF(unsigned char,	hs2Enabled, ,	HS2_ENABLE,	BYTE_T, CONFIG_WLAN_SETTING_T, 0, 0,DECISION_WLAN_PROPERTY_FUNC_ID,REINIT_NULL_FUNC_ID)
+ #endif
+diff -urN old/users/boa/html/Makefile new/users/boa/html/Makefile
+--- old/users/boa/html/Makefile	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/html/Makefile	2019-05-14 14:36:16.000000000 +0800
+@@ -215,6 +215,13 @@
+ EXCLUDE_FILES += ! -path './new/*'
+ EXCLUDE_FILES += ! -name home_old.htm ! -name style_old.css
+ endif
++
++# Multi-AP Support
++ifneq ($(CONFIG_APP_MULTI_AP),y)
++EXCLUDE_FILES += ! -name multi_ap_setting_general.htm
++EXCLUDE_FILES += ! -name multi_ap_setting_topology.htm
++EXCLUDE_FILES += ! -name multi_ap_popup_device_details.htm
++endif
+ #------------------------------------------------------------------------------
+ all:
+ 	rm -f www_files www_files.tar.bz2 webpages.bin webpages.*
+diff -urN old/users/boa/html/multi_ap_popup_device_details.htm new/users/boa/html/multi_ap_popup_device_details.htm
+--- old/users/boa/html/multi_ap_popup_device_details.htm	1970-01-01 08:00:00.000000000 +0800
++++ new/users/boa/html/multi_ap_popup_device_details.htm	2019-03-07 17:35:54.000000000 +0800
+@@ -0,0 +1,149 @@
++<html>
++<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
++<head>
++<meta http-equiv="Content-Type" content="text/html">
++<% getIndex("no-cache"); %>
++<title>EasyMesh Device Details Table</title>
++<% getInfo("include_css"); %>
++
++<SCRIPT>
++
++var count;
++var nbTableHtmlString = "";
++var staTableHtmlString = "";
++
++function loadInfo() {
++    // var urlParams = new URLSearchParams(window.location.search);
++    // count = urlParams.get('count');
++    var results = new RegExp('[\?&]' + 'count' + '=([^&#]*)').exec(window.location.href);
++    count = decodeURI(results[1]) || 0;
++
++	var string_json = '<% getInfo("topology_json_string"); %>';
++	var object_json = JSON.parse(string_json);
++
++    var curr_device = get_device_json(object_json);
++
++    nbTableHtmlString += '<tr class="tbl_head"><td width="80"><font size=2><b>MAC Address</b></td><td width="100"><font size=2><b>Name</b></td><td width="60"><font size=2><b>RSSI</b></td><td width="55"><font size=2><b>Connected Band</b></td></tr>';
++    staTableHtmlString += '<tr class="tbl_head"><td width="80"><font size=2><b>MAC Address</b></td><td width="30"><font size=2><b>RSSI</b></td><td width="55"><font size=2><b>Connected Band</b></td><td width="60"><font size=2><b>Downlink</b></td><td width="60"><font size=2><b>Uplink</b></td></tr>';
++
++    if (0 != curr_device["neighbor_devices"].length) {
++        for (nb in curr_device["neighbor_devices"]) {
++            nbTableHtmlString += '<tr class="tbl_body"><td><font size=2>';
++            nbTableHtmlString += curr_device["neighbor_devices"][nb].neighbor_mac;
++            nbTableHtmlString += '</td><td><font size=2>';
++            nbTableHtmlString += curr_device["neighbor_devices"][nb].neighbor_name;
++            nbTableHtmlString += '</td><td><font size=2>';
++            nbTableHtmlString += curr_device["neighbor_devices"][nb].neighbor_rssi;
++            nbTableHtmlString += '</td><td><font size=2>';
++            nbTableHtmlString += curr_device["neighbor_devices"][nb].neighbor_band;
++            nbTableHtmlString += '</td></tr>';
++
++        }
++    }
++
++    if (0 != curr_device["station_info"].length) {
++        for (nb in curr_device["station_info"]) {
++            staTableHtmlString += '<tr class="tbl_body"><td><font size=2>';
++            staTableHtmlString += curr_device["station_info"][nb].station_mac;
++            staTableHtmlString += '</td><td><font size=2>';
++            staTableHtmlString += curr_device["station_info"][nb].station_rssi;
++            staTableHtmlString += '</td><td><font size=2>';
++            staTableHtmlString += curr_device["station_info"][nb].station_connected_band;
++            staTableHtmlString += '</td><td><font size=2>';
++            staTableHtmlString += curr_device["station_info"][nb].station_downlink;
++            staTableHtmlString += '</td><td><font size=2>';
++            staTableHtmlString += curr_device["station_info"][nb].station_uplink;
++            staTableHtmlString += '</td></tr>';
++
++        }
++    }
++
++    document.getElementById("nbTableContainer").innerHTML = nbTableHtmlString;
++	document.getElementById("staTableContainer").innerHTML = staTableHtmlString;
++
++    setInterval(function(){ location.reload(true); }, 10000);
++}
++
++var device_counter = 0;
++
++function get_device_json(object_json) {
++    device_counter++;
++    if (device_counter == count) {
++        return object_json;
++    }
++	// htmlString += '<li>';
++	// htmlString += object_json.device_name + ' | ' + object_json.mac_address + ' | <input type="button" value="Show Details" onClick="showDetailOnClick(' + device_counter.toString() + ')">';
++	if (0 != object_json["child_devices"].length) {
++		for (child_device in object_json["child_devices"]) {
++            var return_object = get_device_json(object_json["child_devices"][child_device]);
++            if (0 == return_object) {
++                continue;
++            } else {
++                return return_object;
++            }
++		}
++    }
++
++    return 0;
++}
++
++</SCRIPT>
++
++</head>
++
++<body onload="loadInfo();">
++<blockquote>
++<h2>
++    EasyMesh Device Details Table
++</h2>
++
++
++<table border=0 width="800" cellspacing=0 cellpadding=0>
++  <tr><font size=2>
++ This table shows the details of individual EasyMesh device in the network, child neighbor list and associated station list
++  </tr>
++  <tr><hr size=1 noshade align=top></tr>
++  <tr>
++		<td width="100%" colspan=2><font size=2><b>Neighbor RSSI (excluding parent AP):</b></td>
++  </tr>
++</table>
++<form action=/boafrm/formWirelessTbl method=POST name="formWirelessTbl">
++<table border='1' id='nbTableContainer' width="300">
++
++
++<!-- <tr class="tbl_body"><td><font size=2>f0:25:b7:ce:57:36</td><td><font size=2>Agent1</td><td><font size=2>120</td></tr>
++<tr class="tbl_body"><td><font size=2>f0:25:b7:ce:57:36</td><td><font size=2>EasyMesh_Agent</td><td><font size=2>120</td></tr> -->
++<!-- <td width="60"><font size=2><b>Rx Packet</b></td>
++<td width="60"><font size=2><b>Tx Rate (Mbps)</b></td>
++<td width="60"><font size=2><b>Power Saving</b></td>
++<td width="60"><font size=2><b>Expired Time (s)</b></td></tr> -->
++</table>
++
++<table border=0 width="800" cellspacing=0 cellpadding=0>
++<tr><hr size=1 noshade align=top></tr>
++<tr>
++    <td width="100%" colspan=2><font size=2><b>Station Info:</b></td>
++</tr>
++</table>
++
++<table border='1' id='staTableContainer' width="450">
++<!--
++<td width="250"><font size=2><b>SSID</b></td>
++-->
++<!-- <td width="60"><font size=2><b>Mode</b></td> -->
++
++<!-- <tr class="tbl_body"><td><font size=2>f0:25:b7:ce:57:36</td><td><font size=2>120</td><td><font size=2>5G</td><td><font size=2>100</td><td><font size=2>50</td></tr>
++<tr class="tbl_body"><td><font size=2>f0:25:b7:ce:57:36</td><td><font size=2>120</td><td><font size=2>5G</td><td><font size=2>100</td><td><font size=2>50</td></tr>
++<tr class="tbl_body"><td><font size=2>f0:25:b7:ce:57:36</td><td><font size=2>120</td><td><font size=2>5G</td><td><font size=2>100</td><td><font size=2>50</td></tr> -->
++<!-- <td width="60"><font size=2><b>Expired Time (s)</b></td></tr> -->
++
++</table>
++
++<input type="hidden" value="/wlstatbl.htm" name="submit-url">
++  <p><input type="button" value="Refresh" onclick="location.reload(true);">&nbsp;&nbsp;
++  <input type="button" value=" Close " name="close" onClick="javascript: window.close();"></p>
++</form>
++</blockquote>
++</body>
++
++</html>
+diff -urN old/users/boa/html/multi_ap_setting_general.htm new/users/boa/html/multi_ap_setting_general.htm
+--- old/users/boa/html/multi_ap_setting_general.htm	1970-01-01 08:00:00.000000000 +0800
++++ new/users/boa/html/multi_ap_setting_general.htm	2019-03-07 17:35:54.000000000 +0800
+@@ -0,0 +1,238 @@
++<html>
++<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
++<head>
++<meta http-equiv="Content-Type" content="text/html">
++<% getIndex("no-cache"); %>
++<title>EasyMesh Interface Setup </title>
++<% language=javascript %>
++<script type="text/javascript" src="util_gw.js"> </script>
++<% getInfo("include_css"); %>
++<SCRIPT>
++var wlan_num =<% getIndex("show_wlan_num"); %> ;
++
++var wlan1Disabled = 0, wlan2Disabled = 0;
++var role=<% getIndex("multi_ap_controller"); %> ;
++
++function loadInfo()
++{
++
++	wlan1Disabled = <% getIndex("interface_info_query_00"); %>;
++	wlan2Disabled = <% getIndex("interface_info_query_10"); %>;
++
++
++	//load role from mib and set radio button accordingly
++	if (role == 0) {
++		document.getElementById("role_disabled").checked = true;
++	} else if (role == 1) {
++		document.getElementById("role_controller").checked = true;
++		document.getElementById("wsc_trigger").innerHTML   = '<td width="30%"><font size=2><b>WPS Trigger:</b></td><td width="70%"><font size=2><input type="submit" value="Start PBC" name="start_wsc" onClick=""></td>';
++	} else if (role == 2) {
++		document.getElementById("role_agent").checked = true;
++		document.getElementById("wsc_trigger").innerHTML   = '<td width="30%"><font size=2><b>WPS Trigger:</b></td><td width="70%"><font size=2><input type="submit" value="Start PBC" name="start_wsc" onClick=""></td>';
++	}
++
++	//save role into prev_role
++	if (role == 0) {
++		document.getElementById("role_prev").value = "disabled";
++	} else if (role == 1) {
++		document.getElementById("role_prev").value = "controller";
++	} else if (role == 2) {
++		document.getElementById("role_prev").value = "agent";
++	}
++
++}
++
++
++function resetClick()
++{
++	location.reload(true);
++}
++
++
++
++function saveChanges()
++{
++	if (!document.getElementById("role_disabled").checked) {
++		if ("" == document.getElementById("device_name_text").value) {
++			alert("Device Name cannot be empty.");
++			return false;
++		}
++	}
++
++	var dot11kvDisabled = <% getIndex("is_dot11kv_disabled"); %>;
++	if (dot11kvDisabled && (!document.getElementById("role_disabled").checked)) {
++		if(!confirm("11k or/and 11v are not enabled in some interface(s), click OK to enable and continue")){
++			return false;
++		}
++		document.getElementById("needEnable11kv").value = "1";
++	}
++
++	var securitySettingWrong = <% getIndex("is_security_setting_wrong"); %>;
++	if (securitySettingWrong && (role == 1)) {
++		alert("Something wrong with your security settings.\nPlease be aware that EasyMesh only supports WPA2 with PSK.\nPlease ensure security type is WPA2 and password is not null.");
++		return false;
++	}
++
++	if (<% getIndex("needPopupBackhaul"); %> && (role == 1)) {
++		if(!confirm("Alert: VAP1 for Wlan1 and/or Wlan2 will be auto-managed. \nClick OK to continue.")){
++			return false;
++		}
++	}
++
++    return true;
++}
++
++function isControllerOnChange(){
++	if (document.getElementById("role_controller").checked == true) {
++		role = 1;
++	} else if (document.getElementById("role_agent").checked == true){
++		role = 2;
++	} else {
++		role = 0;
++	}
++}
++
++
++
++</SCRIPT>
++</head>
++
++<body onload="loadInfo();">
++<blockquote>
++<h2>EasyMesh General Settings</h2>
++
++<form action=/boafrm/formMultiAP method=POST name="MultiAP">
++<table border=0 width="500" cellspacing=4 cellpadding=0>
++  <tr><font size=2>
++    This page is used to configure the parameters for EasyMesh feature of your Access Point.
++  </tr>
++  <tr><hr size=1 noshade align=top></tr>
++
++  <!-- <tr>
++	<td width="100%" colspan=2><font size=2><b>
++	 <input type="checkbox" name="" value="ON" ONCLICK="">&nbsp;&nbsp;Disable EasyMesh</b>
++	</td>
++	</tr> -->
++
++	<tr id="device_name">
++		<td width="30%"><font size=2><b>Device Name:</b></td>
++		<td width="70%">
++			<input type="text" id="device_name_text" name="device_name_text" value="<% getInfo("device_name_query"); %>">
++		</td>
++	</tr>
++
++	<tr id="is_controller">
++		<td width="30%"><font size=2><b>Role:</b></td>
++		<td width="70%"><font size=2>
++		<input type="radio" id="role_controller" name="role" value="controller" onclick="isControllerOnChange()">Controller&nbsp;&nbsp;
++		<input type="radio" id="role_agent" name="role" value="agent" onclick="isControllerOnChange()">Agent&nbsp;&nbsp;
++		<input type="radio" id="role_disabled" name="role" value="disabled" onclick="isControllerOnChange()">Disabled</td>
++	</tr>
++	<tr id="wsc_trigger">
++
++	</tr>
++
++
++  	<!-- <tr>
++		<td width="100%" colspan=2><font size=2><b>Network Topology:</b></td>
++		<td width="100%" colspan=2><font size=2><b>Neighbor Table:</b></td>
++	</tr> -->
++
++  </table>
++
++
++	<!-- <table width="400" border="0&quot;">
++			<tbody><tr>
++			  <td width="100%" colspan="2" class="tbl_title">Parent Node</td>
++			</tr>
++			<tr bgcolor="#DDDDDD">
++			  <td width="40%"><font size="2"><b>Agent1</b></font></td>
++			  <td width="60%"><font size="2">1a2b3c4d5e7f</font></td>
++			</tr>
++
++			<tr>
++			<td width="100%" colspan="2" class="tbl_title">Child Node</td>
++			</tr>
++			<tr bgcolor="#DDDDDD">
++			<td width="40%"><font size="2"><b>Agent3</b></font></td>
++			<td width="60%"><font size="2">2a2b3c4d5e7f</font></td>
++			</tr>
++			<tr bgcolor="#EEEEEE">
++			<td width="40%"><font size="2"><b>Agent4</b></font></td>
++			<td width="60%"><font size="2">3a2b3c4d5e7f</font></td>
++			</tr>
++			<tr bgcolor="#DDDDDD">
++			<td width="40%"><font size="2"><b>Agent5</b></font></td>
++			<td width="60%"><font size="2">3a2b3c4d5e7f
++			</font></td>
++			</tr>
++
++
++
++
++		  </tbody></table> -->
++
++
++<br>
++	<table style="display:none;" id="staticIpTable" border="0" width=640>
++		<% dhcpRsvdIp_List();%>
++	</table>
++<% getInfo("apply_prompt_comment_start");%>
++      <input type="submit" value="Apply Changes" name="save" onClick="return saveChanges()">&nbsp;&nbsp;
++      <input type="reset" value="Reset" name="reset" onClick="resetClick()">
++<% getInfo("apply_prompt_comment_end");%>
++<% getInfo("apply_direct_comment_start");%>
++      <input type="submit" value="Save" name="save" onClick="return saveChanges()">&nbsp;&nbsp;
++      <input type="submit" value="Save & Apply" name="save_apply" onClick="return saveChanges()">&nbsp;&nbsp;
++      <input type="reset" value="Reset" name="reset" onClick="resetClick()">
++<% getInfo("apply_direct_comment_end");%>
++
++
++<!-- <div id="syntaxplugin" class="syntaxplugin" style="border: 1px dashed #bbb; border-radius: 5px !important; overflow: auto; max-height: 30em;">
++		<ul class="alternate" type="square">
++				<li> Controller - 1a2b3c4d5e6f - <input type="button" value="Show Details" onClick="abc()">
++				<ul class="alternate" type="square">
++					<li>AgentLivingRoom : 1a2b3c4d5e7f</li>
++					<li>AgentBedroom1 : 1a2b3c4d5e8f
++					<ul class="alternate" type="square">
++						<li>AgentBedroom2 : 2a2b3c4d5e6f
++						<ul class="alternate" type="square">
++							<li>Agent4 : 3a2b3c4d5e6f</li>
++							<li>Agent5 : 4a2b3c4d5e6f</li>
++							<li>Agent6 : 5a2b3c4d5e6f</li>
++						</ul>
++						</li>
++						<li>Agent7 : 1a3b3c4d5e6f
++						<ul class="alternate" type="square">
++							<li>Agent8 : 7a2b3c4d5e6f</li>
++							<li>Agent9 : 8a2b3c4d5e6f</li>
++							<li>Agent10 : 9a2b3c4d5e6f</li>
++						</ul>
++						</li>
++						<li>Agent11 : 0a2b3c4d5e6f
++						<ul class="alternate" type="square">
++							<li>Agent12 : 4a2b3c3d5e6f</li>
++							<li>Agent13 : 3a2b3c8d5e6f</li>
++							<li>Agent14 : 2a2b3c1d5e6f</li>
++							<li>Agent15 : 1a2b3c4d5e2f</li>
++						</ul>
++						</li>
++					</ul>
++					</li>
++					<li>Agent16 : 2a2b3c4d5e6f</li>
++					<li>Agent17 : 5a2b3c4d5e6f</li>
++				</ul>
++				</li>
++			</ul>
++</div> -->
++
++	  <input type="hidden" value="/multi_ap_setting_general.htm" name="submit-url">
++	  <input type="hidden" value="0" name="needEnable11kv" id="needEnable11kv">
++	  <input type="hidden" value="<% getIndex("needPopupBackhaul"); %>" name="needPopupBackhaul">
++	  <input type="hidden" value="" name="role_prev" id="role_prev">
++
++ </form>
++</blockquote>
++</body>
++
++</html>
+diff -urN old/users/boa/html/multi_ap_setting_topology.htm new/users/boa/html/multi_ap_setting_topology.htm
+--- old/users/boa/html/multi_ap_setting_topology.htm	1970-01-01 08:00:00.000000000 +0800
++++ new/users/boa/html/multi_ap_setting_topology.htm	2019-03-07 17:35:54.000000000 +0800
+@@ -0,0 +1,131 @@
++<html>
++<! Copyright (c) Realtek Semiconductor Corp., 2003. All Rights Reserved. ->
++<head>
++<meta http-equiv="Content-Type" content="text/html">
++<% getIndex("no-cache"); %>
++<title>EasyMesh Interface Setup </title>
++<% language=javascript %>
++<script type="text/javascript" src="util_gw.js"> </script>
++<% getInfo("include_css"); %>
++<SCRIPT>
++var wlan_num =<% getIndex("show_wlan_num"); %> ;
++
++var wlan1Disabled = 0, wlan2Disabled = 0;
++var role=<% getIndex("multi_ap_controller"); %> ;
++
++
++function showDetailOnClick(count) {
++	openWindow('/multi_ap_popup_device_details.htm?count='+count, 'showDeviceDetail', 700, 500);
++}
++
++var htmlString = "";
++var device_counter = 0;
++
++function print_device_json(object_json) {
++	device_counter++;
++	htmlString += '<li>';
++	htmlString += object_json.device_name + ' | ' + object_json.mac_address + ' | ' + object_json.ip_addr + ' | <input type="button" value="Show Details" onClick="showDetailOnClick(' + device_counter.toString() + ')">';
++	if (0 != object_json["child_devices"].length) {
++		htmlString += '<ul class="alternate" type="square">';
++		for (child_device in object_json["child_devices"]) {
++			print_device_json(object_json["child_devices"][child_device]);
++		}
++		htmlString += '</ul>';
++	}
++	htmlString += '</li>';
++}
++
++function loadInfo()
++{
++
++	var string_json = '<% getInfo("topology_json_string"); %>';
++	var object_json = JSON.parse(string_json);
++
++	print_device_json(object_json);
++	document.getElementById("topology_insertion").innerHTML = htmlString;
++
++	setInterval(function(){ location.reload(true); }, 10000);
++}
++
++
++function resetClick()
++{
++	location.reload(true);
++}
++
++
++
++function saveChanges()
++{
++	// var dot11kvDisabled = <% getIndex("is_dot11kv_disabled"); %>;
++	// if (dot11kvDisabled && (!document.getElementById("role_disabled").checked)) {
++	// 	if(!confirm("11k or/and 11v are not enabled in some interface(s), click OK to enable and continue")){
++	// 		return false;
++	// 	}
++	// 	document.getElementById("needEnable11kv").value = "1";
++	// }
++
++	// var securitySettingWrong = <% getIndex("is_security_setting_wrong"); %>;
++	// if (securitySettingWrong && (role == 1)) {
++	// 	alert("Something wrong with your security settings.\nPlease be aware that EasyMesh only supports WPA2 with PSK.\nPlease ensure security type is WPA2 and password is not null.");
++	// 	return false;
++	// }
++
++	// if (<% getIndex("needPopupBackhaul"); %> && (role == 1)) {
++	// 	if(!confirm("Alert: VAP1 for Wlan1 and/or Wlan2 will be auto-managed. \nClick OK to continue.")){
++	// 		return false;
++	// 	}
++	// }
++
++    return true;
++}
++
++
++</SCRIPT>
++</head>
++
++<body onload="loadInfo();">
++<blockquote>
++<h2>EasyMesh Network Topology</h2>
++
++<form action=/boafrm/formMultiAP method=POST name="MultiAP">
++<table border=0 width="500" cellspacing=4 cellpadding=0>
++  <tr><font size=2>
++    This page displays the topology of EasyMesh network
++  </tr>
++  <tr><hr size=1 noshade align=top></tr>
++
++  <!-- <tr>
++	<td width="100%" colspan=2><font size=2><b>
++	 <input type="checkbox" name="" value="ON" ONCLICK="">&nbsp;&nbsp;Disable EasyMesh</b>
++	</td>
++	</tr> -->
++
++  	<tr>
++		<td width="100%" colspan=2><font size=2><b>Network Topology:</b></td>
++	</tr>
++
++  </table>
++
++
++<div id="syntaxplugin" class="syntaxplugin" style="border: 1px dashed #bbb; border-radius: 5px !important; overflow: auto; max-height: 30em;">
++	<ul id="topology_insertion" class="alternate" type="square">
++
++		</ul>
++</div>
++
++
++
++<br>
++
++
++
++
++
++	<input type="button" value="Refresh" onclick="location.reload(true);">
++
++ </form>
++</blockquote>
++</body>
++
++</html>
+diff -urN old/users/boa/html/new/navigation.js new/users/boa/html/new/navigation.js
+--- old/users/boa/html/new/navigation.js	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/html/new/navigation.js	2019-05-14 14:34:52.000000000 +0800
+@@ -1 +1,2 @@
+-/*redirect form*/function get_form(page, wlan_id){        return 'boafrm/formWlanRedirect?redirect-url='+page+'&wlan_id='+wlan_id ;} /*add_menuItem(URL,title)*/function add_menuItem(frameset,url,name){  var str;  document.write("<td class=\"topnavoff\">");  str="<a href=\""+url+"\" target=\""+frameset+"\" id=\""+name+"\" rel=\""+name+"\" onclick=\"return on_click_menu(this);\">"+name+"</a>";  //alert(str);  document.write(str);  document.write("</td>");}function add_topMenuItem(url,menu_name){  add_menuItem("sub_menu",url,menu_name);}function add_subMenuItem(url,menu_name){	var str;  document.write("<tr height=\"35\">");    document.write("<td class=\"topnavoff\">");  str="<a href=\""+url+"\" target=\"content\" id=\""+menu_name+"\" rel=\""+menu_name+"\" onclick=\"return on_click_menu(this);\">"+menu_name+"</a>";  //alert(str);  document.write(str);  document.write("</td>");  //add_menuItem("content",url,menu_name);  document.write("</tr>");}function index_of(array,value){	var i;	for(i = 0; i < array.length; i++){		if(array[i] == value)			return i;			}	return -1;}function show_subnav_element(url,menu_name,isReadable){	if(isReadable){		add_subMenuItem(url,menu_name);	}}function show_topmenu_wlan(is8021xClient, isMeshDefined, is80211rSupport, isAirtimeDefined){		var subhtml_array = [<%getIndex("wlbasic.htm");%>,						<%getIndex("wladvanced.htm");%>,						<%getIndex("wlsecurity.htm");%>,						<%getIndex("wlactrl.htm");%>,						<%getIndex("wlwds.htm");%>,						<%getIndex("wlsurvey.htm");%>,						<%getIndex("wlwps.htm");%>,						<%getIndex("wlsch.htm");%>];		var first_show_index = index_of(subhtml_array,1); 		if(first_show_index == -1){		if(isMeshDefined){			if(<%getIndex("wlmesh.htm")%>)				return 1;		}		if(is8021xClient){			if(<%getIndex("rsCertInstall.htm")%>)				return 1;		}		if(isAirtimeDefined){			if(<%getIndex("airtime.htm")%>)				return 1;		}		return 0;	}else		return 1;		}function show_topmenu_tcpip(showLanDev){	var subhtml_array = [<%getIndex("tcpiplan.htm");%>,						<%getIndex("tcpipwan.htm");%>];		var first_show_index = index_of(subhtml_array,1); 	if(first_show_index == -1){		if(showLanDev){			if(<%getIndex("clients.htm");%>)				return 1;		}		return 0;	}else		return 1;	}function show_topmenu_ipv6(is_mape){	var subhtml_array = [<%getIndex("ipv6_wan.htm");%>,						<%getIndex("dhcp6s.htm");%>,						<%getIndex("radvd.htm");%>];		var first_show_index = index_of(subhtml_array,1); 	if(first_show_index == -1){		if(is_mape){			if(<%getIndex("map_e.htm");%>)				return 1;		}		return 0;	}else		return 1;	}function show_topmenu_firewall(ipv6_enable,route_setup_enable,quagga_enable){	var subhtml_array1 = [<%getIndex("macfilter.htm");%>,						<%getIndex("portfw.htm");%>,						<%getIndex("urlfilter.htm");%>,						<%getIndex("dmz.htm");%>,						<%getIndex("vlan.htm");%>];	var first_show_index1 = index_of(subhtml_array1,1);	if(first_show_index1 == -1){		if(ipv6_enable){			var subhtml_array2 = [<%getIndex("portfilter6.htm");%>,								 <%getIndex("ip6filter.htm");%>,								 <%getIndex("ip6_qos.htm");%>];			var first_show_index2 = index_of(subhtml_array2,1);			if(first_show_index2 != -1)				return 1;		}else{			var subhtml_array2 = [<%getIndex("portfilter.htm");%>,								<%getIndex("ipfilter.htm");%>,								<%getIndex("ip_qos.htm");%>];			var first_show_index2 = index_of(subhtml_array2,1);			if(first_show_index2 != -1)				return 1;		}		if(route_setup_enable){			if(<%getIndex("route.htm");%>)				return 1;		}		if(quagga_enable)			{			<%getIndex("quaggaroute.htm");%>			<%getIndex("bgproute.htm");%>			<%getIndex("isisroute.htm");%>			}		return 0;	}	else		return 1;}function show_topmenu_voip(){	var subhtml_array = [<%getIndex("voip_general.asp");%>,						<%getIndex("voip_tone.asp");%>,						<%getIndex("voip_ring.asp");%>,						<%getIndex("voip_other.asp");%>,						//<%getIndex("voip_config.asp");%>,						<%getIndex("voip_network.asp");%>];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index == -1)		return 0;	else		return 1;}function show_topmenu_mng(isDisplayCPU, isEnableBT,isDisplayTR069){	var subhtml_array = [<%getIndex("status.htm");%>,						<%getIndex("stats.htm");%>,						<%getIndex("ddns.htm");%>,						<%getIndex("ntp.htm");%>,						<%getIndex("dos.htm");%>,						<%getIndex("syslog.htm");%>,						<%getIndex("upload.htm");%>,						<%getIndex("saveconf.htm");%>,						<%getIndex("smtpclient.htm")%>];		var first_show_index = index_of(subhtml_array,1);	if(first_show_index == -1){		if(isDisplayCPU){			if(<%getIndex("cpuShow.htm");%>)				return 1;		}							if(isDisplayTR069){			if(<%getIndex("tr069config.htm");%>)				return 1;		}		if(isEnableBT){			if(<%getIndex("transmission.htm");%>)				return 1;		}				if(userDegreeFlag == 1){			if(<%getIndex("super_password.htm");%>)				return 1;		}		else{			if(<%getIndex("password.htm");%>)				return 1;		}		return 0;	}	else		return 1;		}function show_topmenu_disk(){	var subhtml_array = [<%getIndex("diskinfo.htm");%>,						<%getIndex("accountmng.htm");%>,						<%getIndex("disksharefolder.htm");%>,						<%getIndex("diskpartition.htm");%>,						<%getIndex("diskformat.htm");%>,];			var subnav_array = ["Disk Information",						"Account Management",						"Share Folder",						"Disk Partition",						"Disk Format"];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index != -1){		return 0;	}else		return 1;}function init_submenu(submenuId){	if(document.getElementById(submenuId))	{		if(document.getElementById(submenuId).click)		{			document.getElementById(submenuId).click();		}		else		{			var evt  = document.createEvent('MouseEvents');			evt.initEvent('click',true,true);			document.getElementById(submenuId).dispatchEvent(evt);		}	}}function init_submenu_wlan(is8021xClient, isMeshDefined, is80211rSupport, isAirtimeDefined){	var subhtml_array1 = [<%getIndex("wlbasic.htm");%>,						<%getIndex("wladvanced.htm");%>,						<%getIndex("wlsecurity.htm");%>,						<%getIndex("wlactrl.htm");%>,						<%getIndex("wlwds.htm");%>,						<%getIndex("wlp2p.htm")%>];			var subnav_array1 = ["Basic Setting",						"Advanced",						"Security",						"Access Control",						"WDS Setting",						"Wi-Fi Direct"];	var first_show_index1 = index_of(subhtml_array1,1);	if(first_show_index1== -1){		if(isMeshDefined){			if(<%getIndex("wlmesh.htm");%>){				init_submenu("Mesh Setting");				return;			}		}					var subhtml_array2 = [<%getIndex("wlsurvey.htm");%>,							<%getIndex("wlwps.htm");%>,							<%getIndex("wlsch.htm");%>];					var subnav_array2 = ["Site Survey","WPS","Schedule"];		var first_show_index2 = index_of(subhtml_array2,1);		if(first_show_index2 == -1){				if(is8021xClient){					if(<%getIndex("rsCertInstall.htm");%>){						init_submenu("802.1x Cert Install");						return;					}				}				if(isAirtimeDefined){					if(<%getIndex("airtime.htm");%>){						init_submenu("Airtime Fairness");						return;					}				}						}else			init_submenu(subnav_array2[first_show_index2]);	}	else		init_submenu(subnav_array1[first_show_index1]);}function init_submenu_tcpip(showLanDev){	if(<%getIndex("tcpiplan.htm")%> == 0){		if(showLanDev){			if(<%getIndex("clients.htm");%>){				init_submenu("Lan Clients");				return;			}		}		if(<%getIndex("tcpipwan.htm");%>){			init_submenu("Wan Setting");			return;		}	}else		init_submenu("Lan Setting");}function init_submenu_ipv6(is_mape){	var subhtml_array = [<%getIndex("ipv6_wan.htm");%>,						<%getIndex("dhcp6s.htm");%>,						<%getIndex("radvd.htm");%>];			var subnav_array = ["IPv6 Wan Setting",						"IPv6 Lan Setting",						"Radvd",						"Tunnel (6 over 4)"];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index == -1){		if(is_mape){			if(<%getIndex("map_e.htm");%>){				init_submenu("MAP-E");				return;			}		}	}	else		init_submenu(subnav_array[first_show_index]);  }function init_submenu_voip(){	var subhtml_array = [<%getIndex("voip_general.asp");%>,						<%getIndex("voip_tone.asp");%>,						//<%getIndex("voip_ring.asp");%>,						<%getIndex("voip_other.asp");%>,						//<%getIndex("voip_config.asp");%>,						<%getIndex("voip_network.asp");%>];			var subnav_array = ["General",						"Tone",						//"Ring",						"Other",						//"Config",						"Network"];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index != -1){		init_submenu(subnav_array[first_show_index]);		return;	}		}function init_submenu_firewall(ipv6_enable,route_setup_enable,quagga_enable){		if(ipv6_enable)	{		var subhtml_array = [<%getIndex("portfilter6.htm");%>,							<%getIndex("ip6filter.htm");%>,							<%getIndex("macfilter.htm");%>,							<%getIndex("portfw.htm");%>,							<%getIndex("urlfilter.htm");%>,							<%getIndex("dmz.htm");%>,							<%getIndex("vlan.htm");%>];				var subnav_array = ["Port Filtering",							"IP Filtering",							"MAC Filtering",							"Port Forwarding",							"URL Filtering",							"DMZ",							"vlan"];		var first_show_index = index_of(subhtml_array,1);		if(first_show_index != -1){			init_submenu(subnav_array[first_show_index]);			return;		}	}	else{		var subhtml_array = [<%getIndex("portfilter.htm");%>,							<%getIndex("ipfilter.htm");%>,							<%getIndex("macfilter.htm");%>,							<%getIndex("portfw.htm");%>,							<%getIndex("urlfilter.htm");%>,							<%getIndex("dmz.htm");%>,							<%getIndex("vlan.htm");%>];				var subnav_array = ["Port Filtering",							"IP Filtering",							"MAC Filtering",							"Port Forwarding",							"URL Filtering",							"DMZ",							"vlan"];		var first_show_index = index_of(subhtml_array,1);		if(first_show_index != -1){			init_submenu(subnav_array[first_show_index]);			return;		}	}	 if(route_setup_enable){		if(<%getIndex("route.htm");%>){			init_submenu("Route Setup");			return;		}	 }	if(quagga_enable){		if(<%getIndex("quaggaroute.htm");%>){			init_submenu("Ospf Setup");			//return;		}		if(<%getIndex("bgproute.htm");%>){			init_submenu("Bgp Setup");			//return;		}		if(<%getIndex("isisroute.htm");%>){			init_submenu("IsIs Setup");			//return;		}	 }	 if(ipv6_enable){		if(<%getIndex("ip6_qos.htm");%>){			init_submenu("Qos");			return;		}	 }else{		if(<%getIndex("ip_qos.htm");%>){			init_submenu("Qos");			return;		}	 }	}function init_submenu_mng(isDisplayCPU, isEnableBT,isDisplayTR069){	var subtml_array1 = [<%getIndex("status.htm");%>,						<%getIndex("stats.htm");%>,						<%getIndex("ddns.htm");%>];	var subnav_array1 = ["Status","Statistics","DDNS"];	var first_show_index1 = index_of(subtml_array1,1); 	if(first_show_index1 == -1){		if(isDisplayCPU){			if(<%getIndex("cpuShow.htm");%>){				init_submenu("CPU Utilizaiton");				return;			}						}		var subtml_array2 = [<%getIndex("ntp.htm");%>,							<%getIndex("dos.htm");%>];		var subnav_array2 = ["Time Zone Setting","Deny Of Serivce"];		var first_show_index2 = index_of(subtml_array2,1); 		if(first_show_index2 == -1){			if(isDisplayTR069){				if(<%getIndex("tr069config.htm");%>){					init_submenu("TR-069 Config");					return;				}								}			var subtml_array3 = [<%getIndex("syslog.htm");%>,								<%getIndex("upload.htm");%>,								 <%getIndex("saveconf.htm");%>];			var subnav_array3 = ["Log","Upgrade Firmware","Save/Reload Setting"];			var first_show_index3 = index_of(subtml_array3,1); 			if(first_show_index3 == -1){				if(userDegreeFlag == 1){					if(<%getIndex("super_password.htm");%>){						init_submenu("Password");						return;					}									}else{					if(<%getIndex("password.htm");%>){						init_submenu("Password");						return;					}				}				if(isEnableBT){					if(<%getIndex("transmission.htm");%>){						init_submenu("Transmission BT");						return;					}				}			}			else				init_submenu(subnav_array3[first_show_index3]);					}		else			init_submenu(subnav_array2[first_show_index2]);								}	else		init_submenu(subnav_array1[first_show_index1]);	 		}function init_submenu_disk(){	var subhtml_array = [<%getIndex("diskinfo.htm");%>,						<%getIndex("accountmng.htm");%>,						<%getIndex("disksharefolder.htm");%>,						<%getIndex("diskpartition.htm");%>,						<%getIndex("diskformat.htm");%>,];			var subnav_array = ["Disk Information",						"Account Management",						"Share Folder",						"Disk Partition",						"Disk Format"];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index != -1){		init_submenu(subnav_array[first_show_index]);		return;	}  }/*draw_topnav*/function draw_topnav(wlan_num,ipv6,isDisplayVOIP,userDegreeFlag,is8021xClient, isMeshDefined, is80211rSupport, isAirtimeDefined,                           showLanDev,is_mape,route_setup_enable,quagga_enable,                           isDisplayCPU,isEnableBT,isDisplayTR069, disk_onoff){  add_topMenuItem("sub_menu_setup.htm",menu_setup);   if(userDegreeFlag != 0){    if(<%getIndex("sub_menu_wlan_support");%> != 0)    {		if(<%getIndex("sub_menu_wlan.htm");%>){			if(show_topmenu_wlan(is8021xClient, isMeshDefined, is80211rSupport, isAirtimeDefined)){				add_topMenuItem(get_form("sub_menu_wlan.htm",0),menu_wlan1);	 			if(wlan_num==2)	  				add_topMenuItem(get_form("sub_menu_wlan.htm",1),menu_wlan2);			}			}    }	if(<%getIndex("sub_menu_tcpip.htm");%>){		if(show_topmenu_tcpip(showLanDev)){			add_topMenuItem("sub_menu_tcpip.htm",menu_tcpip);		}	}	if(ipv6){		if(<%getIndex("sub_menu_ipv6.htm");%>)			if(show_topmenu_ipv6(is_mape))				add_topMenuItem("sub_menu_ipv6.htm","ipv6");	}	if (<%getInfo("show_firewall_all")%>) {		if(<%getIndex("sub_menu_firewall.htm");%>){			if(show_topmenu_firewall(ipv6,route_setup_enable,quagga_enable))				add_topMenuItem("sub_menu_firewall.htm",menu_fireWall);		}	}	if(isDisplayVOIP){		if(<%getIndex("sub_menu_voip.htm");%>)			if(show_topmenu_voip())				add_topMenuItem("sub_menu_voip.htm","VoIP");	}			if(<%getIndex("sub_menu_mng.htm");%>){		if(show_topmenu_mng(isDisplayCPU,isEnableBT,isDisplayTR069))			add_topMenuItem("sub_menu_mng.htm",menu_management);	}		if (disk_onoff){		if(<%getIndex("sub_menu_disk_mng.htm");%>){			if(show_topmenu_disk())				add_topMenuItem("sub_menu_disk_mng.htm","Storage");		}	 }		  }  else{     if(<%getIndex("sub_menu_wlan_support");%> != 0)	 if(wlan_num==1)		 add_topMenuItem(get_form("sub_menu_wlan.htm",0),menu_wlan2);	 else		add_topMenuItem(get_form("sub_menu_wlan.htm",0),menu_wlan1); 	 if(wlan_num==2)  		add_topMenuItem(get_form("sub_menu_wlan.htm",1),menu_wlan2);  	 add_topMenuItem("sub_menu_tcpip.htm",menu_tcpip); 	 if(ipv6)  		add_topMenuItem("sub_menu_ipv6.htm","ipv6");	 if (<%getInfo("show_firewall_all")%>) {  	 	add_topMenuItem("sub_menu_firewall.htm",menu_fireWall);	 }  	 if( isDisplayVOIP)  		add_topMenuItem("sub_menu_voip.htm","VoIP");  	 add_topMenuItem("sub_menu_mng.htm",menu_management);	 if (disk_onoff)  		add_topMenuItem("sub_menu_disk_mng.htm","Storage");  }    init_submenu(menu_setup);  	}function draw_subnav_head(){	document.write("<table id=\"topnav_container\" border=\"0\" cellspacing=\"1\" summary=\"\">");	document.write("<tbody>");	document.write("<tr height=\"34\">");	document.write("<td class=\"topHeaderMenu\">");	document.write("<div id=\"topHeaderId\"></div>");	document.write("</td></tr>");}function draw_subnav_tail(){	document.write("<tr><td class=\"subMenuDummy\"></td></tr>");	document.write("</tbody></table>");}function draw_subnav_setup(multiple_wan_enable,OneWanSptUnderMtl,userDegreeFlag){    add_subMenuItem("wizard.htm",menu_wizd);  if (<%getInfo("show_opmode_menu")%>==1) {	  if(!multiple_wan_enable){		  if(userDegreeFlag != 0){			show_subnav_element("opmode.htm",menu_operation_mode,<%getIndex("opmode.htm")%>); 		  }else		  	add_subMenuItem("opmode.htm",menu_operation_mode);   	  }  } else if(<%getInfo("show_opmode_menu")%>==2) { // ulinker	  if(!multiple_wan_enable){	  			  if(userDegreeFlag != 0){		  				show_subnav_element("ulinker_opmode.htm",menu_ulink_operation_mode,<%getIndex("ulinker_opmode.htm")%>); 		  			  }else		  	add_subMenuItem("ulinker_opmode.htm",menu_ulink_operation_mode); 	  	}   }   init_submenu(menu_wizd);}function draw_subnav_wlan(is8021xClient, isWapiSupport, isWapiLocalAsSupport, isMeshDefined, is80211rSupport, isAirtimeDefined,userDegreeFlag){	if(userDegreeFlag != 0){		show_subnav_element("wlbasic.htm",menu_basic,<%getIndex("wlbasic.htm")%>); 		show_subnav_element("wladvanced.htm",menu_advance,<%getIndex("wladvanced.htm")%>);  		show_subnav_element("wlsecurity.htm",menu_security,<%getIndex("wlsecurity.htm")%>);  		show_subnav_element("wlactrl.htm",menu_accessControl,<%getIndex("wlactrl.htm")%>);  		show_subnav_element("wlwds.htm",menu_wds,<%getIndex("wlwds.htm")%>);		if(isMeshDefined==1)	  		show_subnav_element("wlmesh.htm",menu_mesh,<%getIndex("wlmesh.htm")%>);    		show_subnav_element("wlsurvey.htm",menu_siteSurvey,<%getIndex("wlsurvey.htm")%>);  		show_subnav_element("wlwps.htm",menu_wps,<%getIndex("wlwps.htm")%>);  		show_subnav_element("wlsch.htm",menu_schedule,<%getIndex("wlsch.htm")%>);		if(is8021xClient==1)     		show_subnav_element("rsCertInstall.htm",menu_8021xCert,<%getIndex("rsCertInstall.htm")%>); 		if(isAirtimeDefined==1)   			show_subnav_element("airtime.htm","Airtime Fairness",<%getIndex("airtime.htm")%>);		if(<% getIndex("isP2PSupport")%>)			show_subnav_element("wlp2p.htm", "Wi-Fi Direct", <%getIndex("wlp2p.htm")%>);				init_submenu_wlan(is8021xClient,isMeshDefined,is80211rSupport,isAirtimeDefined);	}else{		add_subMenuItem("wlbasic.htm",menu_basic);  		add_subMenuItem("wladvanced.htm",menu_advance);  		add_subMenuItem("wlsecurity.htm",menu_security);  		add_subMenuItem("wlactrl.htm",menu_accessControl);  		add_subMenuItem("wlwds.htm",menu_wds); 		if(isMeshDefined==1)	  		add_subMenuItem("wlmesh.htm",menu_mesh);    		add_subMenuItem("wlsurvey.htm",menu_siteSurvey);  		add_subMenuItem("wlwps.htm",menu_wps);  		add_subMenuItem("wlsch.htm",menu_schedule);  		if(is8021xClient==1)     		add_subMenuItem("rsCertInstall.htm",menu_8021xCert);		if(isWapiSupport==1)		{     			add_subMenuItem("wlwapiinstallcert.htm","Certification Install");			add_subMenuItem("wlwapiRekey.htm","Key Update");		}		if(isWapiLocalAsSupport==1)     		add_subMenuItem("wlwapiCertManagement.htm","Certification Manage"); 		if(isAirtimeDefined==1)   			add_subMenuItem("airtime.htm","Airtime Fairness");		if(<% getIndex("isP2PSupport")%>)			add_subMenuItem("wlp2p.htm", "Wi-Fi Direct");					 init_submenu(menu_basic);	}}  function draw_subnav_tcpip(multiple_wan_enable,showLanDev,userDegreeFlag){	if(userDegreeFlag != 0){		show_subnav_element("tcpiplan.htm",menu_lan,<%getIndex("tcpiplan.htm")%>);		if(showLanDev==1)			show_subnav_element("clients.htm",menu_lan,<%getIndex("clients.htm")%>);		if (<%getInfo("show_tcpip_wan")%>) {			show_subnav_element("tcpipwan.htm",menu_wan,<%getIndex("tcpipwan.htm")%>);		}		init_submenu_tcpip(showLanDev);	}else{		add_subMenuItem("tcpiplan.htm",menu_lan);  		if(showLanDev==1)  			add_subMenuItem("clients.htm",menu_lan_client); 		if (<%getInfo("show_tcpip_wan")%>) {			if(multiple_wan_enable)			  	add_subMenuItem("tcpip_multiwanlist.htm",menu_wan);			 else		  		add_subMenuItem("tcpipwan.htm",menu_wan);		}		init_submenu(menu_lan);		}  }function draw_subnav_ipv6(is_mape,is_radvd_wan,userDegreeFlag){	if(userDegreeFlag != 0){		show_subnav_element("ipv6_wan.htm","IPv6 Wan Setting",<%getIndex("ipv6_wan.htm")%>);  		show_subnav_element("dhcp6s.htm","IPv6 Lan Setting",<%getIndex("dhcp6s.htm")%>);  		show_subnav_element("radvd.htm","Radvd",<%getIndex("radvd.htm")%>);		if(is_radvd_wan)			show_subnav_element("radvd_wan.htm","Wan Radvd",<%getIndex("radvd_wan.htm")%>);  		show_subnav_element("tunnel6.htm","Tunnel (6 over 4)",<%getIndex("tunnel6.htm")%>);		if(is_mape)  			show_subnav_element("map_e.htm","MAP-E",<%getIndex("map_e.htm")%>);				init_submenu_ipv6(is_mape);	}else{		add_subMenuItem("ipv6_wan.htm","IPv6 Wan Setting");  		add_subMenuItem("dhcp6s.htm","IPv6 Lan Setting");  		add_subMenuItem("radvd.htm","Radvd");		if(is_radvd_wan)			add_subMenuItem("radvd_wan.htm","Radvd wan");  		add_subMenuItem("tunnel6.htm","Tunnel (6 over 4)");  		if(is_mape)  			add_subMenuItem("map_e.htm","MAP-E");				init_submenu("IPv6 Wan Setting");	}  }function draw_subnav_firewall(ipv6_enable, route_setup_enable,quagga_enable,userDegreeFlag){	if (<%getInfo("show_firewall_all")%>) {		if(userDegreeFlag != 0){			if(ipv6_enable)			{				show_subnav_element("portfilter6.htm",menu_portFilter,<%getIndex("portfilter6.htm");%>);				show_subnav_element("ip6filter.htm",menu_ipFilter,<%getIndex("ip6filter.htm");%>);			}			else			{		 	 	show_subnav_element("portfilter.htm",menu_portFilter,<%getIndex("portfilter.htm");%>);		  		show_subnav_element("ipfilter.htm",menu_ipFilter,<%getIndex("ipfilter.htm");%>);			}		 	show_subnav_element("macfilter.htm",menu_macFilter,<%getIndex("macfilter.htm");%>);		  	show_subnav_element("portfw.htm",menu_portFw,<%getIndex("portfw.htm");%>);		  	show_subnav_element("urlfilter.htm",menu_urlFilter,<%getIndex("urlfilter.htm");%>);		  	show_subnav_element("dmz.htm",menu_dmz,<%getIndex("dmz.htm");%>);			if(<%getIndex("rtk_vlan_support");%>)				show_subnav_element("vlan.htm","vlan",<%getIndex("vlan.htm");%>);			if(<%getIndex("linux_vlan_support");%>)				show_subnav_element("8021q_vlan.htm",menu_vlan,<%getIndex("8021q_vlan.htm");%>);			if(route_setup_enable)		  		show_subnav_element("route.htm",menu_routeSetup,<%getIndex("route.htm");%>);			if(quagga_enable)				{		  		show_subnav_element("quaggaroute.htm","Ospf Setup",<%getIndex("quaggaroute.htm");%>);				show_subnav_element("bgproute.htm","Bgp Setup",<%getIndex("bgproute.htm");%>);				show_subnav_element("isisroute.htm","IsIs Setup",<%getIndex("isisroute.htm");%>);				}		  	if(ipv6_enable)		  		show_subnav_element("ip6_qos.htm",menu_qos,<%getIndex("ip6_qos.htm");%>);		 	 else		  		show_subnav_element("ip_qos.htm",menu_qos,<%getIndex("ip_qos.htm");%>);			init_submenu_firewall(ipv6_enable,route_setup_enable,quagga_enable);		}		else{			if(ipv6_enable)			{				add_subMenuItem("portfilter6.htm",menu_portFilter);				add_subMenuItem("ip6filter.htm",menu_ipFilter);			}			else			{		 	 	add_subMenuItem("portfilter.htm",menu_portFilter);		 	 	add_subMenuItem("ipfilter.htm",menu_ipFilter);			}		 		add_subMenuItem("macfilter.htm",menu_macFilter);		  		add_subMenuItem("portfw.htm",menu_portFw);		  		add_subMenuItem("urlfilter.htm",menu_urlFilter);		  		add_subMenuItem("dmz.htm",menu_dmz);		  					if(<%getIndex("rtk_vlan_support");%>)				add_subMenuItem("vlan.htm","vlan");			if(<%getIndex("linux_vlan_support");%>)				add_subMenuItem("8021q_vlan.htm",menu_vlan);		  		 	if(route_setup_enable)		  		add_subMenuItem("route.htm",menu_routeSetup);			if(quagga_enable)				{		  		add_subMenuItem("quaggaroute.htm","Ospf Setup");				add_subMenuItem("bgproute.htm","Bgp Setup");				add_subMenuItem("isisroute.htm","IsIs Setup");				}		  	if(ipv6_enable)		  		add_subMenuItem("ip6_qos.htm",menu_qos);		 	else		  		add_subMenuItem("ip_qos.htm",menu_qos);			if(<%getIndex("snmp_support")%>)				add_subMenuItem("snmp.htm","SNMP");		  	init_submenu(menu_portFilter);		}	}}function draw_subnav_voip(userDegreeFlag){	/*if(userDegreeFlag != 0){		show_subnav_element("voip_general.asp","General",<%getIndex("voip_general.asp");%>); 		show_subnav_element("voip_tone.asp","Tone",<%getIndex("voip_tone.asp");%>);  		show_subnav_element("voip_ring.asp","Ring",<%getIndex("voip_ring.asp");%>); 		show_subnav_element("voip_other.asp","Other",<%getIndex("voip_other.asp");%>);  		show_subnav_element("voip_config.asp","Config",<%getIndex("voip_config.asp");%>);  		show_subnav_element("voip_network.asp","Network",<%getIndex("voip_network.asp");%>);		init_submenu_voip();	}else	*/	{		<% getInfo("voip_menu_new"); %> 		add_subMenuItem("voip_tone.asp","Tone");  		//add_subMenuItem("voip_ring.asp","Ring"); 		add_subMenuItem("voip_other.asp","Other");  		//add_subMenuItem("voip_config.asp","Config");  		add_subMenuItem("voip_network.asp","Network");		init_submenu(<%getInfo("voip_submenu_1");%>);	}}function draw_subnav_mng(isDisplayCPU, isEnableBT,isDisplayTR069,isDisplayOpenvpn,userDegreeFlag,supportSuperUser,supportDiagnostic,isSupportWeave,isSupportZigBee){	if(userDegreeFlag != 0){		show_subnav_element("status.htm",menu_status,<%getIndex("status.htm");%>);		show_subnav_element("stats.htm",menu_statistics,<%getIndex("stats.htm");%>);		if (<%getInfo("show_mgt_ddns")%>) {			show_subnav_element("ddns.htm",menu_ddns,<%getIndex("ddns.htm");%>);		}		if(isDisplayCPU == 1)  			show_subnav_element("cpuShow.htm",menu_cpu,<%getIndex("cpuShow.htm");%>);		if (<%getInfo("show_mgt_ntp")%>) {			show_subnav_element("ntp.htm",menu_timeZone,<%getIndex("ntp.htm");%>);		}		if (<%getInfo("show_mgt_dos")%>) {			show_subnav_element("dos.htm",menu_dos,<%getIndex("dos.htm");%>);    		}    	if(isDisplayTR069 == 1)  			show_subnav_element("tr069config.htm",menu_tr69_config,<%getIndex("tr069config.htm");%>); 				if (<%getInfo("show_mgt_bluetooth_repeater")%>) {			show_subnav_element("bluetoothRepeaterConfig.htm",menu_bluetooth_repeater,<%getIndex("bluetoothRepeaterConfig.htm");%>);		}   		show_subnav_element("syslog.htm",menu_log,<%getIndex("syslog.htm");%>);    	show_subnav_element("upload.htm",menu_updateFm,<%getIndex("upload.htm");%>);    	show_subnav_element("saveconf.htm",menu_setting,<%getIndex("saveconf.htm");%>);		  		if(userDegreeFlag == 1) 	 		show_subnav_element("super_password.htm",menu_psw,<%getIndex("super_password.htm");%>);  		else 			show_subnav_element("password.htm",menu_psw,<%getIndex("password.htm");%>); 		if(isEnableBT == 1)  			show_subnav_element("transmission.htm",menu_BT,<%getIndex("transmission.htm");%>);		init_submenu_mng(isDisplayCPU, isEnableBT,isDisplayTR069);	}	else{		add_subMenuItem("status.htm",menu_status);  		add_subMenuItem("stats.htm",menu_statistics);		if(<%getInfo("show_url_redirect")%>){			add_subMenuItem("url_redirect.htm", menu_httpRedirect);		}		if (<%getInfo("show_mgt_ddns")%>) {  			add_subMenuItem("ddns.htm",menu_ddns);		}  		if(isDisplayCPU == 1)  			add_subMenuItem("cpuShow.htm",menu_cpu);		if (<%getInfo("show_mgt_ntp")%>) {  			add_subMenuItem("ntp.htm",menu_timeZone);		}		if (<%getInfo("show_mgt_dos")%>) {  			add_subMenuItem("dos.htm",menu_dos);		}  		if(isDisplayTR069 == 1)  			add_subMenuItem("tr069config.htm",menu_tr69_config);		if (<%getInfo("show_mgt_bluetooth_repeater")%>) {			add_subMenuItem("bluetoothRepeaterConfig.htm",menu_bluetooth_repeater);		}  		add_subMenuItem("syslog.htm",menu_log);  		add_subMenuItem("upload.htm",menu_updateFm);  		add_subMenuItem("saveconf.htm",menu_setting);						if(supportSuperUser)			add_subMenuItem("super_password.htm",menu_psw);		else  			add_subMenuItem("password.htm",menu_psw);		  		if(isEnableBT == 1)  			add_subMenuItem("transmission.htm",menu_BT);		if(isSupportWeave==1)  			add_subMenuItem("weave.htm",menu_weave_set);		if(isSupportZigBee==1)  			add_subMenuItem("zigbee.htm",menu_zigbee);		if(isDisplayOpenvpn == 1)  			add_subMenuItem("openvpn.htm",menu_openvpn);  		if(supportDiagnostic == 1)  			add_subMenuItem("diagnostic.htm",menu_diagnostic);		if("<% getInfo("userName"); %>" != "")        	add_subMenuItem( "logout.htm", menu_logout); 		init_submenu(menu_status);	}} function draw_subnav_disk(userDegreeFlag){	if(userDegreeFlag != 0){		show_subnav_element("diskinfo.htm","Disk Information",<%getIndex("diskinfo.htm");%>);		show_subnav_element("accountmng.htm","Account Management",<%getIndex("accountmng.htm");%>);		show_subnav_element("disksharefolder.htm","Share Folder",<%getIndex("disksharefolder.htm");%>);		show_subnav_element("diskpartition.htm","Disk Partition",<%getIndex("diskpartition.htm");%>);		show_subnav_element("diskformat.htm","Disk Format",<%getIndex("diskformat.htm");%>);		init_submenu_disk();	}else{		add_subMenuItem("diskinfo.htm","Disk Information");  		add_subMenuItem("accountmng.htm","Account Management");  		add_subMenuItem("disksharefolder.htm","Share Folder"); 		add_subMenuItem("diskpartition.htm","Disk Partition");  		add_subMenuItem("diskformat.htm","Disk Format");		init_submenu("Disk Information");	} }function has_class(element, class_name){        if (!element.className) {                element.className = "";                return false;        }        var regex = new RegExp("(^|\\s)\\s*" + class_name + "\\s*(\\s|$)");        return regex.test(element.className);}/*add_class()*/function add_class(element, class_name){        if (has_class(element, class_name)) {                return;        }        element.className += (element.className == "" ? "" : " ") + class_name;}/*remove_class()*/function remove_class(element, class_name){        if (!element.className) {                element.className = "";                return;        }        /*         * This regex is similar to \bclassName\b, except that \b does not         * treat certain legal CSS characters as "word characters": notably,         * the . and - characters.         */        var regex = new RegExp("(^|\\s)\\s*" + class_name + "\\s*(\\s|$)");        element.className = element.className.replace(regex, "$1$2");}/*on_click_menu(this)*/function on_click_menu(element){  var items = document.getElementsByTagName("a");  for (var i = 0; i < items.length; i++) {        var item = items[i];        remove_class(item.parentNode, "topnavon");        add_class(item.parentNode, "topnavoff");  }  remove_class(element.parentNode, "topnavoff");  add_class(element.parentNode, "topnavon"); }
+\ No newline at end of file
++/*redirect form*/function get_form(page, wlan_id){        return 'boafrm/formWlanRedirect?redirect-url='+page+'&wlan_id='+wlan_id ;} /*add_menuItem(URL,title)*/function add_menuItem(frameset,url,name){  var str;  document.write("<td class=\"topnavoff\">");  str="<a href=\""+url+"\" target=\""+frameset+"\" id=\""+name+"\" rel=\""+name+"\" onclick=\"return on_click_menu(this);\">"+name+"</a>";  //alert(str);  document.write(str);  document.write("</td>");}function add_topMenuItem(url,menu_name){  add_menuItem("sub_menu",url,menu_name);}function add_subMenuItem(url,menu_name){	var str;  document.write("<tr height=\"35\">");    document.write("<td class=\"topnavoff\">");  str="<a href=\""+url+"\" target=\"content\" id=\""+menu_name+"\" rel=\""+menu_name+"\" onclick=\"return on_click_menu(this);\">"+menu_name+"</a>";  //alert(str);  document.write(str);  document.write("</td>");  //add_menuItem("content",url,menu_name);  document.write("</tr>");}function index_of(array,value){	var i;	for(i = 0; i < array.length; i++){		if(array[i] == value)			return i;			}	return -1;}function show_subnav_element(url,menu_name,isReadable){	if(isReadable){		add_subMenuItem(url,menu_name);	}}function show_topmenu_wlan(is8021xClient, isMeshDefined, is80211rSupport, isAirtimeDefined){		var subhtml_array = [<%getIndex("wlbasic.htm");%>,						<%getIndex("wladvanced.htm");%>,						<%getIndex("wlsecurity.htm");%>,						<%getIndex("wlactrl.htm");%>,						<%getIndex("wlwds.htm");%>,						<%getIndex("wlsurvey.htm");%>,						<%getIndex("wlwps.htm");%>,						<%getIndex("wlsch.htm");%>];		var first_show_index = index_of(subhtml_array,1); 		if(first_show_index == -1){		if(isMeshDefined){			if(<%getIndex("wlmesh.htm")%>)				return 1;		}		if(is8021xClient){			if(<%getIndex("rsCertInstall.htm")%>)				return 1;		}		if(isAirtimeDefined){			if(<%getIndex("airtime.htm")%>)				return 1;		}		return 0;	}else		return 1;		}function show_topmenu_tcpip(showLanDev){	var subhtml_array = [<%getIndex("tcpiplan.htm");%>,						<%getIndex("tcpipwan.htm");%>];		var first_show_index = index_of(subhtml_array,1); 	if(first_show_index == -1){		if(showLanDev){			if(<%getIndex("clients.htm");%>)				return 1;		}		return 0;	}else		return 1;	}function show_topmenu_ipv6(is_mape){	var subhtml_array = [<%getIndex("ipv6_wan.htm");%>,						<%getIndex("dhcp6s.htm");%>,						<%getIndex("radvd.htm");%>];		var first_show_index = index_of(subhtml_array,1); 	if(first_show_index == -1){		if(is_mape){			if(<%getIndex("map_e.htm");%>)				return 1;		}		return 0;	}else		return 1;	}function show_topmenu_firewall(ipv6_enable,route_setup_enable,quagga_enable){	var subhtml_array1 = [<%getIndex("macfilter.htm");%>,						<%getIndex("portfw.htm");%>,						<%getIndex("urlfilter.htm");%>,						<%getIndex("dmz.htm");%>,						<%getIndex("vlan.htm");%>];	var first_show_index1 = index_of(subhtml_array1,1);	if(first_show_index1 == -1){		if(ipv6_enable){			var subhtml_array2 = [<%getIndex("portfilter6.htm");%>,								 <%getIndex("ip6filter.htm");%>,								 <%getIndex("ip6_qos.htm");%>];			var first_show_index2 = index_of(subhtml_array2,1);			if(first_show_index2 != -1)				return 1;		}else{			var subhtml_array2 = [<%getIndex("portfilter.htm");%>,								<%getIndex("ipfilter.htm");%>,								<%getIndex("ip_qos.htm");%>];			var first_show_index2 = index_of(subhtml_array2,1);			if(first_show_index2 != -1)				return 1;		}		if(route_setup_enable){			if(<%getIndex("route.htm");%>)				return 1;		}		if(quagga_enable)			{			<%getIndex("quaggaroute.htm");%>			<%getIndex("bgproute.htm");%>			<%getIndex("isisroute.htm");%>			}		return 0;	}	else		return 1;}function show_topmenu_voip(){	var subhtml_array = [<%getIndex("voip_general.asp");%>,						<%getIndex("voip_tone.asp");%>,						<%getIndex("voip_ring.asp");%>,						<%getIndex("voip_other.asp");%>,						//<%getIndex("voip_config.asp");%>,						<%getIndex("voip_network.asp");%>];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index == -1)		return 0;	else		return 1;}function show_topmenu_mng(isDisplayCPU, isEnableBT,isDisplayTR069){	var subhtml_array = [<%getIndex("status.htm");%>,						<%getIndex("stats.htm");%>,						<%getIndex("ddns.htm");%>,						<%getIndex("ntp.htm");%>,						<%getIndex("dos.htm");%>,						<%getIndex("syslog.htm");%>,						<%getIndex("upload.htm");%>,						<%getIndex("saveconf.htm");%>,						<%getIndex("smtpclient.htm")%>];		var first_show_index = index_of(subhtml_array,1);	if(first_show_index == -1){		if(isDisplayCPU){			if(<%getIndex("cpuShow.htm");%>)				return 1;		}							if(isDisplayTR069){			if(<%getIndex("tr069config.htm");%>)				return 1;		}		if(isEnableBT){			if(<%getIndex("transmission.htm");%>)				return 1;		}				if(userDegreeFlag == 1){			if(<%getIndex("super_password.htm");%>)				return 1;		}		else{			if(<%getIndex("password.htm");%>)				return 1;		}		return 0;	}	else		return 1;		}function show_topmenu_disk(){	var subhtml_array = [<%getIndex("diskinfo.htm");%>,						<%getIndex("accountmng.htm");%>,						<%getIndex("disksharefolder.htm");%>,						<%getIndex("diskpartition.htm");%>,						<%getIndex("diskformat.htm");%>,];			var subnav_array = ["Disk Information",						"Account Management",						"Share Folder",						"Disk Partition",						"Disk Format"];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index != -1){		return 0;	}else		return 1;}function init_submenu(submenuId){	if(document.getElementById(submenuId))	{		if(document.getElementById(submenuId).click)		{			document.getElementById(submenuId).click();		}		else		{			var evt  = document.createEvent('MouseEvents');			evt.initEvent('click',true,true);			document.getElementById(submenuId).dispatchEvent(evt);		}	}}function init_submenu_wlan(is8021xClient, isMeshDefined, is80211rSupport, isAirtimeDefined){	var subhtml_array1 = [<%getIndex("wlbasic.htm");%>,						<%getIndex("wladvanced.htm");%>,						<%getIndex("wlsecurity.htm");%>,						<%getIndex("wlactrl.htm");%>,						<%getIndex("wlwds.htm");%>,						<%getIndex("wlp2p.htm")%>];			var subnav_array1 = ["Basic Setting",						"Advanced",						"Security",						"Access Control",						"WDS Setting",						"Wi-Fi Direct"];	var first_show_index1 = index_of(subhtml_array1,1);	if(first_show_index1== -1){		if(isMeshDefined){			if(<%getIndex("wlmesh.htm");%>){				init_submenu("Mesh Setting");				return;			}		}					var subhtml_array2 = [<%getIndex("wlsurvey.htm");%>,							<%getIndex("wlwps.htm");%>,							<%getIndex("wlsch.htm");%>];					var subnav_array2 = ["Site Survey","WPS","Schedule"];		var first_show_index2 = index_of(subhtml_array2,1);		if(first_show_index2 == -1){				if(is8021xClient){					if(<%getIndex("rsCertInstall.htm");%>){						init_submenu("802.1x Cert Install");						return;					}				}				if(isAirtimeDefined){					if(<%getIndex("airtime.htm");%>){						init_submenu("Airtime Fairness");						return;					}				}						}else			init_submenu(subnav_array2[first_show_index2]);	}	else		init_submenu(subnav_array1[first_show_index1]);}function init_submenu_tcpip(showLanDev){	if(<%getIndex("tcpiplan.htm")%> == 0){		if(showLanDev){			if(<%getIndex("clients.htm");%>){				init_submenu("Lan Clients");				return;			}		}		if(<%getIndex("tcpipwan.htm");%>){			init_submenu("Wan Setting");			return;		}	}else		init_submenu("Lan Setting");}function init_submenu_ipv6(is_mape){	var subhtml_array = [<%getIndex("ipv6_wan.htm");%>,						<%getIndex("dhcp6s.htm");%>,						<%getIndex("radvd.htm");%>];			var subnav_array = ["IPv6 Wan Setting",						"IPv6 Lan Setting",						"Radvd",						"Tunnel (6 over 4)"];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index == -1){		if(is_mape){			if(<%getIndex("map_e.htm");%>){				init_submenu("MAP-E");				return;			}		}	}	else		init_submenu(subnav_array[first_show_index]);  }function init_submenu_voip(){	var subhtml_array = [<%getIndex("voip_general.asp");%>,						<%getIndex("voip_tone.asp");%>,						//<%getIndex("voip_ring.asp");%>,						<%getIndex("voip_other.asp");%>,						//<%getIndex("voip_config.asp");%>,						<%getIndex("voip_network.asp");%>];			var subnav_array = ["General",						"Tone",						//"Ring",						"Other",						//"Config",						"Network"];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index != -1){		init_submenu(subnav_array[first_show_index]);		return;	}		}function init_submenu_firewall(ipv6_enable,route_setup_enable,quagga_enable){		if(ipv6_enable)	{		var subhtml_array = [<%getIndex("portfilter6.htm");%>,							<%getIndex("ip6filter.htm");%>,							<%getIndex("macfilter.htm");%>,							<%getIndex("portfw.htm");%>,							<%getIndex("urlfilter.htm");%>,							<%getIndex("dmz.htm");%>,							<%getIndex("vlan.htm");%>];				var subnav_array = ["Port Filtering",							"IP Filtering",							"MAC Filtering",							"Port Forwarding",							"URL Filtering",							"DMZ",							"vlan"];		var first_show_index = index_of(subhtml_array,1);		if(first_show_index != -1){			init_submenu(subnav_array[first_show_index]);			return;		}	}	else{		var subhtml_array = [<%getIndex("portfilter.htm");%>,							<%getIndex("ipfilter.htm");%>,							<%getIndex("macfilter.htm");%>,							<%getIndex("portfw.htm");%>,							<%getIndex("urlfilter.htm");%>,							<%getIndex("dmz.htm");%>,							<%getIndex("vlan.htm");%>];				var subnav_array = ["Port Filtering",							"IP Filtering",							"MAC Filtering",							"Port Forwarding",							"URL Filtering",							"DMZ",							"vlan"];		var first_show_index = index_of(subhtml_array,1);		if(first_show_index != -1){			init_submenu(subnav_array[first_show_index]);			return;		}	}	 if(route_setup_enable){		if(<%getIndex("route.htm");%>){			init_submenu("Route Setup");			return;		}	 }	if(quagga_enable){		if(<%getIndex("quaggaroute.htm");%>){			init_submenu("Ospf Setup");			//return;		}		if(<%getIndex("bgproute.htm");%>){			init_submenu("Bgp Setup");			//return;		}		if(<%getIndex("isisroute.htm");%>){			init_submenu("IsIs Setup");			//return;		}	 }	 if(ipv6_enable){		if(<%getIndex("ip6_qos.htm");%>){			init_submenu("Qos");			return;		}	 }else{		if(<%getIndex("ip_qos.htm");%>){			init_submenu("Qos");			return;		}	 }	}function init_submenu_mng(isDisplayCPU, isEnableBT,isDisplayTR069){	var subtml_array1 = [<%getIndex("status.htm");%>,						<%getIndex("stats.htm");%>,						<%getIndex("ddns.htm");%>];	var subnav_array1 = ["Status","Statistics","DDNS"];	var first_show_index1 = index_of(subtml_array1,1); 	if(first_show_index1 == -1){		if(isDisplayCPU){			if(<%getIndex("cpuShow.htm");%>){				init_submenu("CPU Utilizaiton");				return;			}						}		var subtml_array2 = [<%getIndex("ntp.htm");%>,							<%getIndex("dos.htm");%>];		var subnav_array2 = ["Time Zone Setting","Deny Of Serivce"];		var first_show_index2 = index_of(subtml_array2,1); 		if(first_show_index2 == -1){			if(isDisplayTR069){				if(<%getIndex("tr069config.htm");%>){					init_submenu("TR-069 Config");					return;				}								}			var subtml_array3 = [<%getIndex("syslog.htm");%>,								<%getIndex("upload.htm");%>,								 <%getIndex("saveconf.htm");%>];			var subnav_array3 = ["Log","Upgrade Firmware","Save/Reload Setting"];			var first_show_index3 = index_of(subtml_array3,1); 			if(first_show_index3 == -1){				if(userDegreeFlag == 1){					if(<%getIndex("super_password.htm");%>){						init_submenu("Password");						return;					}									}else{					if(<%getIndex("password.htm");%>){						init_submenu("Password");						return;					}				}				if(isEnableBT){					if(<%getIndex("transmission.htm");%>){						init_submenu("Transmission BT");						return;					}				}			}			else				init_submenu(subnav_array3[first_show_index3]);					}		else			init_submenu(subnav_array2[first_show_index2]);								}	else		init_submenu(subnav_array1[first_show_index1]);	 		}function init_submenu_disk(){	var subhtml_array = [<%getIndex("diskinfo.htm");%>,						<%getIndex("accountmng.htm");%>,						<%getIndex("disksharefolder.htm");%>,						<%getIndex("diskpartition.htm");%>,						<%getIndex("diskformat.htm");%>,];			var subnav_array = ["Disk Information",						"Account Management",						"Share Folder",						"Disk Partition",						"Disk Format"];	var first_show_index = index_of(subhtml_array,1);	if(first_show_index != -1){		init_submenu(subnav_array[first_show_index]);		return;	}  }/*draw_topnav*/function draw_topnav(wlan_num,ipv6,isDisplayVOIP,userDegreeFlag,is8021xClient, isMeshDefined, is80211rSupport, isAirtimeDefined,                           showLanDev,is_mape,route_setup_enable,quagga_enable,                           isDisplayCPU,isEnableBT,isDisplayTR069, disk_onoff, multi_ap_onoff)
++{  add_topMenuItem("sub_menu_setup.htm",menu_setup);   if(userDegreeFlag != 0){    if(<%getIndex("sub_menu_wlan_support");%> != 0)    {		if(<%getIndex("sub_menu_wlan.htm");%>){			if(show_topmenu_wlan(is8021xClient, isMeshDefined, is80211rSupport, isAirtimeDefined)){				add_topMenuItem(get_form("sub_menu_wlan.htm",0),menu_wlan1);	 			if(wlan_num==2)	  				add_topMenuItem(get_form("sub_menu_wlan.htm",1),menu_wlan2);			}			}    }	if(<%getIndex("sub_menu_tcpip.htm");%>){		if(show_topmenu_tcpip(showLanDev)){			add_topMenuItem("sub_menu_tcpip.htm",menu_tcpip);		}	}	if(ipv6){		if(<%getIndex("sub_menu_ipv6.htm");%>)			if(show_topmenu_ipv6(is_mape))				add_topMenuItem("sub_menu_ipv6.htm","ipv6");	}	if (<%getInfo("show_firewall_all")%>) {		if(<%getIndex("sub_menu_firewall.htm");%>){			if(show_topmenu_firewall(ipv6,route_setup_enable,quagga_enable))				add_topMenuItem("sub_menu_firewall.htm",menu_fireWall);		}	}	if(isDisplayVOIP){		if(<%getIndex("sub_menu_voip.htm");%>)			if(show_topmenu_voip())				add_topMenuItem("sub_menu_voip.htm","VoIP");	}			if(<%getIndex("sub_menu_mng.htm");%>){		if(show_topmenu_mng(isDisplayCPU,isEnableBT,isDisplayTR069))			add_topMenuItem("sub_menu_mng.htm",menu_management);	}		if (disk_onoff){		if(<%getIndex("sub_menu_disk_mng.htm");%>){			if(show_topmenu_disk())				add_topMenuItem("sub_menu_disk_mng.htm","Storage");		}	 }		  }  else{     if(<%getIndex("sub_menu_wlan_support");%> != 0)	 if(wlan_num==1)		 add_topMenuItem(get_form("sub_menu_wlan.htm",0),menu_wlan2);	 else		add_topMenuItem(get_form("sub_menu_wlan.htm",0),menu_wlan1); 	 if(wlan_num==2)  		add_topMenuItem(get_form("sub_menu_wlan.htm",1),menu_wlan2);	 if(multi_ap_onoff)		add_topMenuItem("sub_menu_multi_ap.htm","EasyMesh");  	 add_topMenuItem("sub_menu_tcpip.htm",menu_tcpip); 	 if(ipv6)  		add_topMenuItem("sub_menu_ipv6.htm","ipv6");	 if (<%getInfo("show_firewall_all")%>) {  	 	add_topMenuItem("sub_menu_firewall.htm",menu_fireWall);	 }  	 if( isDisplayVOIP)  		add_topMenuItem("sub_menu_voip.htm","VoIP");  	 add_topMenuItem("sub_menu_mng.htm",menu_management);	 if (disk_onoff)  		add_topMenuItem("sub_menu_disk_mng.htm","Storage");  }    init_submenu(menu_setup);  	}function draw_subnav_head(){	document.write("<table id=\"topnav_container\" border=\"0\" cellspacing=\"1\" summary=\"\">");	document.write("<tbody>");	document.write("<tr height=\"34\">");	document.write("<td class=\"topHeaderMenu\">");	document.write("<div id=\"topHeaderId\"></div>");	document.write("</td></tr>");}function draw_subnav_tail(){	document.write("<tr><td class=\"subMenuDummy\"></td></tr>");	document.write("</tbody></table>");}function draw_subnav_setup(multiple_wan_enable,OneWanSptUnderMtl,userDegreeFlag){    add_subMenuItem("wizard.htm",menu_wizd);  if (<%getInfo("show_opmode_menu")%>==1) {	  if(!multiple_wan_enable){		  if(userDegreeFlag != 0){			show_subnav_element("opmode.htm",menu_operation_mode,<%getIndex("opmode.htm")%>); 		  }else		  	add_subMenuItem("opmode.htm",menu_operation_mode);   	  }  } else if(<%getInfo("show_opmode_menu")%>==2) { // ulinker	  if(!multiple_wan_enable){	  			  if(userDegreeFlag != 0){		  				show_subnav_element("ulinker_opmode.htm",menu_ulink_operation_mode,<%getIndex("ulinker_opmode.htm")%>); 		  			  }else		  	add_subMenuItem("ulinker_opmode.htm",menu_ulink_operation_mode); 	  	}   }   init_submenu(menu_wizd);}function draw_subnav_wlan(is8021xClient, isWapiSupport, isWapiLocalAsSupport, isMeshDefined, is80211rSupport, isAirtimeDefined,userDegreeFlag){	if(userDegreeFlag != 0){		show_subnav_element("wlbasic.htm",menu_basic,<%getIndex("wlbasic.htm")%>); 		show_subnav_element("wladvanced.htm",menu_advance,<%getIndex("wladvanced.htm")%>);  		show_subnav_element("wlsecurity.htm",menu_security,<%getIndex("wlsecurity.htm")%>);  		show_subnav_element("wlactrl.htm",menu_accessControl,<%getIndex("wlactrl.htm")%>);  		show_subnav_element("wlwds.htm",menu_wds,<%getIndex("wlwds.htm")%>);		if(isMeshDefined==1)	  		show_subnav_element("wlmesh.htm",menu_mesh,<%getIndex("wlmesh.htm")%>);    		show_subnav_element("wlsurvey.htm",menu_siteSurvey,<%getIndex("wlsurvey.htm")%>);  		show_subnav_element("wlwps.htm",menu_wps,<%getIndex("wlwps.htm")%>);  		show_subnav_element("wlsch.htm",menu_schedule,<%getIndex("wlsch.htm")%>);		if(is8021xClient==1)     		show_subnav_element("rsCertInstall.htm",menu_8021xCert,<%getIndex("rsCertInstall.htm")%>); 		if(isAirtimeDefined==1)   			show_subnav_element("airtime.htm","Airtime Fairness",<%getIndex("airtime.htm")%>);		if(<% getIndex("isP2PSupport")%>)			show_subnav_element("wlp2p.htm", "Wi-Fi Direct", <%getIndex("wlp2p.htm")%>);				init_submenu_wlan(is8021xClient,isMeshDefined,is80211rSupport,isAirtimeDefined);	}else{		add_subMenuItem("wlbasic.htm",menu_basic);  		add_subMenuItem("wladvanced.htm",menu_advance);  		add_subMenuItem("wlsecurity.htm",menu_security);  		add_subMenuItem("wlactrl.htm",menu_accessControl);  		add_subMenuItem("wlwds.htm",menu_wds); 		if(isMeshDefined==1)	  		add_subMenuItem("wlmesh.htm",menu_mesh);    		add_subMenuItem("wlsurvey.htm",menu_siteSurvey);  		add_subMenuItem("wlwps.htm",menu_wps);  		add_subMenuItem("wlsch.htm",menu_schedule);  		if(is8021xClient==1)     		add_subMenuItem("rsCertInstall.htm",menu_8021xCert);		if(isWapiSupport==1)		{     			add_subMenuItem("wlwapiinstallcert.htm","Certification Install");			add_subMenuItem("wlwapiRekey.htm","Key Update");		}		if(isWapiLocalAsSupport==1)     		add_subMenuItem("wlwapiCertManagement.htm","Certification Manage"); 		if(isAirtimeDefined==1)   			add_subMenuItem("airtime.htm","Airtime Fairness");		if(<% getIndex("isP2PSupport")%>)			add_subMenuItem("wlp2p.htm", "Wi-Fi Direct");					 init_submenu(menu_basic);	}}  function draw_subnav_tcpip(multiple_wan_enable,showLanDev,userDegreeFlag){	if(userDegreeFlag != 0){		show_subnav_element("tcpiplan.htm",menu_lan,<%getIndex("tcpiplan.htm")%>);		if(showLanDev==1)			show_subnav_element("clients.htm",menu_lan,<%getIndex("clients.htm")%>);		if (<%getInfo("show_tcpip_wan")%>) {			show_subnav_element("tcpipwan.htm",menu_wan,<%getIndex("tcpipwan.htm")%>);		}		init_submenu_tcpip(showLanDev);	}else{		add_subMenuItem("tcpiplan.htm",menu_lan);  		if(showLanDev==1)  			add_subMenuItem("clients.htm",menu_lan_client); 		if (<%getInfo("show_tcpip_wan")%>) {			if(multiple_wan_enable)			  	add_subMenuItem("tcpip_multiwanlist.htm",menu_wan);			 else		  		add_subMenuItem("tcpipwan.htm",menu_wan);		}		init_submenu(menu_lan);		}  }function draw_subnav_multi_ap(userDegreeFlag){	if(userDegreeFlag != 0){		// show_subnav_element("tcpiplan.htm","Lan Setting",<%getIndex("tcpiplan.htm")%>);		// if(showLanDev==1)		// 	show_subnav_element("clients.htm","Lan Clients",<%getIndex("clients.htm")%>);		// if (<%getInfo("show_tcpip_wan")%>) {		// 	show_subnav_element("tcpipwan.htm","Wan Setting",<%getIndex("tcpipwan.htm")%>);		// }		// init_submenu_tcpip(showLanDev);	}else{		add_subMenuItem("multi_ap_setting_general.htm","General");		if ( 1 == <% getIndex("multi_ap_controller"); %>) {			add_subMenuItem("multi_ap_setting_topology.htm","Topology");		}		init_submenu("General");	}}function draw_subnav_ipv6(is_mape,is_radvd_wan,userDegreeFlag){	if(userDegreeFlag != 0){		show_subnav_element("ipv6_wan.htm","IPv6 Wan Setting",<%getIndex("ipv6_wan.htm")%>);  		show_subnav_element("dhcp6s.htm","IPv6 Lan Setting",<%getIndex("dhcp6s.htm")%>);  		show_subnav_element("radvd.htm","Radvd",<%getIndex("radvd.htm")%>);		if(is_radvd_wan)			show_subnav_element("radvd_wan.htm","Wan Radvd",<%getIndex("radvd_wan.htm")%>);  		show_subnav_element("tunnel6.htm","Tunnel (6 over 4)",<%getIndex("tunnel6.htm")%>);		if(is_mape)  			show_subnav_element("map_e.htm","MAP-E",<%getIndex("map_e.htm")%>);				init_submenu_ipv6(is_mape);	}else{		add_subMenuItem("ipv6_wan.htm","IPv6 Wan Setting");  		add_subMenuItem("dhcp6s.htm","IPv6 Lan Setting");  		add_subMenuItem("radvd.htm","Radvd");		if(is_radvd_wan)			add_subMenuItem("radvd_wan.htm","Radvd wan");  		add_subMenuItem("tunnel6.htm","Tunnel (6 over 4)");  		if(is_mape)  			add_subMenuItem("map_e.htm","MAP-E");				init_submenu("IPv6 Wan Setting");	}  }function draw_subnav_firewall(ipv6_enable, route_setup_enable,quagga_enable,userDegreeFlag){	if (<%getInfo("show_firewall_all")%>) {		if(userDegreeFlag != 0){			if(ipv6_enable)			{				show_subnav_element("portfilter6.htm",menu_portFilter,<%getIndex("portfilter6.htm");%>);				show_subnav_element("ip6filter.htm",menu_ipFilter,<%getIndex("ip6filter.htm");%>);			}			else			{		 	 	show_subnav_element("portfilter.htm",menu_portFilter,<%getIndex("portfilter.htm");%>);		  		show_subnav_element("ipfilter.htm",menu_ipFilter,<%getIndex("ipfilter.htm");%>);			}		 	show_subnav_element("macfilter.htm",menu_macFilter,<%getIndex("macfilter.htm");%>);		  	show_subnav_element("portfw.htm",menu_portFw,<%getIndex("portfw.htm");%>);		  	show_subnav_element("urlfilter.htm",menu_urlFilter,<%getIndex("urlfilter.htm");%>);		  	show_subnav_element("dmz.htm",menu_dmz,<%getIndex("dmz.htm");%>);			if(<%getIndex("rtk_vlan_support");%>)				show_subnav_element("vlan.htm","vlan",<%getIndex("vlan.htm");%>);			if(<%getIndex("linux_vlan_support");%>)				show_subnav_element("8021q_vlan.htm",menu_vlan,<%getIndex("8021q_vlan.htm");%>);			if(route_setup_enable)		  		show_subnav_element("route.htm",menu_routeSetup,<%getIndex("route.htm");%>);			if(quagga_enable)				{		  		show_subnav_element("quaggaroute.htm","Ospf Setup",<%getIndex("quaggaroute.htm");%>);				show_subnav_element("bgproute.htm","Bgp Setup",<%getIndex("bgproute.htm");%>);				show_subnav_element("isisroute.htm","IsIs Setup",<%getIndex("isisroute.htm");%>);				}		  	if(ipv6_enable)		  		show_subnav_element("ip6_qos.htm",menu_qos,<%getIndex("ip6_qos.htm");%>);		 	 else		  		show_subnav_element("ip_qos.htm",menu_qos,<%getIndex("ip_qos.htm");%>);			init_submenu_firewall(ipv6_enable,route_setup_enable,quagga_enable);		}		else{			if(ipv6_enable)			{				add_subMenuItem("portfilter6.htm",menu_portFilter);				add_subMenuItem("ip6filter.htm",menu_ipFilter);			}			else			{		 	 	add_subMenuItem("portfilter.htm",menu_portFilter);		 	 	add_subMenuItem("ipfilter.htm",menu_ipFilter);			}		 		add_subMenuItem("macfilter.htm",menu_macFilter);		  		add_subMenuItem("portfw.htm",menu_portFw);		  		add_subMenuItem("urlfilter.htm",menu_urlFilter);		  		add_subMenuItem("dmz.htm",menu_dmz);		  					if(<%getIndex("rtk_vlan_support");%>)				add_subMenuItem("vlan.htm","vlan");			if(<%getIndex("linux_vlan_support");%>)				add_subMenuItem("8021q_vlan.htm",menu_vlan);		  		 	if(route_setup_enable)		  		add_subMenuItem("route.htm",menu_routeSetup);			if(quagga_enable)				{		  		add_subMenuItem("quaggaroute.htm","Ospf Setup");				add_subMenuItem("bgproute.htm","Bgp Setup");				add_subMenuItem("isisroute.htm","IsIs Setup");				}		  	if(ipv6_enable)		  		add_subMenuItem("ip6_qos.htm",menu_qos);		 	else		  		add_subMenuItem("ip_qos.htm",menu_qos);			if(<%getIndex("snmp_support")%>)				add_subMenuItem("snmp.htm","SNMP");		  	init_submenu(menu_portFilter);		}	}}function draw_subnav_voip(userDegreeFlag){	/*if(userDegreeFlag != 0){		show_subnav_element("voip_general.asp","General",<%getIndex("voip_general.asp");%>); 		show_subnav_element("voip_tone.asp","Tone",<%getIndex("voip_tone.asp");%>);  		show_subnav_element("voip_ring.asp","Ring",<%getIndex("voip_ring.asp");%>); 		show_subnav_element("voip_other.asp","Other",<%getIndex("voip_other.asp");%>);  		show_subnav_element("voip_config.asp","Config",<%getIndex("voip_config.asp");%>);  		show_subnav_element("voip_network.asp","Network",<%getIndex("voip_network.asp");%>);		init_submenu_voip();	}else	*/	{		<% getInfo("voip_menu_new"); %> 		add_subMenuItem("voip_tone.asp","Tone");  		//add_subMenuItem("voip_ring.asp","Ring"); 		add_subMenuItem("voip_other.asp","Other");  		//add_subMenuItem("voip_config.asp","Config");  		add_subMenuItem("voip_network.asp","Network");		init_submenu(<%getInfo("voip_submenu_1");%>);	}}function draw_subnav_mng(isDisplayCPU, isEnableBT,isDisplayTR069,isDisplayOpenvpn,userDegreeFlag,supportSuperUser,supportDiagnostic,isSupportWeave,isSupportZigBee){	if(userDegreeFlag != 0){		show_subnav_element("status.htm",menu_status,<%getIndex("status.htm");%>);		show_subnav_element("stats.htm",menu_statistics,<%getIndex("stats.htm");%>);		if (<%getInfo("show_mgt_ddns")%>) {			show_subnav_element("ddns.htm",menu_ddns,<%getIndex("ddns.htm");%>);		}		if(isDisplayCPU == 1)  			show_subnav_element("cpuShow.htm",menu_cpu,<%getIndex("cpuShow.htm");%>);		if (<%getInfo("show_mgt_ntp")%>) {			show_subnav_element("ntp.htm",menu_timeZone,<%getIndex("ntp.htm");%>);		}		if (<%getInfo("show_mgt_dos")%>) {			show_subnav_element("dos.htm",menu_dos,<%getIndex("dos.htm");%>);    		}    	if(isDisplayTR069 == 1)  			show_subnav_element("tr069config.htm",menu_tr69_config,<%getIndex("tr069config.htm");%>); 				if (<%getInfo("show_mgt_bluetooth_repeater")%>) {			show_subnav_element("bluetoothRepeaterConfig.htm",menu_bluetooth_repeater,<%getIndex("bluetoothRepeaterConfig.htm");%>);		}   		show_subnav_element("syslog.htm",menu_log,<%getIndex("syslog.htm");%>);    	show_subnav_element("upload.htm",menu_updateFm,<%getIndex("upload.htm");%>);    	show_subnav_element("saveconf.htm",menu_setting,<%getIndex("saveconf.htm");%>);		  		if(userDegreeFlag == 1) 	 		show_subnav_element("super_password.htm",menu_psw,<%getIndex("super_password.htm");%>);  		else 			show_subnav_element("password.htm",menu_psw,<%getIndex("password.htm");%>); 		if(isEnableBT == 1)  			show_subnav_element("transmission.htm",menu_BT,<%getIndex("transmission.htm");%>);		init_submenu_mng(isDisplayCPU, isEnableBT,isDisplayTR069);	}	else{		add_subMenuItem("status.htm",menu_status);  		add_subMenuItem("stats.htm",menu_statistics);		if(<%getInfo("show_url_redirect")%>){			add_subMenuItem("url_redirect.htm", menu_httpRedirect);		}		if (<%getInfo("show_mgt_ddns")%>) {  			add_subMenuItem("ddns.htm",menu_ddns);		}  		if(isDisplayCPU == 1)  			add_subMenuItem("cpuShow.htm",menu_cpu);		if (<%getInfo("show_mgt_ntp")%>) {  			add_subMenuItem("ntp.htm",menu_timeZone);		}		if (<%getInfo("show_mgt_dos")%>) {  			add_subMenuItem("dos.htm",menu_dos);		}  		if(isDisplayTR069 == 1)  			add_subMenuItem("tr069config.htm",menu_tr69_config);		if (<%getInfo("show_mgt_bluetooth_repeater")%>) {			add_subMenuItem("bluetoothRepeaterConfig.htm",menu_bluetooth_repeater);		}  		add_subMenuItem("syslog.htm",menu_log);  		add_subMenuItem("upload.htm",menu_updateFm);  		add_subMenuItem("saveconf.htm",menu_setting);						if(supportSuperUser)			add_subMenuItem("super_password.htm",menu_psw);		else  			add_subMenuItem("password.htm",menu_psw);		  		if(isEnableBT == 1)  			add_subMenuItem("transmission.htm",menu_BT);		if(isSupportWeave==1)  			add_subMenuItem("weave.htm",menu_weave_set);		if(isSupportZigBee==1)  			add_subMenuItem("zigbee.htm",menu_zigbee);		if(isDisplayOpenvpn == 1)  			add_subMenuItem("openvpn.htm",menu_openvpn);  		if(supportDiagnostic == 1)  			add_subMenuItem("diagnostic.htm",menu_diagnostic);		if("<% getInfo("userName"); %>" != "")        	add_subMenuItem( "logout.htm", menu_logout); 		init_submenu(menu_status);	}} function draw_subnav_disk(userDegreeFlag){	if(userDegreeFlag != 0){		show_subnav_element("diskinfo.htm","Disk Information",<%getIndex("diskinfo.htm");%>);		show_subnav_element("accountmng.htm","Account Management",<%getIndex("accountmng.htm");%>);		show_subnav_element("disksharefolder.htm","Share Folder",<%getIndex("disksharefolder.htm");%>);		show_subnav_element("diskpartition.htm","Disk Partition",<%getIndex("diskpartition.htm");%>);		show_subnav_element("diskformat.htm","Disk Format",<%getIndex("diskformat.htm");%>);		init_submenu_disk();	}else{		add_subMenuItem("diskinfo.htm","Disk Information");  		add_subMenuItem("accountmng.htm","Account Management");  		add_subMenuItem("disksharefolder.htm","Share Folder"); 		add_subMenuItem("diskpartition.htm","Disk Partition");  		add_subMenuItem("diskformat.htm","Disk Format");		init_submenu("Disk Information");	} }function has_class(element, class_name){        if (!element.className) {                element.className = "";                return false;        }        var regex = new RegExp("(^|\\s)\\s*" + class_name + "\\s*(\\s|$)");        return regex.test(element.className);}/*add_class()*/function add_class(element, class_name){        if (has_class(element, class_name)) {                return;        }        element.className += (element.className == "" ? "" : " ") + class_name;}/*remove_class()*/function remove_class(element, class_name){        if (!element.className) {                element.className = "";                return;        }        /*         * This regex is similar to \bclassName\b, except that \b does not         * treat certain legal CSS characters as "word characters": notably,         * the . and - characters.         */        var regex = new RegExp("(^|\\s)\\s*" + class_name + "\\s*(\\s|$)");        element.className = element.className.replace(regex, "$1$2");}/*on_click_menu(this)*/function on_click_menu(element){  var items = document.getElementsByTagName("a");  for (var i = 0; i < items.length; i++) {        var item = items[i];        remove_class(item.parentNode, "topnavon");        add_class(item.parentNode, "topnavoff");  }  remove_class(element.parentNode, "topnavoff");  add_class(element.parentNode, "topnavon"); }
+\ No newline at end of file
+diff -urN old/users/boa/html/new/sub_menu_multi_ap.htm new/users/boa/html/new/sub_menu_multi_ap.htm
+--- old/users/boa/html/new/sub_menu_multi_ap.htm	1970-01-01 08:00:00.000000000 +0800
++++ new/users/boa/html/new/sub_menu_multi_ap.htm	2019-03-07 17:35:54.000000000 +0800
+@@ -0,0 +1,23 @@
++<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
++<html>
++  <head>
++  <meta http-equiv="content-type" content="text/html; charset=windows-1250">
++  <meta name="generator" content="PSPad editor, www.pspad.com">
++  <link rel="stylesheet" rev="stylesheet" href="style.css" type="text/css">
++  <SCRIPT language=Javascript src="navigation.js"></SCRIPT>
++  <SCRIPT language=Javascript src="fadeFont.js"></SCRIPT>
++  <title>test</title>
++  </head>
++  <body style="background-color: #3B9DCC">
++  <SCRIPT language=Javascript>
++  var userDegreeFlag = <%getIndex("userDegreeFlag");%>;
++	// var multiple_wan_enable = <% getIndex("multiWanSupport"); %> ;
++	draw_subnav_head();
++	// draw_subnav_tcpip(multiple_wan_enable,<%getIndex("showLanDevInfoSupport");%>,userDegreeFlag);
++	draw_subnav_multi_ap(userDegreeFlag);
++	draw_subnav_tail();
++	//init_submenu("Lan Setting");
++
++  </SCRIPT>
++  </body>
++</html>
+\ No newline at end of file
+diff -urN old/users/boa/html/new/top_menu.htm new/users/boa/html/new/top_menu.htm
+--- old/users/boa/html/new/top_menu.htm	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/html/new/top_menu.htm	2019-05-14 14:35:21.000000000 +0800
+@@ -47,8 +47,7 @@
+   			showLanDev,
+   			is_mape,
+   			route_setup_enable,quagga_enable,
+-  			isDisplayCPU,isEnableBT,isDisplayTR069, <%getIndex("DiskWebSupportOnOff")%>);
+-  </SCRIPT>
++  			isDisplayCPU,isEnableBT,isDisplayTR069, <%getIndex("DiskWebSupportOnOff")%>, <%getIndex("multiAPOn")%>);  </SCRIPT>
+ </tr></tbody>
+ </table>
+   </body>
+diff -urN old/users/boa/html/wlmultipleap.htm new/users/boa/html/wlmultipleap.htm
+--- old/users/boa/html/wlmultipleap.htm	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/html/wlmultipleap.htm	2019-05-14 14:36:59.000000000 +0800
+@@ -499,12 +499,37 @@
+ 	}	
+ }
+ 
++var backhaulIndex0 = <% getIndex("backhaulIndexQuery_0"); %>;
++var backhaulIndex1 = <% getIndex("backhaulIndexQuery_1"); %>;
++
++function Load_Setting() {
++	var map_role = <% getIndex("multi_ap_controller"); %>;
++	if(0 != map_role) {
++		if (wlan_idx == 0) {
++			disableTextField(document.MultipleAP.elements["wl_ssid"+backhaulIndex0]);
++			disableTextField(document.MultipleAP.elements["wl_hide_ssid"+backhaulIndex0]);
++		} else if (wlan_idx == 1) {
++			disableTextField(document.MultipleAP.elements["wl_ssid"+backhaulIndex1]);
++			disableTextField(document.MultipleAP.elements["wl_hide_ssid"+backhaulIndex1]);
++		}
++	}
++}
++
+ function enableVirtualWLAN(form, virtual_id)
+ {
+ 	enableTextField(form.elements["wl_band"+virtual_id]);
++	if (wlan_idx == 0) {
++		if (virtual_id != backhaulIndex0) {
+ 	enableTextField(form.elements["wl_ssid"+virtual_id]);
+-	enableTextField(form.elements["TxRate"+virtual_id]);
+ 	enableTextField(form.elements["wl_hide_ssid"+virtual_id]);
++		}
++	} else if (wlan_idx == 1) {
++		if (virtual_id != backhaulIndex1){
++			enableTextField(form.elements["wl_ssid"+virtual_id]);
++			enableTextField(form.elements["wl_hide_ssid"+virtual_id]);
++		}
++	}
++	enableTextField(form.elements["TxRate"+virtual_id]);
+ 
+ 	if (form.elements["wl_band"+virtual_id].selectedIndex == 2 || 
+ 			form.elements["wl_band"+virtual_id].selectedIndex >= 4) {
+@@ -598,7 +623,7 @@
+ </script>
+ </head>
+ 
+-<body>
++<body onload="Load_Setting();">
+ <blockquote>
+ <h2><script>dw(wlmultipleap_header)</script></h2>
+ 
+diff -urN old/users/boa/html/wlsecurity_all.htm new/users/boa/html/wlsecurity_all.htm
+--- old/users/boa/html/wlsecurity_all.htm	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/html/wlsecurity_all.htm	2019-05-14 14:37:26.000000000 +0800
+@@ -539,12 +539,30 @@
+ 	setDefaultKeyValue(form, wlan_id);
+ }
+ 
++var backhaulIndex0 = <% getIndex("backhaulIndexQuery_0"); %>;
++var backhaulIndex1 = <% getIndex("backhaulIndexQuery_1"); %>;
++
++function pskValueSet0(){
++	dF.pskValue0.disabled = "disabled";
++}
++function pskValueSet1(){
++	dF.pskValue1.disabled = "disabled";
++}
++
+ function Load_Setting()
+ {
+ 	var dF=document.forms[0];
+ 	idx = parent.document.forms[0].SSID_Setting.selectedIndex;	
+ 	SSIDnum = parent.document.forms[0].SSID_Setting[idx].value;	
+ 	
++	if (SSIDnum != 0 && backhaulIndex0 == SSIDnum && wlan_idx == 0) {
++		pskValueSet0();
++	}
++
++	if (SSIDnum != 0 && backhaulIndex1 == SSIDnum && wlan_idx == 1) {
++		pskValueSet1();
++	}
++
+ 	if (SSIDnum == 0) {	
+ 		mode = <% getVirtualIndex("encrypt", "0") %>;
+ 		enable_1x = <% getVirtualIndex("enable1X", "0") %>;
+diff -urN old/users/boa/Makefile new/users/boa/Makefile
+--- old/users/boa/Makefile	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/Makefile	2019-05-31 11:15:43.000000000 +0800
+@@ -229,6 +229,10 @@
+ endif
+ endif
+ 
++ifeq ($(CONFIG_APP_MULTI_AP),y)
++COMMON_CFLAGS += -DRTK_MULTI_AP
++endif
++
+ ifeq ($(CONFIG_RF_DPK_SETTING_SUPPORT),y)
+ COMMON_CFLAGS += -DCONFIG_RF_DPK_SETTING_SUPPORT
+ endif
+diff -urN old/users/boa/src/apform.h new/users/boa/src/apform.h
+--- old/users/boa/src/apform.h	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/src/apform.h	2019-05-14 14:38:22.000000000 +0800
+@@ -1005,6 +1005,9 @@
+ #endif
+ #endif
+ /*-----end-----*/
++#ifdef RTK_MULTI_AP
++extern void formMultiAP(request *wp, char *path, char *query);
++#endif
+ #ifdef CONFIG_APP_BT_REPEATER_CONFIG
+ void formBTRepeaterSetup(request *wp, char *path, char *query);
+ #endif
+diff -urN old/users/boa/src/asp_page.c new/users/boa/src/asp_page.c
+--- old/users/boa/src/asp_page.c	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/src/asp_page.c	2019-05-14 14:38:44.000000000 +0800
+@@ -466,6 +466,9 @@
+ #ifdef CONFIG_RTL_HTTP_REDIRECT
+ 	{"formHttpRedirect",formHttpRedirect},
+ #endif
++#ifdef RTK_MULTI_AP
++	{"formMultiAP",formMultiAP},
++#endif
+ 	{NULL, NULL}
+ };
+ 
+diff -urN old/users/boa/src/auth.c new/users/boa/src/auth.c
+--- old/users/boa/src/auth.c	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/src/auth.c	2019-05-14 14:39:09.000000000 +0800
+@@ -38,6 +38,7 @@
+ 		{"map_e.html",                    { 1,1 } },
+ 		{"menu.htm",                      { 1,1 } },
+ 		{"menu_empty.html",               { 1,1 } },
++		{"multi_ap_setting_general.htm",  { 1,1 } },
+ 		{"ntp.htm",                       { 1,1 } }, 
+ 		{"opmode.htm",                    { 1,1 } },
+ 		{"password.htm",                  { 1,1 } },  
+@@ -117,6 +118,7 @@
+ 		{"sub_menu_firewall.htm",         { 1,1 } },		
+ 		{"sub_menu_ipv6.htm",             { 1,1 } },
+ 		{"sub_menu_mng.htm",              { 1,1 } },//test for topmenu
++		{"sub_menu_multi_ap.htm",         { 1,1 } },
+ 		{"sub_menu_tcpip.htm",            { 1,1 } },
+ 		{"sub_menu_voip.htm",             { 1,1 } },
+ 		{"sub_menu_wlan.htm",             { 1,1 } },
+@@ -335,6 +337,10 @@
+ 			{"formCpuUtilization",{ 1,1 } },
+ #endif
+ 
++#ifdef RTK_MULTI_AP
++			{"formMultiAP",{ 1,1 } },
++#endif
++
+ 	{NULL,                        { NULL,NULL } }
+ };
+ 
+diff -urN old/users/boa/src/fmget.c new/users/boa/src/fmget.c
+--- old/users/boa/src/fmget.c	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/src/fmget.c	2019-05-14 14:49:50.000000000 +0800
+@@ -620,6 +620,46 @@
+ 			return -1;
+ 		return req_format_write(wp, "%s", buffer);
+ 	}
++
++
++
++#ifdef RTK_MULTI_AP
++    else if ( NULL != strstr(name, "interface_info_query_")) {
++		//findout which interface is being queried
++		int length = strlen(name);
++		wlan_idx  = name[length - 2] - '0';
++		vwlan_idx = name[length - 1] - '0';
++		//fetch its ssid
++		memset(buffer,0x00,sizeof(buffer));
++		if (!apmib_get( MIB_WLAN_SSID,	(void *)buffer)) {
++			sprintf(buffer, "%s", "ERRORRRRR Reading AP MIB" );
++		}
++		translate_control_code(buffer);
++		return req_format_write(wp, "%s", buffer);
++	}
++    else if ( !strcmp(name, "topology_json_string")) {
++		FILE *fp = fopen("/tmp/topology_json", "r");
++		if (fp == NULL) {
++			sprintf(buffer, "%s", "ERROR_JSON_NOT_FOUND" );
++			return -1;
++		}
++		ssize_t read;
++		size_t  len   = 0;
++		char*	line  = NULL;
++		read = getline(&line, &len, fp);
++		fclose(fp);
++		int ret = req_format_write(wp, "%s", line);
++		free(line);
++		return ret;
++	}
++    else if ( !strcmp(name, "device_name_query")) {
++		if (!apmib_get( MIB_MAP_DEVICE_NAME, (void *)buffer)) {
++			sprintf(buffer, "%s", "ERRORRRRR Reading AP MIB_MAP_DEVICE_NAME" );
++		}
++		return req_format_write(wp, "%s", buffer);
++	}
++#endif
++
+ #ifdef CONFIG_APP_OPENVPN
+ 	else if ( !strcmp(name, "openvpnEnabled")) 
+ 	{
+@@ -7711,6 +7751,168 @@
+         return 0;
+     } 
+ #endif    
++#ifdef RTK_MULTI_AP
++    else if ( !strcmp(name, "multi_ap_controller")) {
++        if ( !apmib_get( MIB_MAP_CONTROLLER, (void *)&val) )
++            return -1;
++        sprintf(buffer, "%d", val);
++        req_format_write(wp, buffer);
++        return 0;
++    }
++    else if ( NULL != strstr(name, "interface_info_query_")) {
++		//findout which interface is being queried
++		int length = strlen(name);
++		wlan_idx  = name[length - 2] - '0';
++		vwlan_idx = name[length - 1] - '0';
++		//see if this interface is enabled
++        if ( !apmib_get( MIB_WLAN_WLAN_DISABLED, (void *)&val) )
++            return -1;
++        sprintf(buffer, "%d", val);
++        req_format_write(wp, buffer);
++        return -1;//return 3 if error
++    }
++	else if (!strcmp(name, "is_dot11kv_disabled")) {
++		int i, j;
++		for (i = 0; i < 2; i++) {
++			wlan_idx = i;
++			for (j = 0; j < 6; j++) {
++				vwlan_idx = j;
++				if ( !apmib_get( MIB_WLAN_DOT11K_ENABLE, (void *)&val) )
++					return -1;
++				if (!val) {
++					sprintf(buffer, "%d", 1);
++					req_format_write(wp, buffer);
++					return 0;
++				}
++				if ( !apmib_get( MIB_WLAN_DOT11V_ENABLE, (void *)&val) )
++					return -1;
++				if (!val) {
++					sprintf(buffer, "%d", 1);
++					req_format_write(wp, buffer);
++					return 0;
++				}
++			}
++		}
++		sprintf(buffer, "%d", 0);
++		req_format_write(wp, buffer);
++		return 0;
++	}
++	else if (!strcmp(name, "is_security_setting_wrong")) {
++		int i, j;
++		for (i = 0; i < 2; i++) {
++			wlan_idx = i;
++			for (j = 0; j < 5; j++) {
++				if (j == 1)
++					continue;
++				vwlan_idx = j;
++				if ( !apmib_get( MIB_WLAN_WLAN_DISABLED, (void *)&val) )
++					return -1;
++				//if enabled
++				if (!val) {
++					if ( !apmib_get( MIB_WLAN_ENCRYPT, (void *)&val) )
++						return -1;
++					if (val != ENCRYPT_WPA2) {
++						sprintf(buffer, "%d", 1);
++						req_format_write(wp, buffer);
++						return 0;
++					}
++
++					if ( !apmib_get( MIB_WLAN_WPA_AUTH, (void *)&val) )
++						return -1;
++					if (val != WPA_AUTH_PSK) {
++						sprintf(buffer, "%d", 1);
++						req_format_write(wp, buffer);
++						return 0;
++					}
++
++					char tmp[40];
++					if ( !apmib_get( MIB_WLAN_WPA_PSK, (void *)tmp) )
++						return -1;
++					if (val == NULL) {
++						sprintf(buffer, "%d", 1);
++						req_format_write(wp, buffer);
++						return 0;
++					}
++
++				}
++			}
++		}
++		sprintf(buffer, "%d", 0);
++		req_format_write(wp, buffer);
++		return 0;
++	}
++
++	else if (!strcmp(name, "needPopupBackhaul")) {
++		//check if wlan0-va0 is disabled
++		wlan_idx = 0;
++		vwlan_idx = 1;
++		if ( !apmib_get( MIB_WLAN_WLAN_DISABLED, (void *)&val) )
++			return -1;
++		//if enabled
++		if (!val) {
++			sprintf(buffer, "%d", 1);
++			req_format_write(wp, buffer);
++			return 0;
++		}
++
++		wlan_idx = 1;
++		vwlan_idx = 1;
++		if ( !apmib_get( MIB_WLAN_WLAN_DISABLED, (void *)&val) )
++			return -1;
++		//if enabled
++		if (!val) {
++			sprintf(buffer, "%d", 1);
++			req_format_write(wp, buffer);
++			return 0;
++		}
++
++
++		sprintf(buffer, "%d", 0);
++		req_format_write(wp, buffer);
++		return 0;
++	}
++	else if (NULL != strstr(name, "backhaulIndexQuery_")) {
++		int j;
++		int length = strlen(name);
++		int widx_tmp = wlan_idx;
++		int vwidx_tmp = vwlan_idx;
++
++
++		if ( !apmib_get( MIB_MAP_CONTROLLER, (void *)&val) ){
++			return 0;
++		}
++
++		if(0 == val) {
++			sprintf(buffer, "%d", 0);
++			req_format_write(wp, buffer);
++			return 0;
++		}
++
++		wlan_idx = name[length - 1] - '0';
++		for (j = 1; j < 5; j++) { //exclude root and vxd
++			vwlan_idx = j;
++			if ( !apmib_get( MIB_WLAN_MAP_BSS_TYPE, (void *)&val) ){
++				wlan_idx = widx_tmp;
++				vwlan_idx = vwidx_tmp;
++				return -1;
++			}
++			if (val == 0x40) {
++				wlan_idx = widx_tmp;
++				vwlan_idx = vwidx_tmp;
++	// 			//if it is only backhaul
++				sprintf(buffer, "%d", j);
++				req_format_write(wp, buffer);
++				return 0;
++			}
++		}
++		wlan_idx = widx_tmp;
++		vwlan_idx = vwidx_tmp;
++		sprintf(buffer, "%d", 0);
++		req_format_write(wp, buffer);
++		return 0;
++	}
++
++#endif
+ #ifdef RTK_SMART_ROAMING
+     else if ( !strcmp(name, "smart_roaming_enable")) {        
+         if ( !apmib_get( MIB_CAPWAP_MODE, (void *)&val) )
+@@ -11097,6 +11299,15 @@
+ 	}
+ #endif
+ 
++	else if ( !strcmp(name, "multiAPOn")) {
++		#if defined(RTK_MULTI_AP)
++		sprintf(buffer, "%d", 1);
++		#else
++		sprintf(buffer, "%d", 0);
++		#endif
++		req_format_write(wp, buffer);
++		return 0;
++	}
+ 	else if ( !strcmp(name, "DiskWebSupportOnOff")) {
+ 		#if defined(SAMBA_WEB_SUPPORT)
+ 		sprintf(buffer, "%d", 1);
+@@ -11453,6 +11664,11 @@
+ 			sprintf(buffer,"%d",getHtmlAuth(name,wp->auth_flag));
+ 			req_format_write(wp, buffer);
+ 			return 0;
++		}
++		else if( !strcmp(name,"sub_menu_multi_ap.htm")){
++			sprintf(buffer,"%d",getHtmlAuth(name,wp->auth_flag));
++			req_format_write(wp, buffer);
++			return 0;
+ 		}
+ 		else if( !strcmp(name,"sub_menu_tcpip.htm")){
+ 			sprintf(buffer,"%d",getHtmlAuth(name,wp->auth_flag));
+diff -urN old/users/boa/src/fmmultiap.c new/users/boa/src/fmmultiap.c
+--- old/users/boa/src/fmmultiap.c	1970-01-01 08:00:00.000000000 +0800
++++ new/users/boa/src/fmmultiap.c	2019-04-15 16:01:28.000000000 +0800
+@@ -0,0 +1,320 @@
++/*This file handles MultiAP webpage form request
++ *
++ */
++#include <arpa/inet.h>
++#include <dirent.h>
++#include <net/if.h>
++#include <net/route.h>
++#include <netinet/in.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/ioctl.h>
++#include <sys/socket.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <unistd.h>
++
++/*-- Local inlcude files --*/
++#include "boa.h"
++#include "asp_page.h"
++#include "apmib.h"
++#include "globals.h"
++#include "utility.h"
++#include "apform.h"
++
++void _set_up_backhaul_credentials()
++{
++	unsigned int seed       = 0;
++	int          randomData = open("/dev/urandom", O_RDONLY);
++	int          mibVal     = 1;
++	if (randomData < 0) {
++		// something went wrong, use fallback
++		seed = time(NULL) + rand();
++	} else {
++		char    myRandomData[50];
++		ssize_t result = read(randomData, myRandomData, sizeof myRandomData);
++		if (result < 0) {
++			// something went wrong, use fallback
++			seed = time(NULL) + rand();
++		}
++		int i = 0;
++		for (i = 0; i < 50; i++) {
++			seed += (unsigned char)myRandomData[i];
++			if (i % 5 == 0) {
++				seed = seed * 10;
++			}
++		}
++	}
++	srand(seed);
++	char SSIDDic[62]       = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
++	char NetworkKeyDic[83] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy"
++	                         "z1234567890~!@#0^&*()_+{}[]:;..?";
++
++	char backhaulSSID[21], backhaulNetworkKey[31];
++	strcpy(backhaulSSID, "EasyMeshBH-");
++	backhaulSSID[20]       = '\0';
++	backhaulNetworkKey[30] = '\0';
++
++	// randomly generate SSID post-fix
++	int i;
++	for (i = 11; i < 20; i++) {
++		backhaulSSID[i] = SSIDDic[rand() % 62];
++	}
++	// randomly generate network key
++	for (i = 0; i < 30; i++) {
++		backhaulNetworkKey[i] = NetworkKeyDic[rand() % 83];
++	}
++
++	// set into mib
++	if (!apmib_set(MIB_WLAN_SSID, (void *)backhaulSSID)) {
++		printf("[Error] : Failed to set AP mib MIB_WLAN_SSID\n");
++		return 0;
++	}
++
++	if (!apmib_set(MIB_WLAN_WPA_PSK, (void *)backhaulNetworkKey)) {
++		printf("[Error] : Failed to set AP mib MIB_WLAN_WPA_PSK\n");
++		return 0;
++	}
++
++	if (!apmib_set(MIB_WLAN_WSC_PSK, (void *)backhaulNetworkKey)) {
++		printf("[Error] : Failed to set AP mib MIB_WLAN_WPA_PSK\n");
++		return 0;
++	}
++
++	mibVal = WSC_AUTH_WPA2PSK;
++	apmib_set(MIB_WLAN_WSC_AUTH, (void *)&mibVal);
++	mibVal = WSC_ENCRYPT_AES;
++	apmib_set(MIB_WLAN_WSC_ENC, (void *)&mibVal);
++	mibVal = 1;
++	apmib_set(MIB_WLAN_WSC_CONFIGURED, (void *)&mibVal);
++	mibVal = WPA_CIPHER_AES;
++	apmib_set(MIB_WLAN_WPA2_CIPHER_SUITE, (void *)&mibVal);
++
++	mibVal = 1;
++	if (!apmib_set(MIB_WLAN_HIDDEN_SSID, (void *)&mibVal)) {
++		printf("[Error] : Failed to set AP mib MIB_WLAN_HIDDEN_SSID\n");
++		return 0;
++	}
++}
++
++void formMultiAP(request *wp, char *path, char *query)
++{
++	char *submitUrl, *strVal;
++
++	//Check if it is push button press, trigger push button then return.
++	strVal    = req_get_cstream_var(wp, ("start_wsc"), "");
++	if (strVal[0]) {
++		submitUrl = req_get_cstream_var(wp, ("submit-url"), "");
++		system("echo 1 > /tmp/virtual_push_button");
++		send_redirect_perm(wp, submitUrl);
++		return;
++	}
++
++	int i, j;
++	// Enable dot11kv if not already enabled
++	int mibVal = 1;
++	strVal     = req_get_cstream_var(wp, ("needEnable11kv"), "");
++	if (!strcmp(strVal, "1")) {
++		for (i = 0; i < 2; i++) {
++			wlan_idx = i;
++			for (j = 0; j < 6; j++) {
++				vwlan_idx = j;
++				apmib_set(MIB_WLAN_DOT11K_ENABLE, (void *)&mibVal);
++				apmib_set(MIB_WLAN_DOT11V_ENABLE, (void *)&mibVal);
++			}
++		}
++	}
++
++	char *device_name = req_get_cstream_var(wp, ("device_name_text"), "");
++	apmib_set(MIB_MAP_DEVICE_NAME, (void *)device_name);
++
++	// mibVal = 1;
++	// apmib_set(MIB_STP_ENABLED, (void *)&mibVal);
++
++	char *role_prev = req_get_cstream_var(wp, ("role_prev"), "");
++
++	// Read role info from form and set to mib accordingly
++	strVal = req_get_cstream_var(wp, ("role"), "");
++	mibVal = 0;
++	if (!strcmp(strVal, "controller")) {
++		// Set to controller
++		mibVal = 1;
++		apmib_set(MIB_MAP_CONTROLLER, (void *)&mibVal);
++		apmib_get(MIB_OP_MODE, (void *)&mibVal);
++		if(WISP_MODE != mibVal) {
++			// Disable repeater
++			mibVal = 0;
++			apmib_set(MIB_REPEATER_ENABLED1, (void *)&mibVal);
++			apmib_set(MIB_REPEATER_ENABLED2, (void *)&mibVal);
++			// Disable vxd
++			mibVal    = 1;
++			wlan_idx  = 0;
++			vwlan_idx = 5;
++			apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mibVal);
++			wlan_idx  = 1;
++			vwlan_idx = 5;
++			apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mibVal);
++		}
++
++		// if different from prev role, reset this mib to 0
++		if (strcmp(strVal, role_prev)) {
++			mibVal = 0;
++			apmib_set(MIB_MAP_CONFIGURED_BAND, (void *)&mibVal);
++		}
++
++		// enable va0 on both wlan0 and wlan1
++		mibVal    = 0;
++		wlan_idx  = 0;
++		vwlan_idx = 1;
++		apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mibVal);
++		mibVal = ENCRYPT_WPA2;
++		apmib_set(MIB_WLAN_ENCRYPT, (void *)&mibVal);
++		mibVal = WPA_AUTH_PSK;
++		apmib_set(MIB_WLAN_WPA_AUTH, (void *)&mibVal);
++
++		mibVal    = 0;
++		wlan_idx  = 1;
++		vwlan_idx = 1;
++		apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mibVal);
++		mibVal = ENCRYPT_WPA2;
++		apmib_set(MIB_WLAN_ENCRYPT, (void *)&mibVal);
++		mibVal = WPA_AUTH_PSK;
++		apmib_set(MIB_WLAN_WPA_AUTH, (void *)&mibVal);
++
++		mibVal = 0x20; // fronthaul value
++		int val;
++		for (i = 0; i < 2; i++) {
++			for (j = 0; j < 5; j++) {
++				wlan_idx  = i;
++				vwlan_idx = j;
++				if (!apmib_get(MIB_WLAN_WLAN_DISABLED, (void *)&val))
++					return -1;
++				if (val == 0) // only set to fronthaul if this interface is enabled
++					apmib_set(MIB_WLAN_MAP_BSS_TYPE, (void *)&mibVal);
++			}
++		}
++
++		wlan_idx  = 0;
++		vwlan_idx = 0;
++		mibVal = 1;
++		apmib_set(MIB_WLAN_STACTRL_ENABLE, (void *)&mibVal);
++		apmib_set(MIB_WLAN_STACTRL_PREFER, (void *)&mibVal);
++
++		wlan_idx  = 1;
++		vwlan_idx = 0;
++		mibVal = 1;
++		apmib_set(MIB_WLAN_STACTRL_ENABLE, (void *)&mibVal);
++		mibVal = 0;
++		apmib_set(MIB_WLAN_STACTRL_PREFER, (void *)&mibVal);
++
++		mibVal = 0x40; // backhaul value
++		// wlan0
++		wlan_idx  = 0;
++		vwlan_idx = 1;
++		if (strcmp(strVal, role_prev)) {
++			_set_up_backhaul_credentials();
++		}
++		apmib_set(MIB_WLAN_MAP_BSS_TYPE, (void *)&mibVal);
++
++		// wlan1
++		wlan_idx  = 1;
++		vwlan_idx = 1;
++		if (strcmp(strVal, role_prev)) {
++			_set_up_backhaul_credentials();
++		}
++		apmib_set(MIB_WLAN_MAP_BSS_TYPE, (void *)&mibVal);
++	} else if (!strcmp(strVal, "agent")) {
++		mibVal = DHCP_CLIENT;
++		apmib_set(MIB_DHCP, (void *)&mibVal);
++
++		mibVal = 480;
++		apmib_set(MIB_DHCP_LEASE_TIME, (void *)&mibVal);
++		// Set to agent
++		mibVal = 2;
++		apmib_set(MIB_MAP_CONTROLLER, (void *)&mibVal);
++		// Enable repeater
++		mibVal = 1;
++		apmib_set(MIB_REPEATER_ENABLED1, (void *)&mibVal);
++		mibVal = 0;
++		apmib_set(MIB_REPEATER_ENABLED2, (void *)&mibVal);
++
++		// wlan_idx  = 0;
++		// vwlan_idx = 0;
++		// mibVal = 1;
++		// apmib_set(MIB_WLAN_STACTRL_ENABLE, (void *)&mibVal);
++		// apmib_set(MIB_WLAN_STACTRL_PREFER, (void *)&mibVal);
++
++		// wlan_idx  = 1;
++		// vwlan_idx = 0;
++		// mibVal = 1;
++		// apmib_set(MIB_WLAN_STACTRL_ENABLE, (void *)&mibVal);
++		// mibVal = 0;
++		// apmib_set(MIB_WLAN_STACTRL_PREFER, (void *)&mibVal);
++
++		// Enable vxd on 5g, set mode and enable wsc on vxd
++		mibVal    = 0;
++		wlan_idx  = 0;
++		vwlan_idx = 5;
++		apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mibVal);
++		apmib_set(MIB_WLAN_WSC_DISABLE, (void *)&mibVal);
++		mibVal = 1;
++		apmib_set(MIB_WLAN_MODE, (void *)&mibVal);
++		// Set bss type to 128 for vxd
++		mibVal = 0x80;
++		apmib_set(MIB_WLAN_MAP_BSS_TYPE, (void *)&mibVal);
++
++		// mibVal    = 0;
++		wlan_idx  = 1;
++		vwlan_idx = 5;
++		// // Turn on vxd on 2.4g
++		// apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mibVal);
++		// apmib_set(MIB_WLAN_WSC_DISABLE, (void *)&mibVal);
++		// mibVal = 1;
++		// apmib_set(MIB_WLAN_MODE, (void *)&mibVal);
++		// Set bss type to 0 for vxd
++		mibVal = 0x00;
++		apmib_set(MIB_WLAN_MAP_BSS_TYPE, (void *)&mibVal);
++
++		// if different from prev role, reset this mib to 0
++		if (strcmp(strVal, role_prev)) {
++			mibVal = 0;
++			apmib_set(MIB_MAP_CONFIGURED_BAND, (void *)&mibVal);
++		}
++	} else if (!strcmp(strVal, "disabled")) {
++		mibVal = 0;
++		apmib_set(MIB_MAP_CONTROLLER, (void *)&mibVal);
++
++		// Disable repeater
++		mibVal = 0;
++		apmib_set(MIB_REPEATER_ENABLED1, (void *)&mibVal);
++		apmib_set(MIB_REPEATER_ENABLED2, (void *)&mibVal);
++		// Disable vxd
++		mibVal    = 1;
++		wlan_idx  = 0;
++		vwlan_idx = 5;
++		apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mibVal);
++		wlan_idx  = 1;
++		vwlan_idx = 5;
++		apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mibVal);
++		// reset configured band to 0
++		mibVal = 0;
++		apmib_set(MIB_MAP_CONFIGURED_BAND, (void *)&mibVal);
++	}
++
++	// update flash
++	apmib_update_web(CURRENT_SETTING);
++
++	submitUrl = req_get_cstream_var(wp, ("submit-url"), "");
++	strVal    = req_get_cstream_var(wp, ("save_apply"), "");
++	// sysconf init   if save_apply
++	if (strVal[0]) {
++		OK_MSG(submitUrl);
++	} else {
++		send_redirect_perm(wp, submitUrl);
++	}
++
++	return;
++}
+diff -urN old/users/boa/src/fmwlan.c new/users/boa/src/fmwlan.c
+--- old/users/boa/src/fmwlan.c	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/src/fmwlan.c	2019-05-14 14:50:24.000000000 +0800
+@@ -6583,6 +6583,7 @@
+ 	apmib_recov_wlanIdx();
+ 
+         strValue = req_get_cstream_var(wp, ("80211v_enable_"), "");
++#ifdef RTK_CAPWAP
+         i=0;
+         apmib_get(MIB_CAPWAP_MODE, (void *)&i);
+ 		if (!strcmp(strValue, ("enable"))){
+@@ -6598,6 +6599,16 @@
+ 		apmib_set(MIB_CAPWAP_MODE, (void *)&i);
+ 		k = 1;
+ 		apmib_set(MIB_CAPWAP_WTP_ID, (void *)&k);
++#else
++	if (!strcmp(strValue, ("enable"))){
++		val = 1;
++	}
++	else{
++		val = 0;
++	}
++	apmib_set(MIB_WLAN_DOT11V_ENABLE, (void *)&val);
++	k = 1;
++#endif
+ 		
+ #ifdef MBSSID
+ 		apmib_save_wlanIdx();
+diff -urN old/users/boa/src/Makefile new/users/boa/src/Makefile
+--- old/users/boa/src/Makefile	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/src/Makefile	2019-05-14 14:50:48.000000000 +0800
+@@ -150,6 +150,10 @@
+ REALTEK_FILES += fmdiskmanage.c
+ #endif
+ 
++ifeq ($(CONFIG_APP_MULTI_AP),y)
++REALTEK_FILES += fmmultiap.c
++endif
++
+ ifeq ($(CONFIG_DIGEST_AUTHENTICATION),y)
+ REALTEK_FILES += md5.c
+ endif
+diff -urN old/users/boa/system/set_init.c new/users/boa/system/set_init.c
+--- old/users/boa/system/set_init.c	2019-06-11 17:32:13.000000000 +0800
++++ new/users/boa/system/set_init.c	2019-05-14 14:51:57.000000000 +0800
+@@ -1607,6 +1607,345 @@
+ }
+ #endif
+ 
++#if defined(RTK_MULTI_AP)
++
++#define MAP_CONFIG_2G                 (0)
++#define MAP_CONFIG_5G                 (1)
++
++struct config {
++	unsigned char config_type;
++	char *  ssid;
++	char *  network_key;
++	unsigned char network_type;
++};
++
++void _writeToConfig(FILE *fp, unsigned char config_nr, char **config_array)
++{
++	int i;
++	for (i = 0; i < config_nr; i++) {
++		fprintf(fp, "%s", config_array[i]);
++		free(config_array[i]);
++		if (i < (config_nr - 1)) {
++			fprintf(fp, ",");
++		} else {
++			fprintf(fp, "\n");
++		}
++	}
++}
++
++void _writeToConfig_dec(FILE *fp, unsigned char config_nr, unsigned char *config_array)
++{
++	int i;
++	for (i = 0; i < config_nr; i++) {
++		fprintf(fp, "%d", config_array[i]);
++		if (i < (config_nr - 1)) {
++			fprintf(fp, ",");
++		} else {
++			fprintf(fp, "\n");
++		}
++	}
++}
++
++void _update_config_file(char *config_file_path_from, char *config_file_path_to, unsigned char is_agent)
++{
++	//check for path validity
++	char *ext = strrchr(config_file_path_from, '.');
++	if (!ext || strcmp(ext, ".conf")) {
++		printf("[CONFIG] Invalid config path: %s\n", config_file_path_from);
++		return 1;
++	}
++
++
++	//start to read from mib for config data
++	struct config *config_data = NULL;
++	unsigned char config_nr = 0;
++
++	int i, j;
++	int val;
++	char buffer[100];
++	for (i = 0; i < 2; i++) {
++		wlan_idx = i;
++		for (j = 0; j < 5; j++) {
++			vwlan_idx = j;
++			if ( !apmib_get( MIB_WLAN_WLAN_DISABLED, (void *)&val) ) {
++				printf("Error reading mib in update_config_file!\n");
++				return 0;
++			}
++			if(val && 0 == j) {
++				config_nr++;
++				config_data = (struct config*) realloc(config_data, config_nr * sizeof(struct config));
++				config_data[config_nr - 1].config_type	= (unsigned char) (1 - i);
++				config_data[config_nr - 1].ssid			= "TEARDOWN";
++				config_data[config_nr - 1].network_key	= "invalidkey";
++				config_data[config_nr - 1].network_type	= 0x10; // TEAR_DOWN
++				break;
++			}
++			//if enabled
++			if (!val) {
++				//skip config file reading for vxd on controller, WISP fix				
++				if (vwlan_idx == 5 && is_agent == 0) {					
++					continue;				
++				}
++				config_nr++;
++				config_data = (struct config*) realloc(config_data, config_nr * sizeof(struct config));
++
++
++				config_data[config_nr - 1].config_type	= (unsigned char) (1 - i);
++
++
++				if (!apmib_get( MIB_WLAN_SSID,	(void *)buffer)) {
++					printf("Error reading mib in update_config_file!\n");
++					return 0;
++				}
++
++				config_data[config_nr - 1].ssid			= strdup(buffer);
++
++				if (!apmib_get( MIB_WLAN_WPA_PSK,	(void *)buffer)) {
++					printf("Error reading mib in update_config_file!\n");
++					return 0;
++				}
++
++				config_data[config_nr - 1].network_key	= strdup(buffer);
++
++				if (!apmib_get( MIB_WLAN_MAP_BSS_TYPE,	(void *)&val)) {
++					printf("Error reading mib in update_config_file!\n");
++					return 0;
++				}
++
++				config_data[config_nr - 1].network_type	= (unsigned char)val;
++			}
++		}
++	}
++
++	//read the original config file for global setting
++	FILE *fp = fopen(config_file_path_from, "r");
++	if (fp == NULL) {
++		printf("Error opening config file!\n");
++		return 1;
++	}
++
++	char ** lines = NULL;
++	size_t  len   = 0;
++	ssize_t read;
++	int     line_nr = 0;
++	i       = 0;
++	lines           = (char **) malloc(1 * sizeof(char *));
++	lines[i]		= NULL;
++
++	while ((read = getline(&lines[i], &len, fp)) != -1) {
++		if ('\n' == lines[i][0]) {
++			continue;
++		}
++
++		if ('[' == lines[i][0]) {
++			if (0 == strncmp(lines[i], "[global]", 8)) {
++				i     = 1;
++				lines = (char **)realloc(lines, (i + 1) * sizeof(char *));
++				lines[i]		= NULL;
++				continue;
++			} else {
++				break;
++			}
++		}
++
++		if (0 != i) {
++			i++;
++			lines 			= (char **)realloc(lines, (i + 1) * sizeof(char *));
++			lines[i]		= NULL;
++		}
++	}
++
++	line_nr = i;
++	fclose(fp);
++	//write info into the new config file
++	fp = fopen(config_file_path_to, "w");
++	for (i = 0; i < line_nr; i++) {
++		fprintf(fp, "%s", lines[i]);
++		free(lines[i]);
++	}
++	free(lines);
++
++	char device_name_buffer[30];
++	apmib_get(MIB_MAP_DEVICE_NAME, (void *)device_name_buffer);
++	fprintf(fp, "%s", "device_name = ");
++	fprintf(fp, "%s\n", device_name_buffer);
++
++	//if it is agent, stop here
++	if (1 == is_agent) {
++		fclose(fp);
++		return 0;
++	}
++
++	fprintf(fp, "[2.4g_config_data]\n");
++	unsigned char config_number 	= 0;
++	char ** ssids         			= (char **)malloc(1 * sizeof(char *));
++	char ** network_keys 		 	= (char **)malloc(1 * sizeof(char *));
++	unsigned char * network_types 	= (unsigned char *)malloc(1 * sizeof(unsigned char));
++
++	for (i = 0; i < config_nr; i++) {
++		if (0 == config_data[i].config_type) {
++			config_number++;
++			ssids         = (char **)realloc(ssids, (config_number) * sizeof(char *));
++			network_keys  = (char **)realloc(network_keys, (config_number) * sizeof(char *));
++			network_types = (unsigned char *)realloc(network_types, (config_number) * sizeof(unsigned char));
++			ssids[config_number - 1]         = strdup(config_data[i].ssid);
++			network_keys[config_number - 1]  = strdup(config_data[i].network_key);
++			network_types[config_number - 1] = config_data[i].network_type;
++		}
++	}
++
++
++	fprintf(fp, "number = %d\n", config_number);
++
++	fprintf(fp, "ssid = ");
++	_writeToConfig(fp, config_number, ssids);
++
++	fprintf(fp, "network_key = ");
++	_writeToConfig(fp, config_number, network_keys);
++
++	fprintf(fp, "network_type = ");
++	_writeToConfig_dec(fp, config_number, network_types);
++
++	free(ssids);
++	free(network_keys);
++	free(network_types);
++
++
++	fprintf(fp, "[5g_config_data]\n");
++	config_number = 0;
++	ssids         = (char **)malloc(1 * sizeof(char *));
++	network_keys  = (char **)malloc(1 * sizeof(char *));
++	network_types = (unsigned char *)malloc(1 * sizeof(unsigned char));
++
++	for (i = 0; i < config_nr; i++) {
++		if (1 == config_data[i].config_type) {
++			config_number++;
++			ssids         = (char **)realloc(ssids, (config_number) * sizeof(char *));
++			network_keys  = (char **)realloc(network_keys, (config_number) * sizeof(char *));
++			network_types = (unsigned char *)realloc(network_types, (config_number) * sizeof(unsigned char));
++			ssids[config_number - 1] = strdup(config_data[i].ssid);
++			network_keys[config_number - 1]  = strdup(config_data[i].network_key);
++			network_types[config_number - 1] = config_data[i].network_type;
++		}
++	}
++
++	fprintf(fp, "number = %d\n", config_number);
++
++	fprintf(fp, "ssid = ");
++	_writeToConfig(fp, config_number, ssids);
++
++	fprintf(fp, "network_key = ");
++	_writeToConfig(fp, config_number, network_keys);
++
++	fprintf(fp, "network_type = ");
++	_writeToConfig_dec(fp, config_number, network_types);
++
++	free(ssids);
++	free(network_keys);
++	free(network_types);
++
++	fclose(fp);
++	return 0;
++}
++
++void multi_ap_app()
++{
++	if (find_pid_by_name("map_checker") > 0) {
++		system("killall -9 map_checker >/dev/null 2>&1");
++	}
++
++	if (find_pid_by_name("map_controller") > 0) {
++		system("killall -9 map_controller >/dev/null 2>&1");
++	}
++
++	if (find_pid_by_name("map_agent") > 0) {
++		system("killall -9 map_agent >/dev/null 2>&1");
++	}
++
++	if (find_pid_by_name("map_controller_test") > 0) {
++		system("killall -9 map_controller_test >/dev/null 2>&1");
++	}
++
++	if (find_pid_by_name("map_agent_test") > 0) {
++		system("killall -9 map_agent_test >/dev/null 2>&1");
++	}
++
++	int        map_state = 0;
++
++	//set default name for the map device if device_name is empty
++	char map_device_name[30];
++	apmib_get(MIB_MAP_DEVICE_NAME, (void *)map_device_name);
++
++	apmib_get(MIB_MAP_CONTROLLER, (void *)&map_state);
++	switch(map_state){
++		case 1:{
++			if (!strcmp(map_device_name, "")) {
++				char* default_name_controller = "EasyMesh_Controller";
++				// set into mib
++				if (!apmib_set(MIB_MAP_DEVICE_NAME, (void *)default_name_controller)) {
++					printf("[Error] : Failed to set AP mib MIB_MAP_DEVICE_NAME\n");
++					return 0;
++				}
++				apmib_update(CURRENT_SETTING);
++			}
++			_update_config_file("/etc/multiap.conf", "/var/multiap.conf", 0);
++			int status = system("map_controller -dvv > /dev/null");
++			printf("Multi AP controller daemon is running with %d\n", status);
++			status = system("map_checker &");
++			printf("Multi AP checker daemon is running with %d\n", status);
++			break;
++		}
++		case 2:{
++			if (!strcmp(map_device_name, "")) {
++				char* default_name_agent = "EasyMesh_Agent";
++				// set into mib
++				if (!apmib_set(MIB_MAP_DEVICE_NAME, (void *)default_name_agent)) {
++					printf("[Error] : Failed to set AP mib MIB_MAP_DEVICE_NAME\n");
++					return 0;
++				}
++				apmib_update(CURRENT_SETTING);
++			}
++			_update_config_file("/etc/multiap.conf", "/var/multiap.conf", 1);
++			int status = system("map_agent -dvv > /dev/null");
++			printf("Multi AP agent daemon is running with %d\n", status);
++			status = system("map_checker &");
++			printf("Multi AP checker daemon is running with %d\n", status);
++			break;
++		}
++		case 129:{
++			if (!strcmp(map_device_name, "")) {
++				char* default_name_agent = "EasyMesh_Test_Controller";
++				// set into mib
++				if (!apmib_set(MIB_MAP_DEVICE_NAME, (void *)default_name_agent)) {
++					printf("[Error] : Failed to set AP mib MIB_MAP_DEVICE_NAME\n");
++					return 0;
++				}
++				apmib_update(CURRENT_SETTING);
++			}
++			_update_config_file("/etc/multiap.conf", "/var/multiap.conf", 0);
++			int status = system("map_controller_test -dvv > /dev/console");
++			printf("Multi AP controller logo test daemon is running with %d\n", status);
++			break;
++		}
++		case 130:{
++			if (!strcmp(map_device_name, "")) {
++				char* default_name_agent = "EasyMesh_Test_Agent";
++				// set into mib
++				if (!apmib_set(MIB_MAP_DEVICE_NAME, (void *)default_name_agent)) {
++					printf("[Error] : Failed to set AP mib MIB_MAP_DEVICE_NAME\n");
++					return 0;
++				}
++				apmib_update(CURRENT_SETTING);
++			}
++			_update_config_file("/etc/multiap.conf", "/var/multiap.conf", 1);
++			int status = system("map_agent_test -dvv > /dev/console");
++			printf("Multi AP agent logo test daemon is running with %d\n", status);
++			break;
++		}
++	}
++}
++#endif
++
+ #if defined(CONFIG_SYSFS)
+ static void rtl_mount_sysfs(void)
+ {
+@@ -3128,6 +3467,30 @@
+         system("echo 1 > /sys/class/firmware/timeout");
+ #endif
+ 
++#ifdef RTK_MULTI_AP
++	if(strcmp(argv[3], "wlan_app")){
++		if (find_pid_by_name("map_checker") > 0) {
++			system("killall -9 map_checker >/dev/null 2>&1");
++		}
++
++		if (find_pid_by_name("map_controller") > 0) {
++			system("killall -9 map_controller >/dev/null 2>&1");
++		}
++
++		if (find_pid_by_name("map_agent") > 0) {
++			system("killall -9 map_agent >/dev/null 2>&1");
++		}
++
++		if (find_pid_by_name("map_controller_test") > 0) {
++			system("killall -9 map_controller_test >/dev/null 2>&1");
++		}
++
++		if (find_pid_by_name("map_agent_test") > 0) {
++			system("killall -9 map_agent_test >/dev/null 2>&1");
++		}
++	}
++#endif
++
+ #if defined(CONFIG_RTL_JFFS2_FILE_PARTITION) && defined(MTD_NAME_MAPPING) 
+ 	mount_jffs2_partition();
+ #endif
+@@ -3767,6 +4130,24 @@
+ #endif
+ 					RunSystemCmd(NULL_FILE, "ifconfig", token, "down", NULL_STR);
+ 				RunSystemCmd(NULL_FILE, "flash", "set_mib", token, NULL_STR);/*set vxd wlan iface*/
++#ifdef RTK_MULTI_AP
++				int        map_state = 0;
++				apmib_get(MIB_MAP_CONTROLLER, (void *)&map_state);
++				if(2 == map_state) {					
++					FILE *fd_tmp = fopen("/tmp/map_backhaul_link", "r");					
++					int          connected_interface = 0;					
++					if (NULL == fd_tmp) {						
++						RunSystemCmd(NULL_FILE, "iwpriv", token, "set_mib", "func_off=1", NULL_STR);/*set vxd func_off for agent*/					
++					} 
++					else {						
++						connected_interface = fgetc(fd_tmp);						
++						if ('1' == connected_interface) {							
++							RunSystemCmd(NULL_FILE, "iwpriv", token, "set_mib", "func_off=1", NULL_STR);/*set vxd func_off for agent*/						
++						}						
++						fclose(fd_tmp);					
++					}				
++				}
++#endif
+ 				token = strsep(&strptr," ");
+ 			}
+ 		}
+@@ -3813,6 +4194,14 @@
+ #endif
+ 			RunSystemCmd(NULL_FILE, "ifconfig", wan_interface, "down", NULL_STR);
+ 			RunSystemCmd(NULL_FILE, "flash", "set_mib", wan_interface, NULL_STR);
++#ifdef RTK_MULTI_AP			
++            int map_controller = 0;			
++            apmib_get(MIB_MAP_CONTROLLER, (void *)&map_controller);			
++			if(1 == map_controller){				
++				system("iwpriv wlan0-vxd set_mib a4_enable=0");/*set controller vxd a4 disabled*/				
++				system("iwpriv wlan1-vxd set_mib a4_enable=0");/*set controller vxd a4 disabled*/			
++			}
++#endif
+ 		}
+ #endif
+ 	}	
+@@ -4560,6 +4949,9 @@
+ #ifdef RTL_TRAP_BR_SUBNET_PKT_FROM_WAN_TO_CPU
+ 	system("echo 1 > /proc/br_subnet_from_wan_to_cpu");
+ #endif
++#ifdef RTK_MULTI_AP
++	multi_ap_app();
++#endif
+ 
+ 	return 0;
+ }
+diff -urN old/users/boa/system/set_wlanapp.c new/users/boa/system/set_wlanapp.c
+--- old/users/boa/system/set_wlanapp.c	2019-05-27 19:43:08.000000000 +0800
++++ new/users/boa/system/set_wlanapp.c	2019-05-14 14:52:20.000000000 +0800
+@@ -1329,7 +1329,7 @@
+ 
+ 
+ //for 802.11k========================================================
+-#if defined(DOT11K)
++#if defined(DOT11K) && !defined(RTK_MULTI_AP)
+     start_11k_deamon(all_wlan_interface);
+ #endif
+ 
+diff -urN old/users/boa/utils/flash.c new/users/boa/utils/flash.c
+--- old/users/boa/utils/flash.c	2019-06-11 17:32:13.000000000 +0800
++++ new/users/boa/utils/flash.c	2019-05-14 14:53:49.000000000 +0800
+@@ -6913,6 +6913,13 @@
+ 			pMib->wlan[idx][i].STBCEnabled = 1;
+ 			pMib->wlan[idx][i].CoexistEnabled= 0;
+ 			pMib->wlan[idx][i].dtimPeriod= 1;			
++#ifdef RTK_MULTI_AP
++			if(i == NUM_VWLAN_INTERFACE) {
++				pMib->wlan[idx][i].mapBssType = 0x80;
++			} else {
++				pMib->wlan[idx][i].mapBssType = 0;
++			}
++#endif
+ 		}
+ 
+ #if defined(CONFIG_RTL_ULINKER)
+@@ -7282,6 +7289,12 @@
+ 	pMib->capwapMode = CAPWAP_WTP_ENABLE | CAPWAP_AC_ENABLE;
+ #endif
+ 
++#ifdef RTK_MULTI_AP
++	pMib->mapController     = 0;
++	pMib->mapConfiguredBand = 0;
++	sprintf((char *)pMib->mapDeviceName, "%s","EasyMesh_Device");
++#endif
++
+ #endif
+ 
+ // added by rock /////////////////////////////////////////
+@@ -18391,7 +18404,7 @@
+     }
+ #endif
+ 
+-
++#ifdef RTK_CAPWAP
+ #if defined(RTK_SMART_ROAMING) || defined(CONFIG_IEEE80211V)
+ 	pmib->sr_profile.enable = 0;
+ 
+@@ -18408,6 +18421,7 @@
+ 		pmib->sr_profile.enable = 1;
+ 	}
+ #endif
++#endif
+ 
+ #ifdef RTK_CROSSBAND_REPEATER
+ 	pmib->crossBand.crossband_enable = 0;
+@@ -18651,6 +18665,11 @@
+ 	}
+ #endif
+ 
++#ifdef RTK_MULTI_AP
++	apmib_get(MIB_WLAN_MAP_BSS_TYPE, (void *)&intVal);
++	pmib->multi_ap.multiap_bss_type = (unsigned char)intVal;
++#endif
++
+ #ifdef CONFIG_APP_SIMPLE_CONFIG
+ 	apmib_get(MIB_WLAN_MODE, (void *)&intVal);
+ 	if(intVal != CLIENT_MODE)
+diff -urN old/users/Kconfig new/users/Kconfig
+--- old/users/Kconfig	2019-05-27 19:43:07.000000000 +0800
++++ new/users/Kconfig	2019-05-14 15:41:33.000000000 +0800
+@@ -536,6 +536,11 @@
+ config DOT11K_DEAMON
+         bool "11k Deamon support"
+ 		
++config APP_EBTABLES
++	bool "ebtables"
++	help
++		ebtables – Linux Ethernet bridge firewall
++		
+ config APP_EXPAT210
+        bool "expat210"
+        select LIB_EXPAT
+@@ -733,6 +738,14 @@
+ 	help 
+ 	 mtd utils support
+ 
++config APP_MULTI_AP
++	bool "Multi-AP"
++		select APP_OPENSSL
++		select APP_OPENSSL-1.0.2D
++		select APP_EBTABLES
++	help
++		Multi-AP daemon
++
+ config APP_NETATALK
+         bool "netatalk"
+ 	help
+diff -urN old/users/Makefile new/users/Makefile
+--- old/users/Makefile	2019-05-27 19:43:07.000000000 +0800
++++ new/users/Makefile	2019-05-14 15:42:09.000000000 +0800
+@@ -116,6 +116,13 @@
+ 
+ export openssl_dir
+ 
++
++ifeq ($(CONFIG_APP_MULTI_AP),y)
++CONFIG_LIB_OPENSSL_102D=y
++lib_$(CONFIG_APP_GOAHEAD)		+= goahead-2.1.1
++lib_$(CONFIG_APP_BOA)		+= boa
++endif
++
+ ifdef CONFIG_RTL_COMAPI_WLTOOLS
+ WLTOOLS=wireless_tools.29
+ else
+@@ -368,6 +375,15 @@
+ app_$(CONFIG_APP_RTK_HCIATTACH)  += rtk_hciattach
+ app_$(CONFIG_APP_BT_MP)  += bt_mp_tool
+ 
++ifdef CONFIG_APP_EBTABLES
++app_$(CONFIG_APP_EBTABLES)		+= ebtables
++endif
++
++ifdef CONFIG_APP_MULTI_AP
++app_$(CONFIG_APP_MULTI_AP)		+= multi-ap
++endif
++
++
+ ifdef CONFIG_RTL_JFFS2_PARTITION_ENABLE
+ app_y += mtd-utils
+ else
+diff -urN old/users/wsc/src/Makefile new/users/wsc/src/Makefile
+--- old/users/wsc/src/Makefile	1970-01-01 08:00:00.000000000 +0800
++++ new/users/wsc/src/Makefile	2019-02-01 15:41:29.000000000 +0800
+@@ -0,0 +1,13 @@
++ifeq ($(wildcard $(DIR_LINUX)/.config),)
++DIR_LINUX_KERNEL = $(DIR_ROOT)/linux-2.6.30
++else
++DIR_LINUX_KERNEL = $(DIR_LINUX)
++endif
++
++WSCSRC = $(shell pwd)
++
++all:
++
++romfs:
++	$(ROMFSINST) $(WSCSRC)/wscd /bin/wscd
++	$(ROMFSINST) $(WSCSRC)/wscd.conf /etc/wscd.conf
+Binary files old/users/wsc/src/wscd and new/users/wsc/src/wscd differ
+diff -urN old/users/wsc/src/wscd.conf new/users/wsc/src/wscd.conf
+--- old/users/wsc/src/wscd.conf	1970-01-01 08:00:00.000000000 +0800
++++ new/users/wsc/src/wscd.conf	2019-05-13 17:44:30.000000000 +0800
+@@ -0,0 +1,73 @@
++#detail please reference config_file_README.txt
++wlan_fifo0 ="/var/wscd-wlan0.fifo"
++wlan_fifo1 ="/var/wscd-wlan1.fifo"
++
++SSID_prefix = "Reaktek_AP_"
++
++use_ie = 1
++auth_type_flags = 39
++encrypt_type_flags = 15
++
++uuid = 112233445566778899aaaabbccddeeff
++#device_name = "RTK_AP"	dont use  this if flash mib has  define
++manufacturer = "Realtek Semiconductor Corp."
++manufacturerURL = "http://www.realtek.com/"
++modelURL = "http://www.realtek.com/"
++model_name = "RTL8xxx"
++model_num = "EV-2010-09-20"
++serial_num = "123456789012347"
++modelDescription = "WLAN Access Point"
++UPC = "665544332211"
++device_attrib_id = 1
++device_oui = 0050f204
++device_category_id = 6
++device_sub_category_id = 1
++device_password_id = 0
++
++tx_timeout = 5
++resent_limit = 2
++reg_timeout = 120
++block_timeout = 60
++
++#for WPS logo test 5.4.5, set search_external_registrar = 1
++search_external_registrar = 0
++
++WPS_START_LED_GPIO_number = 2
++WPS_END_LED_unconfig_GPIO_number = 1
++WPS_END_LED_config_GPIO_number = 1
++WPS_ERROR_LED_GPIO_number = 0
++WPS_PBC_overlapping_GPIO_number = 0
++PBC_overlapping_LED_time_out = 30
++
++
++No_ifname_for_flash_set = 0
++
++#disable_disconnect = 1
++#disable_auto_gen_ssid = 1
++#manual_key_type = 2
++#manual_key = 1234567890
++#random_key_len = 64
++#PSK_LEN = 64
++
++disable_hidden_ap = 1
++
++#SSID_prefix = "RTKAP_"
++
++button_hold_time = 1
++
++# for WPS2;if wps1.0 don't define
++# 0x2008|0x480|0x680(CONFIG_METHOD_VIRTUAL_PIN | CONFIG_METHOD_PHYSICAL_PBC | CONFIG_METHOD_VIRTUAL_PBC )
++
++config_method =  0x784
++#if AP mode config by EAP-base ER or auto-generate
++#but want not apply to both band then preset the paramater to 1
++#ProfileDontBothApply = 1
++
++# value=2:deny whatever config or unconfig state.
++# value=1:deny under configured state, allow when unconfig state.
++#disable_configured_by_exReg = 1
++
++#when PIN failed number >= MaxPinFailThresHold AP will indefinitely auto-lock-down 
++#until user intervenes to unlock ; vaild value 1~10
++#MaxPinFailThresHold = 10
++
+diff -urN old/users/wsc/src/wsc.h new/users/wsc/src/wsc.h
+--- old/users/wsc/src/wsc.h	2019-05-27 19:43:41.000000000 +0800
++++ new/users/wsc/src/wsc.h	2019-06-11 18:33:39.000000000 +0800
+@@ -1411,8 +1411,8 @@
+ };
+ */
+ typedef struct _BssDscr {
+-    unsigned char bdBssId[6];
+-    char bdSsIdBuf[WSC_MAX_SSID_LEN];
++	unsigned char bdBssId[6];
++	char bdSsIdBuf[WSC_MAX_SSID_LEN];
+     unsigned char	*ssidptr;			// unused, for backward compatible
+ 	unsigned short	ssidlen;
+ //Do not use define flag in this structure, it will cause mismatch with wlan driver!
+@@ -1555,6 +1555,9 @@
+ #ifdef TR069_SUPPORT
+ 	unsigned char extRegDisable;
+ #endif
++#ifdef CONFIG_MULTI_AP
++	unsigned char backhaul_sta;
++#endif
+ } STA_CTX, *STA_CTX_Tp;
+ 
+ typedef struct pbc_node_context *pbc_node_ptr;
+@@ -2108,6 +2111,11 @@
+ 
+ 
+ #endif
++
++#ifdef CONFIG_MULTI_AP
++extern unsigned char MULTIAP_BACKHAUL_STA[6];
++#endif
++
+ extern CTX_Tp pGlobalCtx;
+ extern int wlioctl_get_mib(	char *interfacename , char* mibname ,int *result );
+ #ifdef DEBUG
+@@ -2189,6 +2197,10 @@
+ int get_band(CTX_Tp pCtx);
+ int wlioctl_get_mib_byte(char *interfacename , char* mibname ,unsigned char *result);
+ #endif
++#ifdef CONFIG_MULTI_AP
++int wlioctl_get_mib_byte_map(char *interfacename , char* mibname ,unsigned char *result, int size);
++int get_mac_address_map(char *interface, unsigned char *addr);
++#endif
+ extern void remove_active_pbc_sta(CTX_Tp pCtx, unsigned char* staAddr, unsigned char mode);
+ extern void SwitchSessionOverlap_LED_On(CTX_Tp pCtx);
+ #endif // MUL_PBC_DETECTTION

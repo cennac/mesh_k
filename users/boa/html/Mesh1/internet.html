@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>		 
+		<link rel="stylesheet" type="text/css" href="css/compiled/theme_styles.css"/>
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link rel="stylesheet" href="css/progress.css" />
+		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<script type="text/javascript" src="util_gw.js"> </script>
+		<script type="text/javascript">	
+			var MultiPppoeEnable= '<% getIndex("multiPppoe"); %>';
+			var dynamicWanIP=1;
+			function Load_Setting()
+			{
+				var wanDhcp_ = '<% getIndex("wanDhcp"); %>';
+				if(wanDhcp_==0){
+					$(".static_ip").css("display","block");
+					$(".pppoe").css("display","none");
+					$(".DHCP").css("display","none");
+					$("#wanType_id option:nth-child(1)").prop("selected", 'selected');
+				}
+				if(wanDhcp_==3){
+					$(".static_ip").css("display","none");
+					$(".pppoe").css("display","block");
+					$(".DHCP").css("display","none");
+					$("#wanType_id option:nth-child(3)").prop("selected", 'selected');
+				}
+				if(wanDhcp_==1){
+					$(".static_ip").css("display","none");
+					$(".pppoe").css("display","none");
+					$(".DHCP").css("display","block");
+					$("#wanType_id option:nth-child(2)").prop("selected", 'selected');
+				}
+			}
+		</script>
+	</head>
+	<body onload="Load_Setting();">
+		 		<div class="main_content">
+		 			<div class="intnet">
+		 				<div class="intnet_content">
+			 				<form role="form" action="/boafrm/formWanTcpipSetup" method="POST" name="tcpip_form" id="internet_form">
+			 					<!--<input type="hidden" id="getPppAuthStatus" value="Not Start" name="getPppAuthStatus" onChange="wanTypeSelection(this)">-->
+			 						<input type="hidden" name="lan_ip_address" value="<% getInfo("ip-rom"); %>">
+									<input type="hidden" name="lan_subnet_mask" value="<% getInfo("mask-rom"); %>">
+			 					<div class="form-group">
+			 						<label class="i18n" name="wanjoinTyep_internet"></label>
+			 						<select class="type_select" id="wanType_id" size="1" name="wanType" >
+			 							<option value="fixedIp">static Ip</option>
+			 							<option value="autoIp">DHCP</option>
+			 							<option value="ppp">PPPoE</option>
+			 						</select>	
+			 						<i class="fa fa-caret-down type_down"></i>
+			 					</div>
+			 					<div class="form-group static_ip"><label class="i18n" name="ipAddr_internet"></label><input class="form_input" type="text" name="wan_ip" value="<% getInfo("wan-ip-rom"); %>" placeholder="请输入"/></div>
+			 					<div class="form-group static_ip"><label class="i18n" name="subnet_internet"></label><input class="form_input" type="text" name="wan_mask" value="<% getInfo("wan-mask-rom"); %>" placeholder="请输入"/></div>
+			 					<div class="form-group static_ip"><label class="i18n" name="default_internet"></label><input class="form_input" type="text" name="wan_gateway" value="<% getInfo("wan-gateway-rom"); %>" placeholder="请输入"/></div>
+			 					<div class="form-group static_ip"><label class="i18n" name="DNS1_internet"></label><input class="form_input" type="text" name="dns1" value="<% getInfo("wan-dns1"); %>" placeholder="请输入"/></div>
+			 					<div class="form-group static_ip"><label class="i18n" name="DNS2_internet"></label><input class="form_input" type="text" name="dns2" value="<% getInfo("wan-dns2"); %>" placeholder="请输入"/></div>
+			 					<div class="form-group pppoe"><label class="i18n" name="name_internet"></label><input class="form_input" type="text" name="pppUserName" value="<% getInfo("pppUserName"); %>" placeholder="请输入"/></div>
+			 					<div class="form-group pppoe"><label class="i18n" name="password_internet"></label><input class="form_input" type="password" name="pppPassword" value="<% getInfo("pppPassword"); %>" placeholder="请输入"/></div>
+			 					<!--<div class="form-group pppoe pppoe_button">
+			 						<button type="submit" value="Connect" name="pppConnect" onClick="return pppConnectClick(0)">连接</button>
+			 						<script>document.tcpip.pppConnect.value = tcpip_wan_conn;</script>
+			 						<button type="submit" value="Disconnect" name="pppDisconnect" onClick="return pppConnectClick(1)">断开连接</button>
+			 						<script>document.tcpip.pppDisconnect.value = tcpip_wan_disconn;</script>
+			 						<script type="text/javascript">
+										if ( <% getIndex("pppConnectStatus"); %> )
+											setPPPConnected();
+									</script>
+			 					</div>-->
+			 					<div class="form-group form-group-btn">
+			 						<!--<% getInfo("apply_direct_comment_start");%>-->
+			 						<button type="submit" value="Save & Apply" class="i18n internet_submit" name="save_apply" onClick="return saveChanges_wan2(document.tcpip_form,MultiPppoeEnable,dynamicWanIP)"></button>
+			 						<!--<% getInfo("apply_direct_comment_end");%>-->
+			 					</div>
+			 				</form>
+			 			</div>
+		 			</div>
+		 			<div class="progress">
+						<div class="wrapper">			
+							<div class="load-bar">   
+								<div class="load-bar-inner" data-loading="0"> <!--<span id="counter">98%</span>--> </div> 
+							</div>   
+							<p>应用配置重启中...</p>
+						</div>
+					</div>
+		 		</div>
+		
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+	    <script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				$(".type_select").change(function(){
+					var changevalue=$(this).find("option:selected").text();
+					if(changevalue=="static Ip"){
+						$(".static_ip").css("display","block");
+						$(".pppoe").css("display","none");
+						$(".DHCP").css("display","none");
+					}
+					if(changevalue=="DHCP"){
+						$(".static_ip").css("display","none");
+						$(".pppoe").css("display","none");
+						$(".DHCP").css("display","block");
+					}
+					if(changevalue=="PPPoE"){
+						$(".static_ip").css("display","none");
+						$(".pppoe").css("display","block");
+						$(".DHCP").css("display","none");
+					}
+				});
+				
+				var interval = setInterval(increment,100);
+				  var current = 0;
+				
+				  function increment(){
+				    current++;
+				    $('#counter').html(current+'%'); 
+				    if(current == 100) { current = 0; }
+				  }
+				
+				  $('.load-bar').mouseover(function(){
+				            clearInterval(interval);
+				  }).mouseout(function(){
+				      interval = setInterval(increment,100);
+				        });
+				var my_progress;
+				$(".internet_submit").click(function(){
+					$(".progress").css("display","block");			
+					my_progress=setInterval(setTime, 9190);
+				})
+				function setTime(){
+					$(".progress").css("display","none");	
+					clearInterval(my_progress);
+				}
+				
+			})
+			function check_web_access_port_valid()
+			{
+				if (wan_access_port_en){
+					if (document.tcpip.webWanAccess.checked){
+					   if (document.tcpip.webAccessPort.value=="") {
+							alert(tcpip_wan_port_empty);
+							document.tcpip.webAccessPort.focus();
+							return false;
+						  }
+			
+						  if ((validateKey( document.tcpip.webAccessPort.value ) == 0) ) {
+							alert(tcpip_wan_port_invalid);
+							document.tcpip.webAccessPort.focus();
+							return false;
+						  }
+						  d1 = getDigit(document.tcpip.webAccessPort.value, 1);
+						  if (d1 > 65535 || d1 < 1) {
+							alert(tcpip_wan_port_invalid_num);
+							document.tcpip.webAccessPort.focus();
+							return false;
+						  }	
+					}
+				}
+				return true;
+			}
+		</script>
+	</body>
+</html>

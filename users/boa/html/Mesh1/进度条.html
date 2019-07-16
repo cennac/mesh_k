@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="css/progress.css" />
+	</head>
+	<body>
+	<div class="progress">
+		<div class="wrapper">			
+			<div class="load-bar">   
+				<div class="load-bar-inner" data-loading="0"> <span id="counter">98%</span> </div> 
+			</div>   
+			<p>应用配置重启中...</p>
+		</div>
+	</div>
+		<script src="js/jquery.js"></script>
+		<script type="text/javascript">
+		$(function(){
+		$(".progress").css("display","block");
+		  var interval = setInterval(increment,100);
+		  var current = 0;
+		
+		  function increment(){
+		    current++;
+		    $('#counter').html(current+'%'); 
+		    if(current == 100) { current = 0; }
+		  }
+		
+		  $('.load-bar').mouseover(function(){
+		            clearInterval(interval);
+		  }).mouseout(function(){
+		      interval = setInterval(increment,100);
+		         });
+		
+		});
+		</script>
+
+
+</body>
+</html>

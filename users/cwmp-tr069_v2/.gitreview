@@ -1,0 +1,6 @@
+[gerrit]
+host=cn3sd8.sdlc.rd.realtek.com
+port=29418
+project=rlxlinux/users/cwmp
+defaultbranch=release/v3.4.14/cwmp-tr069_v2
+defaultremote=origin

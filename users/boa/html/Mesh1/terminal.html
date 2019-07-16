@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>		 
+		<!--<link rel="stylesheet" type="text/css" href="css/compiled/theme_styles.css"/>-->
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<script type="text/javascript" src="util_gw.js"> </script>
+	</head>
+	<body>
+		 <!--<div class="main-wrap">-->
+		 	<!--<div class="header">
+			 	<div class="header-wrap">
+			 		<div class="logo"><img class="logo_img" src="img/KSLINK.png"/></div>
+			 		<div class="logout">
+			 			<div class="languageC">
+			 				<select name="">
+			 					<option value="0">中文</option>
+			 					<option value="1">English</option>
+			 				</select>
+			 				<i class="fa fa-caret-down"></i>
+			 			</div>
+			 			<span class="separate">|</span>
+			 			<a href="#" class="log_logout">&nbsp;&nbsp;&nbsp;退出登录</a>
+			 		</div>
+			 	</div>
+			 	<div class="top-nav">
+					<ul class="nav nav-pills nav-justified">
+						<li><a href="home2.htm"><span>主页</span><img class="icon_1" src="img/home_nav.png"/></a></li>
+						<li><a href="internet.html"><span>网络设置</span><img class="icon_2" src="img/internet_nav.png"/></a></li>
+						<li><a href="wifiset.html"><span>WiFi设置</span><img class="icon_3" src="img/WiFi_nav.png"/></a></li>
+						<li class="active"><a href="terminal.html"><span>终端管理</span><img class="icon_4" src="img/terminal_nav.png"/></a></li>
+						<li><a href="more.html"><span>高级设置</span><img class="icon_5" src="img/more_nav.png"/></a></li>
+					</ul>
+				</div>
+			</div>
+		 	<div class="content-wrap">-->
+		 		<div class="main_content">	
+		 			<div class="terminal_content">
+		 				<div class="terminal_title"><span class="i18n" name="title_terminal1"></span></div>
+		 				<form action=/boafrm/formReflashClientTbl method=POST name="formClientTbl">
+							<div class="table-responsive table_content">								
+								<table class="table">
+									<thead>
+										<tr>
+											<th class="i18n" name="th_ipAddr_terminal"></th>
+											<th class="i18n" name="th_MacAddr_terminal"></th>
+											<th class="i18n" name="th_time_long"></th>
+											<!--<th>连接时长</th>-->
+										</tr>
+									</thead>
+									<tbody>
+										<% dhcpClientList(); %>
+										<!--<tr>
+											<td><div class="avatar"><img class="" src="img/phone.png"/></div></td>
+											<td>产品1</td>
+											<td>23/11/2013</td>
+											<td>待发货</td>
+										</tr>
+										<tr>
+											<td><div class="avatar"><img class="" src="img/phone.png"/></div></td>
+											<td>产品1</td>
+											<td>23/11/2013</td>
+											<td>待发货</td>
+										</tr>
+										<tr>
+											<td><div class="avatar"><img class="" src="img/phone.png"/></div></td>
+											<td>产品2</td>
+											<td>10/11/2013</td>
+											<td>发货中</td>
+										</tr>
+										<tr>
+											<td><div class="avatar"><img class="" src="img/phone.png"/></div></td>
+											<td>产品3</td>
+											<td>20/10/2013</td>
+											<td>待确认</td>
+										</tr>-->
+									</tbody>
+								</table>
+							</div>
+							
+						</form>
+						<div class="terminal_title"><span class="i18n" name="title_terminal2"></span></div>
+						<div class="table-responsive table_content">
+							<table class="table">
+								<thead>
+									<tr>
+										<th class="i18n" name="th_ipAddr_terminal"></th>
+										<th class="i18n" name="th_MacAddr_terminal"></th>
+										<th class="i18n" name="th_time_long"></th>
+									</tr>
+								</thead>
+								<tbody>
+									<% dhcpClientList(); %>
+									<!--<tr>
+										<td><div class="avatar"><img class="" src="img/phone.png"/></div></td>
+										<td>192.168.1.200</td>
+										<td>N7:28:H9:B7</td>
+										<td>2023</td>
+									</tr>
+									<tr>
+										<td><div class="avatar"><img class="" src="img/phone.png"/></div></td>
+										<td>192.168.1.200</td>
+										<td>N7:28:H9:B7</td>
+										<td>2023</td>
+									</tr>
+									<tr>
+										<td><div class="avatar"><img class="" src="img/phone.png"/></div></td>
+										<td>192.168.1.200</td>
+										<td>N7:28:H9:B7</td>
+										<td>2023</td>
+									</tr>
+									<tr>
+										<td><div class="avatar"><img class="" src="img/phone.png"/></div></td>
+										<td>192.168.1.200</td>
+										<td>N7:28:H9:B7</td>
+										<td>2023</td>
+									</tr>-->
+								</tbody>
+							</table>
+						</div>
+						<input type="hidden" value="/dhcptbl.htm" name="submit-url">
+						<div class="reflesh"><button  type="submit" value="Refresh" class="i18n" name="refresh"></button></div>
+					</div>
+		 		</div>
+		 	<!--</div>-->
+		 	<!--<div class="footer-wrap">
+		 		<p>深圳金信诺高新技术股份有限公司@copyright 2019</p>
+		 	</div>-->
+		 <!--</div>-->
+		
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+	</body>
+</html>

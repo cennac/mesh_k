@@ -1,0 +1,16 @@
+--- users/wsc/src/Makefile	2019-02-01 15:41:29.000000000 +0800
++++ users/wsc/src/Makefile	1970-01-01 08:00:00.000000000 +0800
+@@ -1,13 +0,0 @@
+-ifeq ($(wildcard $(DIR_LINUX)/.config),)
+-DIR_LINUX_KERNEL = $(DIR_ROOT)/linux-2.6.30
+-else
+-DIR_LINUX_KERNEL = $(DIR_LINUX)
+-endif
+-
+-WSCSRC = $(shell pwd)
+-
+-all:
+-
+-romfs:
+-	$(ROMFSINST) $(WSCSRC)/wscd /bin/wscd
+-	$(ROMFSINST) $(WSCSRC)/wscd.conf /etc/wscd.conf

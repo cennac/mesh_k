@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
+		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<script src="js/util_gw.js"></script>
+		<script src="js/util_qos.js"></script>
+		<script type="text/javascript">
+			var advanced_qos_enable='<%getIndex("advancedIpqosEnable")%>';
+		</script>
+	</head>
+	<body onload="Load_Setting();">
+		<div class="guest_net">
+			<form  action="/boafrm/formIpQoS" method="POST" name="formQosAdd">
+				<div class="form-group_smart" style="margin-bottom: 10px;">
+					<!--<label style="width: 50px;"></label>-->
+					<label class="i18n" name="title_smart"></label>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch" data-size="mini" name="enabled" value="ON" />
+					</div>
+				</div>
+				<div class="up_dowm">
+			        <input type="checkbox" name="automaticUplinkSpeed" onclick="updateLinkState(1)"><span class="i18n" name="AutoUplinkspeed_smart"></span>
+				</div>
+				<div class="form-group_smart"><label class="i18n" name="Uplinkspeed_smart"></label><input class="form_input" type="text" name="manualUplinkSpeed" value="<% getInfo("qosManualUplinkSpeed"); %>"/>Kbps</div>
+				<div class="up_dowm">
+			        <input type="checkbox" name="automaticDownlinkSpeed" <% getIndex("qosAutoDownlinkSpeed");%> onclick="updateLinkState(2)"><span class="i18n" name="AutoDownlinkspeed_smart"></span>
+				</div>
+				<div class="form-group_smart"><label class="i18n" name="Downlinkspeed_smart"></label><input class="form_input" type="text" name="manualDownlinkSpeed" value="<% getInfo("qosManualDownlinkSpeed"); %>"/>Kbps</div>
+				<div class="tips"><span class="i18n" name="tips_for_smart"></span></div>	
+				<div class="form-group form-group-btn">
+					<button type="submit" value="Save & Apply" name="save_apply" onclick="return addRuleClick()" class="i18n"></button>
+				</div>
+			</form>
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+		<script>
+			$(document).ready(function(){
+				//开关按钮
+				$('.checkbox_switch').bootstrapSwitch({
+					onText: "",
+					offText: "",
+					onColor: "success",
+					offColor: "info",
+					size: "small",
+					onSwitchChange: function(event, state) {
+						if (state == true) {
+							//关闭
+							disableTextField(document.formQosAdd.automaticUplinkSpeed);
+ 							disableTextField(document.formQosAdd.automaticDownlinkSpeed);
+ 							disableTextField(document.formQosAdd.manualUplinkSpeed);
+ 							disableTextField(document.formQosAdd.manualDownlinkSpeed);							
+						} else {
+							//打开
+ 							enableTextField(document.formQosAdd.automaticUplinkSpeed);
+ 							enableTextField(document.formQosAdd.automaticDownlinkSpeed);
+ 							if (document.formQosAdd.automaticUplinkSpeed.checked) {  	
+							 	disableTextField(document.formQosAdd.manualUplinkSpeed);
+							  }
+							  else {
+							 	enableTextField(document.formQosAdd.manualUplinkSpeed);
+							  } 
+							  if (document.formQosAdd.automaticDownlinkSpeed.checked) {  	
+							 	disableTextField(document.formQosAdd.manualDownlinkSpeed);
+							  }
+							  else {
+							 	enableTextField(document.formQosAdd.manualDownlinkSpeed);
+							  }
+						}
+					}
+	
+				})
+				
+				var switch_status=$('.checkbox_switch').bootstrapSwitch('state');
+			})
+			function Load_Setting()//页面初始化
+			{
+				if ( <% getIndex("qosEnabled"); %> ){
+					$('[name="enabled"]').bootstrapSwitch('state',false);
+				}else{
+					$('[name="enabled"]').bootstrapSwitch('state',true);
+				}
+				if ( <% getIndex("qosAutoUplinkSpeed"); %> ){
+					document.formQosAdd.automaticUplinkSpeed.checked = true;
+					document.formQosAdd.automaticDownlinkSpeed.checked=true;
+					disableTextField(document.formQosAdd.manualUplinkSpeed);
+ 					disableTextField(document.formQosAdd.manualDownlinkSpeed);
+				}else{
+					document.formQosAdd.automaticUplinkSpeed.checked = false;
+					document.formQosAdd.automaticDownlinkSpeed.checked=false;
+					enableTextField(document.formQosAdd.manualUplinkSpeed);
+ 					enableTextField(document.formQosAdd.manualDownlinkSpeed);
+				}
+					
+				
+			}
+			function updateLinkState(key){//自动上行下载选项
+				if(key==1){
+				  if (document.formQosAdd.automaticUplinkSpeed.checked) {  	
+				 	disableTextField(document.formQosAdd.manualUplinkSpeed);
+				  }
+				  else {
+				 	enableTextField(document.formQosAdd.manualUplinkSpeed);
+				  }
+				}else{ 
+				  if (document.formQosAdd.automaticDownlinkSpeed.checked) {  	
+				 	disableTextField(document.formQosAdd.manualDownlinkSpeed);
+				  }
+				  else {
+				 	enableTextField(document.formQosAdd.manualDownlinkSpeed);
+				  }
+				}
+			}
+			function addRuleClick()//保存
+			{
+			  if (!switch_status)
+			  	return true;
+			
+			  if (!document.formQosAdd.automaticUplinkSpeed.checked && (document.formQosAdd.manualUplinkSpeed.value=="" || document.formQosAdd.manualUplinkSpeed.value < 100)) {
+				alert(ip_qos_upspeed_empty);
+				document.formQosAdd.manualUplinkSpeed.focus();
+				return false;
+			  }
+			 
+			  if(!document.formQosAdd.automaticUplinkSpeed.checked && validateKey(document.formQosAdd.manualUplinkSpeed.value) == 0)
+			  {
+			  	alert(ip_qos_band_invalid);
+				document.formQosAdd.manualUplinkSpeed.focus();
+				return false;
+			  }
+			 
+			  if (!document.formQosAdd.automaticDownlinkSpeed.checked && (document.formQosAdd.manualDownlinkSpeed.value=="" || document.formQosAdd.manualDownlinkSpeed.value<100)) {
+				alert(ip_qos_downspeed_empty);
+				document.formQosAdd.manualDownlinkSpeed.focus();
+				return false;
+			  }
+			  
+			  if(!document.formQosAdd.automaticDownlinkSpeed.checked && validateKey(document.formQosAdd.manualDownlinkSpeed.value) == 0)
+			  {
+			  	alert(ip_qos_band_invalid);
+				document.formQosAdd.manualDownlinkSpeed.focus();
+				return false;
+			  }
+			   return true;
+			}
+		</script>
+	</body>
+</html>

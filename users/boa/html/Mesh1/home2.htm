@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
+		<link rel="stylesheet" href="css/bootstrap-switch.min.css" />
+		<!--<link rel="stylesheet" type="text/css" href="css/compiled/theme_styles.css"/>-->
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		
+		<script type="text/javascript">
+			var ssid_2g="<% getIndex("2G_ssid"); %>";
+			var ssid_5g="<% getIndex("5G_ssid"); %>";
+			var ssid_drv=new Array();
+  			var channel_drv=new Array();
+		</script>
+	</head>
+	<body style="overflow: hidden;">
+		 <div class="main-wrap">
+		 	<div class="header">
+			 	<div class="header-wrap">
+			 		<div class="logo"><img class="logo_img" src="img/KSLINK.png"/></div>
+			 		<div class="logout">
+			 			<div class="languageC">
+			 				<select id="language">
+			 					<option value="zh-CN">中文</option>
+			 					<option value="en">English</option>
+			 				</select>
+			 				<i class="fa fa-caret-down"></i>
+			 			</div>
+			 			<span class="separate">|</span>
+			 			<a href="#" class="log_logout i18n" name="logout">&nbsp;&nbsp;&nbsp;</a>
+			 		</div>
+			 	</div>
+			 	<div class="top-nav">
+					<ul class="nav nav-pills nav-justified">
+						<li class="active li_1" ><a href_val="index.html"><img class="icon_1" src="img/nav_icon_home@2x.png"/><span class="i18n" name="home_page"></span></a></li>
+						<li class="li_2"><a href_val="internet.html"><img class="icon_2" src="img/nav_icon_network@2x.png"/><span class="i18n" name="internet_page"></span></a></li>
+						<li class="li_3"><a href_val="wifiset.html"><img class="icon_3" src="img/nav_icon_wifi@2x.png"/><span class="i18n" name="wifi_page"></span></a></li>
+						<li class="li_4"><a href_val="terminal.html"><img class="icon_4" src="img/nav_icon_terminal@2x.png"/><span class="i18n" name="terminal_page"></span></a></li>
+						<li class="li_5"><a href_val="more.html"><img class="icon_5" src="img/nav_icon_manage@2x.png"/><span class="i18n" name="setting_page"></span></a></li>
+					</ul>
+				</div>
+			</div>
+		 	<div class="content-wrap">	
+		 		<iframe class="iframe_holder" src="index.html"></iframe>
+		 		
+		 	</div>
+		 	<div class="footer-wrap">
+		 		<p class="i18n" name="footer_introduce"></p>
+		 	</div>
+		 </div>
+		
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/jtopo.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
+	    <script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+		<script>
+			$(".ssid_2G").text(ssid_2g);
+			$(".ssid_5G").text(ssid_5g);
+		</script>
+		<script>
+			//**********设置iframe宽高***********
+			var top_height=$(".header").height();
+			var bottom_height=$("footer-wrap_home").height();
+			var content_height=window.innerHeight-top_height-bottom_height;			
+			$(".iframe_holder").height(content_height);
+			$(".iframe_holder").width(window.innerWidth);
+			//单击导航栏时设置iframe对应页面
+			var iframe_href;
+			$(".nav li").click(function() {
+				iframe_href = $(this).find("a").attr("href_val");
+				$(".iframe_holder").attr("src",iframe_href);
+				$(this).addClass("active");
+				$(this).siblings().removeClass("active");
+			});
+			
+		</script>
+	</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
+		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<script src="js/util_gw.js"></script>
+	</head>
+	<body>
+		<div class="guest_net dhcp">
+			<form action="/boafrm/formTcpipSetup" method="POST" name="tcpip">
+			<div class="form-group form_group_dhcp">
+				<label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="dhcp_dhcp"></label>
+				<select name="dhcp" onChange="dhcpChange(document.tcpip.dhcp.selectedIndex)">
+					 <%  getDHCPModeCombobox(); %> 
+						<!--<option value="" class="i18n" name="Disable_dhcp"></option>
+						<option value="" class="i18n" name="Client_dhcp"></option>
+						<option value="" class="i18n" name="Server_dhcp"></option>-->
+					</select>
+				<i class="fa fa-caret-down type_down"></i>
+			</div>
+			<div class="form-group form_group_dhcp"><label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="clientRange_dhcp"></label><input class="form_input_dhcp" type="text" name="dhcpRangeStart"  value="<% getInfo("dhcpRangeStart"); %>" />—<input class="form_input_dhcp" type="text" name="dhcpRangeEnd"  value="<% getInfo("dhcpRangeEnd"); %>" /></div>
+			<div class="form-group dhcp_server_btn">
+				<button type="button" value="Show Client" name="dhcpClientTbl" onClick="dhcpTblClick('/dhcptbl.htm')" class="i18n"></button>
+			</div>
+			<div class="form-group form_group_dhcp"><label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="leaseTime_dhcp"></label><input class="form_input" type="text" name="dhcpLeaseTime" value="<% getInfo("dhcpLeaseTime"); %>"/><span class="i18n" name="time_dhcp"></span></div>
+			<div class="form-group dhcp_server_btn">
+				<button  type="submit" value="Save & Apply" name="save_apply" onClick="return saveChanges()" class="i18n"></button>
+			</div>
+			<input type="hidden" value="/tcpiplan.htm" name="submit-url">
+			</form>
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+	     <script>
+		  	initialDhcp = document.tcpip.dhcp.selectedIndex;
+			dhcpChange(initialDhcp);
+		  </script>
+		<script>
+			var wlan_num =<% getIndex("show_wlan_num"); %> ;
+			var initialDhcp;
+			//dhcp模式
+			function dhcpChange(index)
+			{
+				var dF = document.tcpip;
+			  if ( index == 0 || index == 1) {
+				  disableTextField(document.tcpip.dhcpRangeStart);
+			   	  disableTextField(document.tcpip.dhcpRangeEnd);
+				  disableButton( document.tcpip.dhcpClientTbl );	  	  
+			  }
+			  else {
+			   	  enableTextField(document.tcpip.dhcpRangeStart);
+			   	  enableTextField(document.tcpip.dhcpRangeEnd);
+				  enableButton( document.tcpip.dhcpClientTbl );			   	  
+			  }
+			}
+			//show client
+			function dhcpTblClick(url) {
+				if ( document.tcpip.dhcp.selectedIndex == 2) {
+					openWindow(url, 'DHCPTbl',600, 400 );
+				}
+			}
+			//保存
+			function saveChanges()
+			{
+			  if ( document.tcpip.dhcp.selectedIndex == 2) {
+			
+				if(checkHostIPValid(document.tcpip.dhcpRangeStart,document.tcpip.lan_mask,tcpip_lan_start_ip)== false) 
+					return false;
+			
+				if ( !checkSubnet(document.tcpip.lan_ip.value,document.tcpip.lan_mask.value,document.tcpip.dhcpRangeStart.value)) {
+					alert(tcpip_lan_start_ip); alert(tcpip_lan_ip_alert);
+					document.tcpip.dhcpRangeStart.value = document.tcpip.dhcpRangeStart.defaultValue;
+					document.tcpip.dhcpRangeStart.focus();
+					return false;
+				}
+			
+				if(checkHostIPValid(document.tcpip.dhcpRangeEnd,document.tcpip.lan_mask,tcpip_lan_end_ip)== false) 
+						return false;
+			
+				if ( !checkSubnet(document.tcpip.lan_ip.value,document.tcpip.lan_mask.value,document.tcpip.dhcpRangeEnd.value)) {
+					alert(tcpip_lan_end_ip); alert(tcpip_lan_ip_alert);
+					document.tcpip.dhcpRangeEnd.value = document.tcpip.dhcpRangeEnd.defaultValue;
+					document.tcpip.dhcpRangeEnd.focus();
+					return false;
+				}
+			        if ( !checkClientRange(document.tcpip.dhcpRangeStart.value,document.tcpip.dhcpRangeEnd.value) ) {
+					alert(tcpip_lan_invalid_rang);
+					document.tcpip.dhcpRangeStart.focus();
+					return false;
+			        }
+			  }
+			
+			  return true;
+			}
+			function checkClientRange(start,end)
+		{
+		  start_d = getDigit(start,4);
+		  start_d += getDigit(start,3)*256;
+		  start_d += getDigit(start,2)*256;
+		  start_d += getDigit(start,1)*256;
+		
+		  end_d = getDigit(end,4);
+		  end_d += getDigit(end,3)*256;
+		  end_d += getDigit(end,2)*256;
+		  end_d += getDigit(end,1)*256;
+		
+		  if ( start_d < end_d )
+			return true;
+		
+		  return false;
+		}
+		</script>
+		
+	</body>
+</html>

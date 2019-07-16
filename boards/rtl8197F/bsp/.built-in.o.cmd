@@ -1,0 +1,1 @@
+cmd_arch/mips-ori/bsp/built-in.o :=  msdk-linux-ld  -m elf32ltsmip   -r -o arch/mips-ori/bsp/built-in.o arch/mips-ori/bsp/prom.o arch/mips-ori/bsp/setup.o arch/mips-ori/bsp/irq.o arch/mips-ori/bsp/timer.o arch/mips-ori/bsp/serial.o arch/mips-ori/bsp/platform.o arch/mips-ori/bsp/clk.o arch/mips-ori/bsp/pci.o arch/mips-ori/bsp/mtd.o arch/mips-ori/bsp/gpio.o 
