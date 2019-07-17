@@ -404,6 +404,7 @@ ifeq ($(CONFIG_APP_PHP), y)
 app_$(CONFIG_APP_PHP)                   += php-5.6.19
 endif
 app_$(CONFIG_REALTEK_CRYPTO_API) += crypto-api
+app_$(CONFIG_APP_SCHEDULE) += schedule
 # libraries
 
 lib_$(CONFIG_APP_HOSTAPD_HCM)		+= inband_lib

@@ -1139,6 +1139,11 @@ config APP_WSC
 	select APP_MINI_UPNP
 	help
 	  The wireless WPS daemon
+config APP_SCHEDULE
+	bool "schedule function"
+	help
+	   schedule process 
+
 # endmenu
 
 
