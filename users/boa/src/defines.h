@@ -27,9 +27,11 @@
 
 #define SUPPORT_ASP
 //#define SUPPORT_URL_LOGIN
+#define LOGIN_URL
+
 
 #define NEW_POST
-#define USE_AUTH
+//#define USE_AUTH
 #define CSRF_SECURITY_PATCH
 
 /***** Change this, or use -c on the command line to specify it *****/

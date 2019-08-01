@@ -40,6 +40,13 @@ var execI18n = function(){
      */
     if ($.cookie("userLanguage")) {
         i18nLanguage = $.cookie("userLanguage");
+        if(i18nLanguage=="en"){
+        	$(".logo_img").attr("src","img/ks_link.png");
+        	$(".login_logo img").attr("src","img/ks_link.png");
+        }else{
+        	$(".logo_img").attr("src","img/KSLINK.png");
+        	$(".login_logo img").attr("src","img/KSLINK.png");
+        }
     } else {
         // 获取浏览器语言
         var navLanguage = getNavLanguage();
@@ -48,6 +55,39 @@ var execI18n = function(){
             var charSize = $.inArray(navLanguage, webLanguage);
             if (charSize > -1) {
                 i18nLanguage = navLanguage;
+                if(navLanguage=="en"){
+		        	$(".logo_img").attr("src","img/ks_link.png");
+		        	$(".login_logo img").attr("src","img/ks_link.png");
+		        }else{
+		        	$(".logo_img").attr("src","img/KSLINK.png");
+		        	$(".login_logo img").attr("src","img/KSLINK.png");
+		        }
+		        
+		        //execI18n();
+		        //将系统语言设置为浏览器对应的语言
+//		        var insertEle = $(".i18n");
+//	            insertEle.each(function() {
+//	                // 根据i18n元素的 name 获取内容写入
+//	                $(this).html($.i18n.prop($(this).attr('name')));
+//	            });
+//	
+//	            var insertInputEle = $(".i18n-input");
+//	            insertInputEle.each(function() {
+//	                var selectAttr = $(this).attr('selectattr');
+//	                if (!selectAttr) {
+//	                    selectAttr = "value";
+//	                }
+//	                $(this).attr(selectAttr, $.i18n.prop($(this).attr('selectname')));
+//	                var guest_net_text=$(this).attr('selectname');
+//	                if(guest_net_text.indexOf("guest_net")!=-1){
+//	                	$(this).text($.i18n.prop($(this).attr('selectname')));
+//	                }
+//	                if($(".uploadurl").text()!=""||$(".uploadurl").text()!=undefined||$(".uploadurl").text()!=null){
+//						$(".Unselected_file").text($.i18n.prop($(this).attr('selectname')));
+//					}else{
+//						$(".Unselected_file").text("");
+//					}
+//	            });
                 // 存到缓存中
                 $.cookie("userLanguage",navLanguage,{
                     expires:30
@@ -86,6 +126,15 @@ var execI18n = function(){
                     selectAttr = "value";
                 }
                 $(this).attr(selectAttr, $.i18n.prop($(this).attr('selectname')));
+                var guest_net_text=$(this).attr('selectname');
+                if(guest_net_text.indexOf("guest_net")!=-1){
+                	$(this).text($.i18n.prop($(this).attr('selectname')));
+                }
+                if($(".uploadurl").text()!=""||$(".uploadurl").text()!=undefined||$(".uploadurl").text()!=null){
+					$(".Unselected_file").text($.i18n.prop($(this).attr('selectname')));
+				}else{
+					$(".Unselected_file").text("");
+				}
             });
         }
     });
@@ -102,9 +151,27 @@ $(function(){
     /* 选择语言 */
     $("#language").bind('change', function() {
         var language = $(this).children('option:selected').val();
+        if(language=="en"){
+        	$(".logo_img").attr("src","img/ks_link.png");
+        	$(".login_logo img").attr("src","img/ks_link.png");
+        }else{
+        	$(".logo_img").attr("src","img/KSLINK.png");
+        	$(".login_logo img").attr("src","img/KSLINK.png");
+        }
         $.cookie("userLanguage",language,{
             expires:30
         });
+        
+//      function addClass_name(){
+	        $(".nav li").each(function(){
+	        	var current_list=$(this).attr("class");
+	        	if(current_list.indexOf("active")!=-1){
+	        		var add_class_name=$(this).attr("class");	        		
+//	        		alert(1111);
+	        	}
+	        })
+//      }
+        //setInterval("addClass_name()",10);
         location.reload();
     });
 });

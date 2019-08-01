@@ -15,13 +15,12 @@
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 		<script src="js/util_gw.js"></script>
 		<script src="js/util_qos.js"></script>
-		<script type="text/javascript">
-			var advanced_qos_enable='<%getIndex("advancedIpqosEnable")%>';
-		</script>
 	</head>
 	<body onload="Load_Setting();">
 		<div class="guest_net">
 			<form  action="/boafrm/formIpQoS" method="POST" name="formQosAdd">
+				<input type=hidden name="lan_mask" value="<% getInfo("mask-rom"); %>">
+				<!--<input type="hidden" value="/smartQos.html" name="submit-url">-->
 				<div class="form-group_smart" style="margin-bottom: 10px;">
 					<!--<label style="width: 50px;"></label>-->
 					<label class="i18n" name="title_smart"></label>
@@ -30,17 +29,37 @@
 					</div>
 				</div>
 				<div class="up_dowm">
-			        <input type="checkbox" name="automaticUplinkSpeed" onclick="updateLinkState(1)"><span class="i18n" name="AutoUplinkspeed_smart"></span>
+			        <input type="checkbox" name="automaticUplinkSpeed" value="ON" onclick="updateLinkState(1)"><span class="i18n" name="AutoUplinkspeed_smart"></span>
 				</div>
 				<div class="form-group_smart"><label class="i18n" name="Uplinkspeed_smart"></label><input class="form_input" type="text" name="manualUplinkSpeed" value="<% getInfo("qosManualUplinkSpeed"); %>"/>Kbps</div>
 				<div class="up_dowm">
-			        <input type="checkbox" name="automaticDownlinkSpeed" <% getIndex("qosAutoDownlinkSpeed");%> onclick="updateLinkState(2)"><span class="i18n" name="AutoDownlinkspeed_smart"></span>
+			        <input type="checkbox" name="automaticDownlinkSpeed" value="ON" <% getIndex("qosAutoDownlinkSpeed");%> onclick="updateLinkState(2)"><span class="i18n" name="AutoDownlinkspeed_smart"></span>
 				</div>
 				<div class="form-group_smart"><label class="i18n" name="Downlinkspeed_smart"></label><input class="form_input" type="text" name="manualDownlinkSpeed" value="<% getInfo("qosManualDownlinkSpeed"); %>"/>Kbps</div>
-				<div class="tips"><span class="i18n" name="tips_for_smart"></span></div>	
-				<div class="form-group form-group-btn">
-					<button type="submit" value="Save & Apply" name="save_apply" onclick="return addRuleClick()" class="i18n"></button>
+				<div class="tips"><span class="i18n" name="tips_for_smart"></span></div>
+				<div style="display: none;">
+					<select name="ipversion">
+				    		<option select value="0">ipv4</option>
+				       		</select>
+					<select name="protocol">
+				    		<option select value="0">ip_qos_proto_both</option>
+				    		<option value="1">TCP</option>
+				    		<option value="2">UDP</option>
+				    		</select>
+					<select size="1" name="mode">
+				      <option selected value="1">ip_qos_quarant_minband</option>
+				      	<option value="2">ip_qos_restrict_maxband</option>
+				      </select>
+				<input type="text" name="bandwidth" size="8">
+				<input type="text" name="bandwidth_downlink" size="8">
 				</div>
+				<div class="form-group form-group-btn">
+					<% getInfo("apply_direct_comment_start");%>
+					<button type="submit" value="Save & Apply" name="save_apply" onclick="return addRuleClick()" class="i18n"></button>
+					<input type="hidden" value="1" name="addQosFlag">
+					<% getInfo("apply_direct_comment_end");%>
+				</div>
+				
 			</form>
 		</div>
 		<script src="js/jquery.js"></script>
@@ -51,6 +70,7 @@
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
 		<script>
+			var advanced_qos_enable=<%getIndex("advancedIpqosEnable")%>;
 			$(document).ready(function(){
 				//开关按钮
 				$('.checkbox_switch').bootstrapSwitch({
@@ -61,52 +81,67 @@
 					size: "small",
 					onSwitchChange: function(event, state) {
 						if (state == true) {
-							//关闭
-							disableTextField(document.formQosAdd.automaticUplinkSpeed);
- 							disableTextField(document.formQosAdd.automaticDownlinkSpeed);
- 							disableTextField(document.formQosAdd.manualUplinkSpeed);
- 							disableTextField(document.formQosAdd.manualDownlinkSpeed);							
-						} else {
 							//打开
- 							enableTextField(document.formQosAdd.automaticUplinkSpeed);
+							enableTextField(document.formQosAdd.automaticUplinkSpeed);
  							enableTextField(document.formQosAdd.automaticDownlinkSpeed);
  							if (document.formQosAdd.automaticUplinkSpeed.checked) {  	
 							 	disableTextField(document.formQosAdd.manualUplinkSpeed);
+							 	document.formQosAdd.manualUplinkSpeed.value.visible=false;
 							  }
 							  else {
 							 	enableTextField(document.formQosAdd.manualUplinkSpeed);
+							 	document.formQosAdd.manualUplinkSpeed.value.visible=true;
 							  } 
 							  if (document.formQosAdd.automaticDownlinkSpeed.checked) {  	
 							 	disableTextField(document.formQosAdd.manualDownlinkSpeed);
+							 	document.formQosAdd.manualDownlinkSpeed.value.visible=false;
 							  }
 							  else {
 							 	enableTextField(document.formQosAdd.manualDownlinkSpeed);
-							  }
+							 	document.formQosAdd.manualDownlinkSpeed.value.visible=true;
+							  }													
+						} else {							
+ 							//关闭
+							disableTextField(document.formQosAdd.automaticUplinkSpeed);
+ 							disableTextField(document.formQosAdd.automaticDownlinkSpeed);
+ 							disableTextField(document.formQosAdd.manualUplinkSpeed);
+ 							disableTextField(document.formQosAdd.manualDownlinkSpeed);	
 						}
 					}
 	
 				})
 				
-				var switch_status=$('.checkbox_switch').bootstrapSwitch('state');
+//				var switch_status=$('.checkbox_switch').bootstrapSwitch('state');
 			})
 			function Load_Setting()//页面初始化
 			{
 				if ( <% getIndex("qosEnabled"); %> ){
-					$('[name="enabled"]').bootstrapSwitch('state',false);
-				}else{
-					$('[name="enabled"]').bootstrapSwitch('state',true);
+					$('[name="enabled"]').bootstrapSwitch('state', true);
+					enableTextField(document.formQosAdd.automaticUplinkSpeed);
+					enableTextField(document.formQosAdd.automaticDownlinkSpeed);
+					if(document.formQosAdd.automaticUplinkSpeed.checked) {
+						disableTextField(document.formQosAdd.manualUplinkSpeed);
+						document.formQosAdd.manualUplinkSpeed.value.visible = "false";
+					} else {
+						enableTextField(document.formQosAdd.manualUplinkSpeed);
+						document.formQosAdd.manualUplinkSpeed.value.visible = "true";
+					}
+					if(document.formQosAdd.automaticDownlinkSpeed.checked) {
+						disableTextField(document.formQosAdd.manualDownlinkSpeed);
+						document.formQosAdd.manualDownlinkSpeed.value.visible = "false";
+					} else {
+						enableTextField(document.formQosAdd.manualDownlinkSpeed);
+						document.formQosAdd.manualDownlinkSpeed.value.visible = "true";
+					}
+					} else {
+						$('[name="enabled"]').bootstrapSwitch('state',false);
+						disableTextField(document.formQosAdd.automaticUplinkSpeed);
+	 					disableTextField(document.formQosAdd.automaticDownlinkSpeed);
+	 					disableTextField(document.formQosAdd.manualUplinkSpeed);
+	 					disableTextField(document.formQosAdd.manualDownlinkSpeed);
 				}
-				if ( <% getIndex("qosAutoUplinkSpeed"); %> ){
-					document.formQosAdd.automaticUplinkSpeed.checked = true;
-					document.formQosAdd.automaticDownlinkSpeed.checked=true;
-					disableTextField(document.formQosAdd.manualUplinkSpeed);
- 					disableTextField(document.formQosAdd.manualDownlinkSpeed);
-				}else{
-					document.formQosAdd.automaticUplinkSpeed.checked = false;
-					document.formQosAdd.automaticDownlinkSpeed.checked=false;
-					enableTextField(document.formQosAdd.manualUplinkSpeed);
- 					enableTextField(document.formQosAdd.manualDownlinkSpeed);
-				}
+				if ( <% getIndex("qosAutoUplinkSpeed"); %> )
+				document.formQosAdd.automaticUplinkSpeed.checked = true;
 					
 				
 			}
@@ -127,9 +162,9 @@
 				  }
 				}
 			}
-			function addRuleClick()//保存
+			function addRuleClick()
 			{
-			  if (!switch_status)
+			  if (!document.formQosAdd.enabled.checked)
 			  	return true;
 			
 			  if (!document.formQosAdd.automaticUplinkSpeed.checked && (document.formQosAdd.manualUplinkSpeed.value=="" || document.formQosAdd.manualUplinkSpeed.value < 100)) {
@@ -157,6 +192,33 @@
 				document.formQosAdd.manualDownlinkSpeed.focus();
 				return false;
 			  }
+			
+			  
+			  if (document.formQosAdd.bandwidth.value!="") {
+			  	if ( validateKey( document.formQosAdd.bandwidth.value ) == 0 ) {
+					alert(ip_qos_band_invalid);
+					document.formQosAdd.bandwidth.focus();
+					return false;
+			  	}
+			   }
+			   
+			   if (document.formQosAdd.bandwidth_downlink.value!="") {
+			  	if ( validateKey( document.formQosAdd.bandwidth_downlink.value ) == 0 ) {
+					alert(ip_qos_band_invalid);
+					document.formQosAdd.bandwidth_downlink.focus();
+					return false;
+			  	}
+			   }
+			   if(advanced_qos_enable)
+			   {
+			   		with(document.formQosAdd)
+			   		{
+						if(phyport.value && bandwidth.value && !checkFieldDigitRange(phyport,0,3,ip_qos_up_phyport_invalid))
+							return false;
+						if(phyport.value && bandwidth_downlink.value && !checkFieldDigitRange(phyport,4,4,ip_qos_down_phyport_invalid))
+			  				return false;
+			   		}
+			   }
 			   return true;
 			}
 		</script>

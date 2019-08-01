@@ -16,10 +16,13 @@
 	</head>
 	<body>
 		<div class="guest_net">
-			<div class="form-group_smart"><label class="i18n" name="sn_addnode"></label><input class="form_input" type="text" placeholder="" /></div>
-			<div class="form-group form-group-btn node_btn">
-				<button type="submit" value="Save" name="addnode" class="i18n"></button>
-			</div>
+			<form action="" method="post" name="addnode_form">				
+				<div class="form-group_smart"><label class="i18n" name="sn_addnode"></label><input class="form_input" type="text" id="snpassword" placeholder="" onkeyup="addCheck()"/></div>
+				<div class="form-group form-group-btn node_btn">
+					<button type="submit" value="Save" name="addnode" class="i18n"></button>
+				</div>
+			</form>
+			
 		</div>
 		<script src="js/jquery.js"></script>
 		<script src="js/bootstrap.js"></script>
@@ -34,6 +37,21 @@
 				
 				
 			})
+			document.addnode_form.addnode.disabled=false;
+			function addCheck(){
+				if(!getValue("snpassword").match(/[A-Za-z0-9]+$/)){
+					alert("请输入数字或字母！");
+					return false;
+				}
+				if(getValue("snpassword").length>21){
+					alert("SN码位数不正确");
+					return false;
+				}
+				document.addnode_form.addnode.disabled=true;
+			}
+			function getValue(id) { 
+			 	return document.getElementById(id).value; 		        
+		   	}
 		</script>
 	</body>
 </html>

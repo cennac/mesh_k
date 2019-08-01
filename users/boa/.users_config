@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # RLX Linux builder
-# Mon Jun 24 18:45:50 2019
+# Fri Jul 26 18:08:21 2019
 #
 
 #
@@ -189,13 +189,15 @@ CONFIG_APP_UPDATEDD=y
 # CONFIG_APP_WEAVE is not set
 CONFIG_APP_WIRELESSTOOLS=y
 CONFIG_APP_WSC=y
+CONFIG_APP_SCHEDULE=y
 
 #
 # Libraries Settings
 #
 # CONFIG_APP_FLEX is not set
 # CONFIG_LIB_FUSE is not set
-# CONFIG_LIB_LIBPCAP is not set
+CONFIG_LIB_LIBPCAP=y
+CONFIG_APP_PCAP=y
 # CONFIG_LIB_PNG is not set
 # CONFIG_LIB_Z is not set
 CONFIG_LIB_XZ=y

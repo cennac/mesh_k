@@ -21,6 +21,7 @@
 #include "apmib.h"
 #include "apform.h"
 #include "utility.h"
+#include "deviceProcIf.h"
 
 #define FW_VERSION	fwVersion
 
@@ -848,6 +849,24 @@ int getInfo(request *wp, int argc, char **argv)
 
 		return req_format_write(wp, "%dday:%dh:%dm:%ds",
 							day, hr, mn, sec);
+	}
+	else if(( !strcmp(name, "wanUplinkRate"))||( !strcmp(name, "wanDownlinkRate"))) {
+		struct ifstatRate wanRate;
+        wanRate.ifname="eth1";
+	    wanRate.rxRate=0;
+		wanRate.txRate=0;
+		getProcIfData(&wanRate);
+		printf("%s:--------->%d:  uplinkRate=%0.5lf  downlink=%0.5lf",__FUNCTION__,__LINE__,wanRate.txRate,wanRate.rxRate);
+		if( !strcmp(name, "wanUplinkRate"))
+		{
+		  return req_format_write(wp, "%0.5lf  Mbps",wanRate.rxRate);
+		}
+		else if( !strcmp(name, "wanDownlinkRate"))
+		{
+		 return req_format_write(wp, "%0.5lf Mbps",wanRate.txRate);
+		}
+
+		
 	}
 	else if( !strcmp(name, "smtpclient_enable")) {
 		#ifdef  CONFIG_APP_SMTP_CLIENT
@@ -3364,6 +3383,12 @@ return req_format_write(wp, "menu.makeLastSubmenu(dynamic_routing);");
                         return -1;
                 return req_format_write(wp, "%s", buffer);
 	}
+	else if ( !strcmp(name, "userPassword")) {
+		buffer[0]='\0';
+		if ( !apmib_get(MIB_USER_PASSWORD,  (void *)buffer) )
+			return -1;
+		return req_format_write(wp, "%s", buffer);
+	}
 
 #ifdef WLAN_EASY_CONFIG
 	else if ( !strcmp(name, "autoCfgAlgReq")) {
@@ -5688,7 +5713,7 @@ else if(!strcmp(argv[0],"caCertExist"))
 #if defined(HTTP_FILE_SERVER_SUPPORTED)
 		req_format_write(wp, "http_files.htm");
 #else
-		req_format_write(wp, "home.htm");
+		req_format_write(wp, WEB_PAGE_HOME);
 #endif
 		return 0;
 	}

@@ -13,28 +13,40 @@
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<script src="js/util_gw.js"></script>
 	</head>
 	<body>
 		<div class="guest_net_parent">
+			<form method="post" action="boafrm/formUpload" enctype="multipart/form-data" name="upload">
 			<div class="softup_content">
-				<div class="test"><button class="test_new i18n" name="test_new_fllow"></button></div>
+				<div class="test"><span class="test_new i18n" name="test_new_fllow"></span></div>
 				<div class="tips"><p class="i18n" name="tips_for_softwareup"></p></div>
 				<div class="soft_up_selectversion">
-					<div class="form-group_smart"><label class="i18n" name="version_softwareup"></label><input type="text" /></div>
-					<div class="form-group_smart"><label class="i18n" name="versionLocal_softwareup"></label><input type="file" class="fileupload"/></div>
+					<div class="form-group_smart"><label class="i18n" name="version_softwareup"></label><input type="text" value="<% getInfo("fwVersion"); %>"/></div>
+					<div class="form-group_smart"><label class="i18n" name="versionLocal_softwareup"></label>
+						<input type="file" name="binary" id="file" style="display:none">
+						<div class="input-append">  
+						   <a class="btn btn-info i18n" onclick="$('input[id=file]').click();" name="fileupload_software" style="background-color: #89CEED;border-color: #89CEED;border-radius: 0;">
+						   	<i class="icon-folder-open-alt"></i> 
+						   </a>
+						   <span id="uploadurl" class="input-large" ></span>
+						</div><span class="i18n" name="Unselected_file" id="Unselected_file"></span>
+			        </div>
 					<!--<div class="form-group_smart tips_for_up_before"><div class="tips_for_up i18n" name="tips_for_up"></div></div>-->
-					<div class="form-group_smart"><button class="fileupload_button i18n" name="commit"></button><button class="fileupload_button i18n" name="reset"></button></div>
+					<div class="form-group_smart"><button class="fileupload_button i18n" onclick="sendClicked(this.form)" type="button" value="Upload" name="send"></button><button class="fileupload_button i18n" type="reset" value="Reset" name="reset"></button></div>
 				</div>
 			</div>
+			<input type="hidden" value="/upload.htm" name="submit-url">
+			</form>
 			<hr style="margin: 50px 0;"/>
 			<div class="softup_content">
-				<div class="test"><button class="test_new i18n" name="test_new_zhu"></button></div>
+				<div class="test"><span class="test_new i18n" name="test_new_zhu"></span></div>
 				<div class="tips"><p class="i18n" name="tips_for_softwareup2"></p></div>
 				<div class="soft_up_selectversion">
 					<div class="form-group_smart"><label class="i18n" name="version_softwareup"></label><input type="text" /></div>
-					<div class="form-group_smart"><label class="i18n" name="versionLocal_softwareup"></label><input type="file" class="fileupload"/></div>
+					<div class="form-group_smart"><label class="i18n" name="versionLocal_softwareup"></label><input type="file" class="fileupload" class="i18n-input" selectname="fileupload_name"/></div>
 					<!--<div class="form-group_smart tips_for_up_before"><div class="tips_for_up i18n" name="tips_for_up"></div></div>-->
-					<div class="form-group_smart"><button class="fileupload_button i18n" name="commit"></button><button class="fileupload_button i18n" name="reset"></button></div>
+					<div class="form-group_smart"><button class="fileupload_button i18n" onclick="" type="button" value="Upload" name="send"></button><button class="fileupload_button i18n" type="reset" value="Reset" name="reset"></button></div>
 				</div>
 			</div>
 		</div>
@@ -45,10 +57,55 @@
 	    <!-- 加载语言包文件 -->
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
-		<script>
-			$(document).ready(function(){
-				
-			})
+	    <script type="text/javascript">
+		$('input[id=file]').change(function() {
+			var path = $(this).val();			
+			path = path.split('\\');		
+			path = path[path.length-1];
+			$('#uploadurl').text(path);
+			alert($("#uploadurl").text());
+			if($("#uploadurl").text()!=""||$("#uploadurl").text()!=undefined||$("#uploadurl").text()!=null){
+					$("#Unselected_file").text("");
+				}
+		});
+			var MWJ_progBar = 0;
+			var time=0;
+			var delay_time=1000;
+			var loop_num=0;
+			var usb_update_img_enabled=<%getIndex("usb_update_img_enabled");%>;
+			var firmware_upgrade_acs_managed = <% getIndex("firmware_acs_managed"); %>;
+			
+			function getFileType(str)
+			{
+				if(str.value == "")
+					return;
+				var name = str.split(".");
+				var type = name[name.length-1];
+				alert(type);
+				return type;
+			}
+			function sendClicked(F)
+			{
+			  if(firmware_upgrade_acs_managed == 1)
+			  {
+			      document.upload.binary.focus();
+			      alert(upload_cannot_upgrade);
+			      return false;
+			  }
+			  if(document.upload.binary.value == ""){
+			      	document.upload.binary.focus();
+			  	alert(upload_send_file_empty);
+			  	return false;
+			  }
+			  
+			  var fileType = getFileType(document.upload.binary.value);
+			  if(fileType != "bin"){      	
+			  	document.upload.binary.focus();
+			  	alert(upload_invalid_format);
+			  	return false;
+			  }
+			  F.submit();  
+			}
 		</script>
 	</body>
 </html>

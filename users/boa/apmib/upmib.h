@@ -57,6 +57,7 @@ UPMIB_T new_mib[] = {
 	{MIB_WLAN_MFIWAC_CONFIGURED,           "DEF_WLAN0_MFIWAC_CONFIGURED",              "0"},
 	{MIB_WLAN_MFIWAC_CONFIGURED,           "WLAN0_MFIWAC_CONFIGURED",              "0"},
 #endif
+	{MIB_FIRST_LOGIN, "FIRST_LOGIN", "false"},
 	{0}
 };
 

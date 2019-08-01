@@ -23,14 +23,15 @@
 					<input type="checkbox" class="checkbox_switch" data-size="mini" name="status" />
 				</div>
 			</div>
-			<div class="form-group_smart"><label class="i18n" name="wifiname_guest"></label><input class="form_input" type="text" placeholder="" /></div>
-			<div class="form-group_smart"><label class="i18n" name="wifipassword_guest"></label><input class="form_input" type="text" placeholder="" /></div>
-			<div class="form-group-self ">
+			<div class="form-group_smart hide_msg"><label class="i18n" name="wifiname_guest"></label><input class="form_input" type="text" placeholder="" /></div>
+			<div class="form-group_smart hide_msg"><label class="i18n" name="wifipassword_guest"></label><input class="form_input" type="text" placeholder="" /></div>
+			<div class="form-group-self hide_msg">
 				<label class="guest_renzheng i18n" name="renzheng_guest"></label>
 				<!--<div class="radio_group">-->
-				<span style="width: 60px"><input type="radio" name="optionsRadios3" class="i18n">4小时</span>
-				<span style="width: 60px"><input type="radio" name="optionsRadios3" checked class="i18n">8小时</span>
-				<span style="width: 80px"><input type="radio" name="optionsRadios3"  class="i18n">一直有效</span>
+				<!--<span style="width: 60px"></span>-->
+				<div style="display: inline-block;"><input type="radio" name="optionsRadios3"><span class="i18n-input" selectname="guest_net_4"></span></div>
+				<div style="display: inline-block;"><input type="radio" name="optionsRadios3"><span class="i18n-input" selectname="guest_net_8"></span></div>
+				<div style="display: inline-block;"><input type="radio" name="optionsRadios3"><span class="i18n-input" selectname="guest_net_long"></span></div>
 				<!--</div>-->
 			</div>
 		</div>
@@ -47,14 +48,14 @@
 				$('[name="status"]').bootstrapSwitch({
 					onText: "",
 					offText: "",
-					onColor: "success",
-					offColor: "info",
+					onColor: "info",
+					offColor: "success",
 					size: "small",
 					onSwitchChange: function(event, state) {
 						if (state == true) {
-	//						alert('已打开');
+							$(".hide_msg").css("display","block");
 						} else {
-	//						alert('已关闭');
+							$(".hide_msg").css("display","none");
 						}
 					}
 	

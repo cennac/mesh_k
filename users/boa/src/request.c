@@ -1000,9 +1000,11 @@ void process_requests(int server_sock)
 				//brad add
                 //printf("[%s:%d]isFWUPGRADE=%d, current=%x, current->request_uri=%s\n" ,__FUNCTION__, __LINE__, isFWUPGRADE, current, current->request_uri);
 #ifdef BOA_WITH_SSL
-                if(isFWUPGRADE == 1 && (!strcmp(current->request_uri,"/boafrm/formUpload")) && fwInProgress == 0) 
+                //if(isFWUPGRADE == 1 && (!strcmp(current->request_uri,"/boafrm/formUpload")) && fwInProgress == 0)
+                if(isFWUPGRADE == 1 && (strstr(current->request_uri,"/boafrm/formUpload") != NULL) && fwInProgress == 0)                  
 #else
-                if(isFWUPGRADE == 1 && (!strcmp(current->request_uri,"/boafrm/formUpload"))) 
+                //if(isFWUPGRADE == 1 && (!strcmp(current->request_uri,"/boafrm/formUpload"))) 
+                if(isFWUPGRADE == 1 && (strstr(current->request_uri,"/boafrm/formUpload") != NULL)) 
 #endif
                 {
 					firmware_len= current->upload_len;   //assign upload length
@@ -1641,13 +1643,36 @@ int process_header_end(request * req)
 			webClientStatus[idx].status=TOBE_LOGIN;
 #endif
 			send_r_unauthorized(req, host_name);
-			return 0;
+            return 0;
 		}
 	}//end strcmp(user_name, "") || strcmp(user_password, "")
 	
 }
 #endif
 	//-------------------------
+
+#ifdef LOGIN_URL
+
+                if((is_valid_user(req) != 1) && (strcmp(req->request_uri, WEB_PAGE_LOGIN) != 0))
+                {
+                    if(!(req->request_uri && req->header_referer && strstr(req->header_referer, WEB_PAGE_LOGIN))) //not login page request
+                    {
+//                        if(strstr(req->header_referer, "formLogin")   //not login err return
+//    				    && (strncmp(req->request_uri,"/util_gw.js", strlen("/util_gw.js"))==0 
+//    				        || strncmp(req->request_uri,"/style.css", strlen("/style.css"))==0 
+//    				        || strncmp(req->request_uri,"/language_", strlen("/language_"))==0))
+//                        {
+//    					    ;
+//    				    }
+//                        else
+//                        {
+                            send_redirect_perm(req, (WEB_PAGE_LOGIN));
+                            return 0;
+//                        }
+                    }
+                }
+
+#endif
 
 	if (translate_uri(req) == 0) { /* unescape, parse uri */
 		/* errors already logged */

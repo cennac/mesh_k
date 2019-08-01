@@ -22,8 +22,7 @@ em,i { font-style:normal;}
 .tr { text-align:right}
 .pr { position:relative;}
 
-select option { color: #666; height:30px;} 
-select option:hover { background: #f9f9f9;} 
+select option { color: #000; height:30px;} 
 
 
 

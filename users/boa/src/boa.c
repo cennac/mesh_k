@@ -74,12 +74,14 @@ static void drop_privs(void);
 
 static int sock_opt = 1;
 static int do_fork = 1;
+extern char *fwVersion;	// defined in version.c
 
 int main(int argc, char *argv[])
 {
 	int server_s;               /* boa socket */
 	pid_t pid;
     int ret;
+	char buffer[32]={0};
 
 	/* set umask to u+rw, u-x, go-rwx */
 	/* according to the man page, umask always succeeds */
@@ -118,6 +120,9 @@ int main(int argc, char *argv[])
 	read_config_files();
 	create_common_env();
 	open_logs();
+	sprintf(buffer, "%s", fwVersion );
+
+	apmib_set(MIB_DEV_VERSION, (void *) buffer);
 
 #if BOA_WITH_OPENSSL
 	if (do_ssl) {

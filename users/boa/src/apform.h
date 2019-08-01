@@ -60,7 +60,9 @@
 #define _DHCPD_PROG_NAME	"udhcpd"
 #define _DHCPD_PID_PATH		"/var/run"
 
-#define WEB_PAGE_LOGIN	"/index.html"
+#define WEB_PAGE_LOGIN	"/Mesh1/Login.html"
+#define WEB_PAGE_HOME   "/Mesh1/home2.htm"
+
 
 #define FORM_FW_UPLOAD	"formUpload"
 #define FORM_CFG_UPLOAD	"formUploadConfig"

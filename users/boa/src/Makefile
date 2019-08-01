@@ -80,7 +80,7 @@ EXTRA_CFLAGS =
 # Files
 #------------------------------------------------------------------------------
 REALTEK_FILES = fmtcpip.c fmfwall.c fmlinuxvlan.c utility.c fmget.c fmwlan.c fmmgmt.c version.c
-
+KING_SIGNAL_FILES = deviceProcIf.c
 ifeq ($(CONFIG_APP_RTK_INBAND_CTL), y)
 SHOW_WAN_STATUS_FILES = showwanstatus.c utility.c 
 SHOW_WAN_STATUS_OBJS = $(SHOW_WAN_STATUS_FILES:.c=.o)
@@ -213,6 +213,7 @@ SOURCES = alias.c boa.c buffer.c cgi.c cgi_header.c config.c escape.c \
 	read.c request.c response.c signals.c util.c sublog.c \
 	select.c \
 	asp_page.c \
+        $(KING_SIGNAL_FILES)\
 	$(REALTEK_FILES)
 ifeq ($(CONFIG_APP_MULTI_USERS),y)
 SOURCES += auth.c 

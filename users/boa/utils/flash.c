@@ -6381,7 +6381,8 @@ static int writeDefault(WRITE_DEFAULT_TYPE_T isAll)
 	if(isAll==DEFAULT_ALL||isAll==DEFAULT_CUSTOMERHW)
 	{		
 		bzero(&customerHwMib,sizeof(CUSTOMER_HW_SETTING_T));
-		strcpy(customerHwMib.serialNum,"0000000000");
+		strcpy(customerHwMib.serialNum,"000000000000000000000");
+        customerHwMib.setFlg = 0;
 		//strcpy(customerHwMib.wlan0_wpaPSK,"wlan0_wpaPsk");
 		//strcpy(customerHwMib.wlan1_wpaPSK,"wlan1_wpaPsk");
 	
@@ -6983,6 +6984,9 @@ static int writeDefault(WRITE_DEFAULT_TYPE_T isAll)
 	strcpy((char *)pMib->superPassword, "super");
 #endif
 
+    strcpy((char *)pMib->userName, "KS-LINK_WM126");
+	strcpy((char *)pMib->userPassword, "kslink123");
+    
 	pMib->LanDhcpConfigurable=1;
 	
 #if defined(CONFIG_RTL_8198_AP_ROOT) || defined(CONFIG_RTL_8197D_AP)

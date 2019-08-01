@@ -16,8 +16,12 @@
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 		<script type="text/javascript" src="util_gw.js"> </script>
 		<script type="text/javascript">	
-			var MultiPppoeEnable= '<% getIndex("multiPppoe"); %>';
+			var initialDnsMode, pppConnectStatus=0;
+			var MultiPppoeEnable= <% getIndex("multiPppoe"); %>;
+			var wan_connection_type=0;
 			var dynamicWanIP=1;
+			
+			var wan_access_port_en = <%getIndex("wanAccessPortEnable");%>;
 			function Load_Setting()
 			{
 				var wanDhcp_ = '<% getIndex("wanDhcp"); %>';
@@ -26,18 +30,21 @@
 					$(".pppoe").css("display","none");
 					$(".DHCP").css("display","none");
 					$("#wanType_id option:nth-child(1)").prop("selected", 'selected');
+					document.tcpip.elements["dnsMode"][1].checked = true;
 				}
 				if(wanDhcp_==3){
 					$(".static_ip").css("display","none");
 					$(".pppoe").css("display","block");
 					$(".DHCP").css("display","none");
 					$("#wanType_id option:nth-child(3)").prop("selected", 'selected');
+					document.tcpip.elements["dnsMode"][0].checked = true;
 				}
 				if(wanDhcp_==1){
 					$(".static_ip").css("display","none");
 					$(".pppoe").css("display","none");
 					$(".DHCP").css("display","block");
 					$("#wanType_id option:nth-child(2)").prop("selected", 'selected');
+					document.tcpip.elements["dnsMode"][0].checked = true;
 				}
 			}
 		</script>
@@ -46,26 +53,46 @@
 		 		<div class="main_content">
 		 			<div class="intnet">
 		 				<div class="intnet_content">
-			 				<form role="form" action="/boafrm/formWanTcpipSetup" method="POST" name="tcpip_form" id="internet_form">
-			 					<!--<input type="hidden" id="getPppAuthStatus" value="Not Start" name="getPppAuthStatus" onChange="wanTypeSelection(this)">-->
+			 				<form role="form" action="/boafrm/formWanTcpipSetup" method="POST" name="tcpip" id="internet_form">
+			 					<input type="hidden" id="getPppAuthStatus" value="Not Start" name="getPppAuthStatus">
 			 						<input type="hidden" name="lan_ip_address" value="<% getInfo("ip-rom"); %>">
 									<input type="hidden" name="lan_subnet_mask" value="<% getInfo("mask-rom"); %>">
+								<div style="display: none;">
+									<input type="radio" value="dnsAuto" name="dnsMode">
+									<input type="radio" value="dnsManual" name="dnsMode">
+								</div>
 			 					<div class="form-group">
 			 						<label class="i18n" name="wanjoinTyep_internet"></label>
-			 						<select class="type_select" id="wanType_id" size="1" name="wanType" >
-			 							<option value="fixedIp">static Ip</option>
-			 							<option value="autoIp">DHCP</option>
-			 							<option value="ppp">PPPoE</option>
+			 						<select class="type_select" id="wanType_id" size="1" name="wanType">
+			 							<option value="fixedIp" class="i18n" name="staticIp_internet"></option>
+			 							<option value="autoIp" class="i18n" name="staticIp_dhcp"></option>
+			 							<option value="ppp" class="i18n" name="staticIp_pppoe"></option>
 			 						</select>	
 			 						<i class="fa fa-caret-down type_down"></i>
 			 					</div>
-			 					<div class="form-group static_ip"><label class="i18n" name="ipAddr_internet"></label><input class="form_input" type="text" name="wan_ip" value="<% getInfo("wan-ip-rom"); %>" placeholder="请输入"/></div>
-			 					<div class="form-group static_ip"><label class="i18n" name="subnet_internet"></label><input class="form_input" type="text" name="wan_mask" value="<% getInfo("wan-mask-rom"); %>" placeholder="请输入"/></div>
-			 					<div class="form-group static_ip"><label class="i18n" name="default_internet"></label><input class="form_input" type="text" name="wan_gateway" value="<% getInfo("wan-gateway-rom"); %>" placeholder="请输入"/></div>
-			 					<div class="form-group static_ip"><label class="i18n" name="DNS1_internet"></label><input class="form_input" type="text" name="dns1" value="<% getInfo("wan-dns1"); %>" placeholder="请输入"/></div>
-			 					<div class="form-group static_ip"><label class="i18n" name="DNS2_internet"></label><input class="form_input" type="text" name="dns2" value="<% getInfo("wan-dns2"); %>" placeholder="请输入"/></div>
-			 					<div class="form-group pppoe"><label class="i18n" name="name_internet"></label><input class="form_input" type="text" name="pppUserName" value="<% getInfo("pppUserName"); %>" placeholder="请输入"/></div>
-			 					<div class="form-group pppoe"><label class="i18n" name="password_internet"></label><input class="form_input" type="password" name="pppPassword" value="<% getInfo("pppPassword"); %>" placeholder="请输入"/></div>
+			 					<div class="form-group static_ip"><label class="i18n" name="ipAddr_internet"></label><input class="form_input" type="text" name="wan_ip" value="<% getInfo("wan-ip-rom"); %>"/></div>
+			 					<div class="form-group static_ip"><label class="i18n" name="subnet_internet"></label><input class="form_input" type="text" name="wan_mask" value="<% getInfo("wan-mask-rom"); %>" /></div>
+			 					<div class="form-group static_ip"><label class="i18n" name="default_internet"></label><input class="form_input" type="text" name="wan_gateway" value="<% getInfo("wan-gateway-rom"); %>"/></div>
+			 					 <span id = "dnsMode_div" style="display: none;" >
+								    <table border="0" width=480>
+								    <tr>
+								      <td width="100%" colspan="2"><font size=2>
+										<b><input type="radio" value="dnsAuto" name="dnsMode" onClick="autoDNSclicked()"><script>dw(tcpip_wan_auto_dns)</script></b>
+								      </td>
+								    </tr>
+								    <tr>
+								      <td width="100%" colspan="2"><font size=2>
+								        <b><input type="radio" value="dnsManual" name="dnsMode" onClick="manualDNSclicked()"><script>dw(tcpip_wan_manually_dns)</script></b>
+								      </td>
+								    </tr>
+								    <tr>
+								    </table>
+								    </span>
+			 					<div class="form-group static_ip"><label class="i18n" name="DNS1_internet"></label><input class="form_input" type="text" name="dns1" value="<% getInfo("wan-dns1"); %>" /></div>
+			 					<div class="form-group static_ip"><label class="i18n" name="DNS2_internet"></label><input class="form_input" type="text" name="dns2" value="<% getInfo("wan-dns2"); %>" /></div>
+			 					<input class="form_input" type="hidden" name="dns3" value="<% getInfo("wan-dns3"); %>" />
+			 					<div class="form-group pppoe"><label class="i18n" name="name_internet"></label><input class="form_input" type="text" name="pppUserName" value="<% getInfo("pppUserName"); %>" /></div>
+			 					<div class="form-group pppoe"><label class="i18n" name="password_internet"></label><input class="form_input" type="password" name="pppPassword" value="<% getInfo("pppPassword"); %>" /></div>
 			 					<!--<div class="form-group pppoe pppoe_button">
 			 						<button type="submit" value="Connect" name="pppConnect" onClick="return pppConnectClick(0)">连接</button>
 			 						<script>document.tcpip.pppConnect.value = tcpip_wan_conn;</script>
@@ -76,11 +103,13 @@
 											setPPPConnected();
 									</script>
 			 					</div>-->
+			 					 
 			 					<div class="form-group form-group-btn">
-			 						<!--<% getInfo("apply_direct_comment_start");%>-->
+			 						<% getInfo("apply_direct_comment_start");%>
 			 						<button type="submit" value="Save & Apply" class="i18n internet_submit" name="save_apply" onClick="return saveChanges_wan2(document.tcpip_form,MultiPppoeEnable,dynamicWanIP)"></button>
-			 						<!--<% getInfo("apply_direct_comment_end");%>-->
+			 						<% getInfo("apply_direct_comment_end");%>
 			 					</div>
+			 					<input type="hidden" value="/tcpipwan.htm" name="submit-url">
 			 				</form>
 			 			</div>
 		 			</div>
@@ -101,6 +130,12 @@
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
 		<script type="text/javascript">
+			var initialDnsMode, pppConnectStatus=0;
+			var MultiPppoeEnable= <% getIndex("multiPppoe"); %>;
+			var wan_connection_type=0;
+			var dynamicWanIP=1;
+			
+			var wan_access_port_en = <%getIndex("wanAccessPortEnable");%>;
 			$(document).ready(function(){
 				$(".type_select").change(function(){
 					var changevalue=$(this).find("option:selected").text();
@@ -108,6 +143,7 @@
 						$(".static_ip").css("display","block");
 						$(".pppoe").css("display","none");
 						$(".DHCP").css("display","none");
+						document.tcpip.dnsMode[1].checked = true ;
 					}
 					if(changevalue=="DHCP"){
 						$(".static_ip").css("display","none");
@@ -144,8 +180,18 @@
 					$(".progress").css("display","none");	
 					clearInterval(my_progress);
 				}
-				
 			})
+			function update_web_access_port_state()
+			{
+				if (wan_access_port_en){
+					if (document.tcpip.webWanAccess.checked){
+						enableTextField(document.tcpip.webAccessPort);
+					}
+					else{
+						disableTextField(document.tcpip.webAccessPort);		
+					}
+				}
+			}
 			function check_web_access_port_valid()
 			{
 				if (wan_access_port_en){
@@ -170,6 +216,34 @@
 					}
 				}
 				return true;
+			}
+			function checkSubnet(ip, mask, client)
+			{
+			  ip_d = getDigit(ip, 1);
+			  mask_d = getDigit(mask, 1);
+			  client_d = getDigit(client, 1);
+			  if ( (ip_d & mask_d) != (client_d & mask_d ) )
+				return false;
+			
+			  ip_d = getDigit(ip, 2);
+			  mask_d = getDigit(mask, 2);
+			  client_d = getDigit(client, 2);
+			  if ( (ip_d & mask_d) != (client_d & mask_d ) )
+				return false;
+			
+			  ip_d = getDigit(ip, 3);
+			  mask_d = getDigit(mask, 3);
+			  client_d = getDigit(client, 3);
+			  if ( (ip_d & mask_d) != (client_d & mask_d ) )
+				return false;
+			
+			  ip_d = getDigit(ip, 4);
+			  mask_d = getDigit(mask, 4);
+			  client_d = getDigit(client, 4);
+			  if ( (ip_d & mask_d) != (client_d & mask_d ) )
+				return false;
+			
+			  return true;
 			}
 		</script>
 	</body>

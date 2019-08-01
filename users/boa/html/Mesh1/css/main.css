@@ -38,7 +38,11 @@
     font-size: 14px;
     padding-left: 10px;
     box-sizing: border-box;
-    margin: 5px 0;
+    margin: 5px 0; 
+    text-indent: 8%;  
+}
+.name_input:last-child input{
+	text-indent: 0px;
 }
 .name_input i{
 	display: inline-block;
@@ -87,6 +91,7 @@
 }
 .iframe_holder{
 	border: none;
+	width: 100%;
 }
 .logo{
 	display: inline-block;
@@ -136,24 +141,14 @@
 	width: 70%;
 	margin: 0 auto;
 	height: 90px;
-	padding-left: 6px;
+	padding-left: 4px;
 	
 }
 .nav li{
 	height: 90px;
 }
 
-@media only screen and (min-width: 100px) and (max-width: 860px) {
-	.logo img{
-		width: 120px;
-	}
-	.logout select{
-		width: 50px;
-	}
-	.header-wrap{
-		width: 100%;
-	}
-}
+
 .nav li a:hover{
 	background: rgba(255,255,255,0.2);
 }
@@ -199,13 +194,6 @@
 	width: 70%;
 	overflow: hidden;
 	margin: 0 auto;
-}
-@media only screen and (min-width: 100px) and (max-width: 860px) {
-	.main_content{
-		width: 98%;
-		overflow: hidden;
-		margin: 0 auto;
-	}
 }
 .link_content_con{
 	width: 99%;
@@ -273,13 +261,13 @@
 	height: 21px;
 	z-index: 99;
 	position: relative;
-	left: 88px;
+	left: 45%;
 	top: -5px;
 }
 .terminal_status{
 	width: 21px;
 	height: 21px;
-	border-radius: 10px;
+	border-radius: 50%;
 	background: #6CBC1A;
 	color: #fff;
 	position: relative;
@@ -289,13 +277,14 @@
 	line-height: 21px;
 	left: -20px;
 }
+
 .link_content .link_img{
 	width: 50%;
 	height: 50%;
 }
 .link_img:first-child{
-	width: 40%;
-	height: 40%;
+	width: 42%;
+	height: 42%;
 }
 .link_content ul li:last-child a i{
 	display: inline-block;
@@ -307,32 +296,7 @@
 	margin-left: 12px;
 	color: #1ABC9C;
 }
-@media only screen and (min-width: 100px) and (max-width: 860px) {
-	.nav{
-		width: 100%;
-	}
-	.nav li{
-		height: 90px;
-		width: 19%;
-		float: left;
-	}
-	.main_content{
-		width: 100%;
-	}
-	.link_content{
-		width: 100%;
-	}
-	.link_content .link_img{
-		width: 50%;
-		height: 50%;
-	}
-	.link_content ul li a hr{
-		margin: 0;
-	}
-	.link_content ul li:nth-child(2){
-		width: 70px;
-	}
-}
+
 .time_count{
 	width: 100%;
 	text-align: center;
@@ -423,7 +387,7 @@
 }
 /*上网设置*/
 .intnet{
-	width: 70%;
+	/*width: 70%;*/
 	height: 100%;
 	margin: 0 auto;
 	/*border: 1px solid #cdcdcd;*/
@@ -431,6 +395,7 @@
 	padding-bottom: 0;
 	margin-top: 40px;
 	padding: 60px;
+	text-align: center;
 }
 .intnet_content{
 	width: 100%;
@@ -446,7 +411,7 @@
 .form-group:first-child{
 	/*margin-top: 20px;*/
 }
-.form-group label,.form-group-self label{
+.form-group label,.form-group-self label,.form_group_dhcp label{
 	height: 30px;
 	width: 135px;
 	text-align: right;
@@ -460,19 +425,20 @@
 }
 .form-group-self span{
 	display: inline-block;
-	width: 60px;
+	width: 70px;
 	font-size: 16px;
+	margin: 8px;
 }
 .guest_renzheng{
 	margin-right: 20px;
 }
-.form-group select{
+.form-group select,.form_group_dhcp select{
 	border: none;
 	appearance: none;
 	-webkit-appearance: none;
 	-moz-appearance: none;
 	outline: none;
-	width: 30%;
+	width: 20%;
 	margin: 10px 0;
 	height: 30px;
     line-height: 30px;
@@ -484,7 +450,7 @@
     padding-left: 5px;
     display: inline-block;
 }
-.form-group .type_down{
+.form-group .type_down,.form_group_dhcp .type_down{
 	display: inline-block;
 	width: 16px;
 	height: 16px;
@@ -492,8 +458,8 @@
 	position: relative;
 	left: -40px;
 }
-.form-group input{
-	width: 30%;
+.form-group input,.form_group_dhcp input{
+	width: 20%;
     border:none;
     border:1px solid #cccccc;
     border-radius: 4px;
@@ -506,17 +472,7 @@
     display: inline-block;
 }
 
-@media only screen and (min-width: 100px) and (max-width: 920px) {
-	.intnet{
-		width: 80%;
-	}
-	.form-group input{
-		width: 45%;
-	}
-	.form-group select{
-		width: 45%;
-	}
-}
+
 .form-group-btn{
 	text-align: center;
 	padding-top: 50px;
@@ -564,9 +520,9 @@
 	width: 50%;
 	float: right;
 }
-.leftset .form-group,.rightset .form-group{
+/*.leftset .form-group,.rightset .form-group{
 	padding-left: 40px;
-}
+}*/
 .leftset .form-group input,.rightset .form-group input{
 	width: 50%;
 }
@@ -624,8 +580,8 @@
 	/*text-align: center;*/
 }
 .form-group-self label:not(.renzheng){
-	/*width: 100px;*/
-	/*text-align: center;*/
+	width: 100px;
+	text-align: center;
 }
 .radio_group label{
 	width: 50px;
@@ -644,24 +600,7 @@
 	padding-bottom: 0;
 	padding: 15px 0 10px 0;
 }
-@media only screen and (min-width: 100px) and (max-width: 860px) {
-	.leftset .form-group, .rightset .form-group{
-		padding-left: 10px;
-	}
-	.form-group label, .form-group-self label{
-		width: 30%;
-		padding: 0;
-	}
-	.form-group input{
-		margin: 0;
-	}
-	.form-group select{
-		margin: 0;
-	}
-	.form-group .type_down{
-		left: -30px;
-	}
-}
+
 .chenal_select,.band_24g{
 	display: none;
 }
@@ -707,12 +646,13 @@
 }
 .terminal_title{
 	width: 100%;
-	height: 30px;
-	line-height: 30px;
-	font-size: 16px;
+	height: 20px;
+	line-height: 20px;
+	font-size: 14px;
 	text-indent: 15px;
 	margin: 15px 10px;
 	border-left: 2px solid #89CEED;
+	font-weight: bolder;
 }
 /*高级设置*/
 .side_nav{
@@ -784,23 +724,20 @@
 }
 .bootstrap-switch-animate.bootstrap-switch-on{
 	/*border-radius: 15px;*/
-	background: #CCCCCC;
-}
-.bootstrap-switch-animate{
 	background: #89CEED;
 }
-.bootstrap-switch.bootstrap-switch-inverse.bootstrap-switch-on .bootstrap-switch-label, .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-label{
-	border-radius: 15px;
+.bootstrap-switch-animate{
+	background: #CCCCCC;
 }
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-info, .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-success{
-	background: none;
+	background: #FFFFFF;
 }
 .bootstrap-switch .bootstrap-switch-handle-off, .bootstrap-switch .bootstrap-switch-handle-on, .bootstrap-switch .bootstrap-switch-label{
-	padding: 2px 12px;
+	padding: 5px 0 3px 15px;
 }
-.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-info,.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-success{
+/*.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-info,.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-success{
 	background: none;
-}
+}*/
 .bootstrap-switch{
 	-webkit-transition: border-color ease-in-out .05s,box-shadow ease-in-out .05s;
 	-o-transition: border-color ease-in-out .05s,box-shadow ease-in-out .05s;
@@ -810,6 +747,26 @@
 	-webkit-transition: margin-left .1s;
 	-o-transition: margin-left .1s;
 	transition: margin-left .1s;
+}
+.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-success, .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-success{
+	color: #fff;
+	background: none;
+	border-radius: 15px;
+}
+.bootstrap-switch .bootstrap-switch-label{
+	background: none;
+}
+.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-info, .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-info{
+	background: none;
+}
+.bootstrap-switch.bootstrap-switch-inverse.bootstrap-switch-on .bootstrap-switch-label, .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-label{
+	background: #fff;
+}
+.bootstrap-switch.bootstrap-switch-inverse.bootstrap-switch-on .bootstrap-switch-label, .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-label{
+	border-radius: 15px;
+}
+.bootstrap-switch .bootstrap-switch-label{
+	background: #FFFFFF;
 }
 .guest_net{
 	width: 60%;
@@ -944,12 +901,12 @@ a.table-link:link,a.table-link:visited,a.table-link:hover,a.table-link:active{
 .ip_filter_hr{
 	border: 2px solid #eee;
 }
-.form-group .form_input_dhcp{
-	width: 12%;
-}
+
 .guest_net .dhcp_server_btn{
-	text-indent: 20%;
+	/*text-indent: 20%;*/
+	text-align: center;
 	margin: 20px 0;
+	width: 70%;
 }
 .form_group_dhcp label{
 	width: 150px;
@@ -1094,4 +1051,195 @@ a.table-link:link,a.table-link:visited,a.table-link:hover,a.table-link:active{
 	font-size: 14px;
 	margin: 0 auto;
 	margin-bottom: 20px;
+	display: inline-block;
+	line-height: 40px;
+	text-align: center;
 }
+.input-append{
+	display: inline-block;
+	margin-left: 3%;
+}
+.internet_submit{
+	width: 180px;
+	height: 40px;
+	background: #89CEED;
+	border-radius: 4px;
+	border: none;
+	color: #fff;
+	font-size: 14px;
+	margin: 0 auto;
+	margin-bottom: 20px;
+}
+.tips_div{
+	height: 15px;
+	line-height: 15px;
+	font-size: 12px;
+	padding-left: 22px;
+}
+.form_group_dhcp input{
+	width: 30%;
+}
+.form_group_dhcp select{
+	width: 30%;
+}
+.form_group_dhcp .form_input_dhcp{
+	width: 12%;
+}
+input[type="radio"], input[type="checkbox"]{
+	margin: 0;
+}
+.form-group_smart .ipfilter_input{
+	width: 80px;
+	margin: 0;
+}
+.hide_msg{
+	display: none;
+}
+.side_nav ul li:hover{
+	cursor: pointer;
+}
+.ip_filter label{
+	margin-right: 10px;
+}
+@media screen and (min-width: 960px) and (max-width: 1500px){
+	
+	.header-wrap{
+		width: 85%;
+	}
+	.nav{
+		width: 85%;
+	}
+	.nav li{
+		height: 90px;
+		width: 19.5%;
+		float: left;
+	}
+	.main_content{
+		width: 85%;
+	}
+	.link_content{
+		width: 95%;
+	}
+	.link_content .link_img{
+		width: 35%;
+		height: 35%;
+	}
+	.link_content ul li a hr{
+		margin: 0;
+	}
+	/*.link_content ul li:nth-child(2){
+		width: 70px;
+	}*/
+	.terminal_status{
+		width: 19px;
+		height: 19px;
+		line-height: 19px;
+		top: -20px;
+		left: -15px;
+	}
+	.intnet{
+		width: 80%;
+	}
+	.form-group input{
+		width: 40%;
+	}
+	.form-group select{
+		width: 40%;
+	}
+	.leftset .form-group, .rightset .form-group{
+		padding-left: 10px;
+	}
+	.form-group label, .form-group-self label{
+		width: 30%;
+		padding: 0;
+	}
+	.form-group input{
+		margin: 0;
+	}
+	.form-group select{
+		margin: 0;
+	}
+	.form-group .type_down{
+		left: -30px;
+	}
+}
+@media screen and (min-width: 100px) and (max-width: 960px) {
+	.main_content{
+		width: 98%;
+	}
+	.logo img{
+		width: 120px;
+	}
+	.logout select{
+		width: 50px;
+	}
+	.header-wrap{
+		width: 97%;
+	}
+	.nav{
+		width: 98%;
+	}
+	.nav li{
+		height: 90px;
+		width: 19%;
+		float: left;
+	}
+	.link_content{
+		width: 100%;
+	}
+	.link_content .link_img{
+		width: 42%;
+		height: 42%;
+	}
+	.link_content ul li a hr{
+		margin: 0;
+	}
+	.link_content ul li:nth-child(2){
+		width: 70px;
+	}
+	.terminal_status{
+		width: 16px;
+		height: 16px;
+		line-height: 16px;
+		top: -15px;
+		left: -10px;
+	}
+	.intnet{
+		width: 80%;
+	}
+	.form-group input{
+		width: 45%;
+	}
+	.form-group select{
+		width: 45%;
+	}
+	.leftset .form-group, .rightset .form-group{
+		padding-left: 10px;
+	}
+	.form-group label, .form-group-self label{
+		width: 30%;
+		padding: 0;
+	}
+	.form-group input{
+		margin: 0;
+	}
+	.form-group select{
+		margin: 0;
+	}
+	.form-group .type_down{
+		left: -30px;
+	}
+	.dhcp{
+		width: 90%;
+	}
+	.form_group_dhcp{
+		width: 90%;
+	}
+	.test_new{
+		width: 160px;
+	}
+	.fileupload_button{
+		width: 100px;
+	}
+}
+

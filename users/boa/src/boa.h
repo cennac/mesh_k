@@ -49,6 +49,7 @@
 #include "compat.h"             /* oh what fun is porting */
 #include "defines.h"
 #include "globals.h"
+#include "../apmib/apmib.h"
 
 #ifdef BOA_WITH_MBEDTLS
 #include "mbedtls/entropy.h"

@@ -14,19 +14,13 @@
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
-		
-		<script type="text/javascript">
-			var ssid_2g="<% getIndex("2G_ssid"); %>";
-			var ssid_5g="<% getIndex("5G_ssid"); %>";
-			var ssid_drv=new Array();
-  			var channel_drv=new Array();
-		</script>
 	</head>
 	<body style="overflow: hidden;">
 		 <div class="main-wrap">
 		 	<div class="header">
 			 	<div class="header-wrap">
-			 		<div class="logo"><img class="logo_img" src="img/KSLINK.png"/></div>
+			 		<div class="logo"><img class="logo_img" src=""/></div>
+			 		
 			 		<div class="logout">
 			 			<div class="languageC">
 			 				<select id="language">
@@ -36,12 +30,16 @@
 			 				<i class="fa fa-caret-down"></i>
 			 			</div>
 			 			<span class="separate">|</span>
-			 			<a href="#" class="log_logout i18n" name="logout">&nbsp;&nbsp;&nbsp;</a>
+			 			<form action="/boafrm/formLogout" method="POST" name="logout" style="display: inline-block;">
+				 			<a href="#" class="log_logout i18n" name="logout" onclick="return clearAuthData()">&nbsp;&nbsp;&nbsp;</a>
+				 			<input type="hidden" value="/wizard.htm" name="return-url">
+				 		</form>
 			 		</div>
+			 		
 			 	</div>
 			 	<div class="top-nav">
 					<ul class="nav nav-pills nav-justified">
-						<li class="active li_1" ><a href_val="index.html"><img class="icon_1" src="img/nav_icon_home@2x.png"/><span class="i18n" name="home_page"></span></a></li>
+						<li class="active li_1" ><a href_val="index_mesh.html"><img class="icon_1" src="img/nav_icon_home@2x.png"/><span class="i18n" name="home_page"></span></a></li>
 						<li class="li_2"><a href_val="internet.html"><img class="icon_2" src="img/nav_icon_network@2x.png"/><span class="i18n" name="internet_page"></span></a></li>
 						<li class="li_3"><a href_val="wifiset.html"><img class="icon_3" src="img/nav_icon_wifi@2x.png"/><span class="i18n" name="wifi_page"></span></a></li>
 						<li class="li_4"><a href_val="terminal.html"><img class="icon_4" src="img/nav_icon_terminal@2x.png"/><span class="i18n" name="terminal_page"></span></a></li>
@@ -50,7 +48,7 @@
 				</div>
 			</div>
 		 	<div class="content-wrap">	
-		 		<iframe class="iframe_holder" src="index.html"></iframe>
+		 		<iframe class="iframe_holder" src="index_mesh.html"></iframe>
 		 		
 		 	</div>
 		 	<div class="footer-wrap">
@@ -67,16 +65,12 @@
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
 		<script>
-			$(".ssid_2G").text(ssid_2g);
-			$(".ssid_5G").text(ssid_5g);
-		</script>
-		<script>
 			//**********设置iframe宽高***********
 			var top_height=$(".header").height();
 			var bottom_height=$("footer-wrap_home").height();
 			var content_height=window.innerHeight-top_height-bottom_height;			
 			$(".iframe_holder").height(content_height);
-			$(".iframe_holder").width(window.innerWidth);
+//			$(".iframe_holder").width(window.outerWidth);
 			//单击导航栏时设置iframe对应页面
 			var iframe_href;
 			$(".nav li").click(function() {
@@ -85,7 +79,44 @@
 				$(this).addClass("active");
 				$(this).siblings().removeClass("active");
 			});
+			function clearAuthData()
+			{
+				
+			  if (document.all) 
+			  {
+			    // Internet Explorer: 'ClearAuthenticationCache' is only available in IE
+			    document.execCommand('ClearAuthenticationCache');
 			
+				} 
+				else 
+				{
+			    var xmlhttp;
+			    if (window.XMLHttpRequest) 
+			   	{
+			        xmlhttp = new XMLHttpRequest();
+			    } 
+			    else if (window.ActiveXObject) 
+			    {
+			        try {
+			            xmlhttp = new ActiveXObject('Msxml2.XMLHTTP');
+			        } catch (ex) {
+			            try {
+			                xmlhttp = new ActiveXObject('Microsoft.XMLHTTP');
+			            } catch (ex) {}
+			        }
+			    }
+			    if (xmlhttp.readyState < 4) 
+			    {
+			        xmlhttp.abort();
+			    }
+			    // Firefox/Mozilla: use anonymous "login" to trigger a "logout"
+			    xmlhttp.open('GET', '/?sling:authRequestLogin=1', false, 'anonymous', 'null');
+			    xmlhttp.send('');
+			}
+					document.logout.submit();
+					return true;
+			
+			}
 		</script>
 	</body>
 </html>

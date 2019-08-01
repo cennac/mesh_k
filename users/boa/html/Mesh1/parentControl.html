@@ -23,7 +23,7 @@
 					<input type="checkbox" class="checkbox_switch" data-size="mini" name="status" />
 				</div>
 			</div>
-			<div class="longTime form-group">
+			<!--<div class="longTime form-group">
 				<span class="i18n" name="timeSelect_parent"></span>
 				<select name="">
 					<option value="" class="i18n" name="1time_parent"></option>
@@ -40,8 +40,8 @@
 					<option value="" class="i18n" name="12time_parent"></option>
 				</select>
 				<i class="fa fa-caret-down type_down"></i>
-			</div>
-			<div class="panel panel-default"> 
+			</div>-->
+			<div class="panel panel-default" style="display: none;"> 
 				<div class="panel-body table-responsive"> 　　　　　　　　 
 		    		<table class="table table-striped table-bordered table-hover" id="tableL01"> </table> 
 		    	</div> 
@@ -109,22 +109,22 @@
 					size: "small",
 					onSwitchChange: function(event, state) {
 						if (state == true) {
-	//						alert('已打开');
+							$(".panel-default").css("display","block");
 						} else {
-	//						alert('已关闭');
+							$(".panel-default").css("display","none");
 						}
 					}	
 				});
 				//表格
 				var tableColumns = [
-                {field: 'useit', title: '是否启用', sortable: false,checkbox: true,formatter:function(cellvalue, options, rowdata){
-                	if (rowdata.useit == true)
-				        return {
-				            disabled : true,//设置是否可用
-				            checked : true//设置选中
-				        };
-				    return false;
-                }},
+//              {field: 'useit', title: '是否启用', sortable: false,checkbox: true,formatter:function(cellvalue, options, rowdata){
+//              	if (rowdata.useit == true)
+//				        return {
+//				            disabled : true,//设置是否可用
+//				            checked : true//设置选中
+//				        };
+//				    return false;
+//              }},
                 {field: 'name', title: '设备名称', sortable: true},
                 {field: 'macaddr', title: 'MAC地址', sortable: false},
                 {field: 'time', title: '上网时长', sortable: false},
@@ -137,15 +137,15 @@
 		          }}
             ];
             var data1=[
-                {useit:true,name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
-                {useit:false,name:"iPhoneX",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
-                {useit:false,name:"红米Note",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
-                {useit:false,name:"三星",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
-                {useit:false,name:"小米",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
-                {useit:false,name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
-                {useit:false,name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
-                {useit:false,name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
-                {useit:false,name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"iPhoneX",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"红米Note",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"三星",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"小米",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
+                {name:"小米8",macaddr:"6d:22:89:F7:80",time:"1:00:23",startT:"2019-02-03 23:45:12",endI:"2019-02-04 23:45:12",usid:"操作"},
             ];
             $('#tableL01').bootstrapTable('destroy');   //动态加载表格之前，先销毁表格
 
@@ -169,8 +169,10 @@
                 // exportTypes: ['csv', 'txt', 'xml'],
 //              clickToSelect: true,
             });
-            var table_height=$('#tableL01').height();
-            $( '#tableL01' ).bootstrapTable('resetView',{ height: table_height+10 } );
+//          var top_height=$(".header").height();
+//			var bottom_height=$(".footer-wrap_home").height();
+//          var table_height=$(".main_content")-top_height-bottom_height;	;
+//          $( '#tableL01' ).bootstrapTable('resetView',{ height: table_height+10 } );
             
 		})		
 		</script>

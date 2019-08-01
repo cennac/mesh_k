@@ -13,7 +13,7 @@
 		<link rel="stylesheet" href="css/main.css" />
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 		<script>
-			var wlan_num = '<% getIndex("wlan_num"); %>';
+			var wlan_num = <% getIndex("wlan_num"); %>;
 			if (wlan_num > 0){
 				ssid_drv[0] ='<%getInfo("ssid_drv");%>';
 				channel_drv[0] ='<%getInfo("channel_drv");%>';
@@ -30,11 +30,11 @@
 		 			<div class="link_content_con">		 				
 		 				<div class="link_content">
 			 				<ul>
-			 					<li><a href="internet.html"><img src="img/content_icon_network@2x.png" class="link_img" /></a></li>
+			 					<li><a href="#"><img src="img/content_icon_network@2x.png" class="link_img" /></a></li>
 			 					<li><a href="#"><span><i class="fa fa-long-arrow-up"></i><span>125Kbps</span></span><div class="link_line"><div class="connect_status"></div><div class="connect_status2"></div></div><span><i class="fa fa-long-arrow-down"></i><span>1267Kbps</span></span></a></li>
-			 					<li><a href="wifiset.html"><img src="img/content_icon_machine.png" class="link_img" /></a></li>
+			 					<li><a href="#"><img src="img/content_icon_machine.png" class="link_img" /></a></li>
 			 					<li><a href="#"><span><span>2.4G</span></span><div class="link_line"><div class="connect_status"></div><div class="connect_status2"></div></div><span><span>5G</span></span></a></li>
-			 					<li><a href="terminal.html"><img src="img/content_icon_terminal@2x.png" class="link_img" /><div class="terminal_status"><span>6</span></div></a></li>
+			 					<li><a href="#"><img src="img/content_icon_terminal@2x.png" class="link_img" /><div class="terminal_status"><span>6</span></div></a></li>
 			 				</ul>
 			 				
 			 				<!--<div class="time_count"><span>上网时长：<% getInfo("uptime"); %></span></div>-->
@@ -98,127 +98,69 @@
 		
 		<script type="text/javascript">
 		 	//***************拓扑结构图***************
-			$(document).ready(function(){		
-				
-			var string_json = '<% getInfo("topology_json_string"); %>';	
-			var object_json = JSON.parse(string_json);	
-			var child_mesh=object_json["child_devices"].length; 
-				
-				
+			$(document).ready(function(){					
 			var canvas = document.getElementById('canvas');
 			var stage = new JTopo.Stage(canvas);
 
 			var scene = new JTopo.Scene();
-			stage.add(scene);			
+			stage.add(scene);
+			
+//			var cloudNode = new JTopo.Node();
+//			cloudNode.setSize(64, 64);//设置根节点大小
+//			cloudNode.setLocation(360,10);	//设置根节点位置
+//			cloudNode.setImage('img/content_icon_machine.png');
+//			cloudNode.layout = {type: 'tree', width:120, height: 200}//设置节点之间的高度和宽度
+//			
+//			scene.add(cloudNode);
+//			
+//			for(var i=1; i<6; i++){
+//				var node = new JTopo.Node();
+//				node.setSize(64, 64);	
+//				node.setImage('img/content_icon_machine_blue@2x.png');
+//				node.setLocation(120,220);
+//				
+//				scene.add(node);								
+//				var link = new JTopo.Link(cloudNode, node);
+//				link.strokeColor='137,206,237';
+//				link.dashedPattern = 18;//设置线的间隔，显示则是虚线形式，默认为实线
+//				link.alpha=0.5;//设置线的透明度
+//				scene.add(link);
+//			}
+//			JTopo.layout.layoutNode(scene, cloudNode, false);
+			//******************设置网络断开和连接状态**********************
+			
 			function node(w,h,x, y, img){
                 var node = new JTopo.Node();
                 node.setSize(w,h);
                 node.setImage('img/' + img);                   
-                node.setLocation(x, y);  
-                node.shadow = false;
-                node.fillColor = "255,255,255";//底色
-                node.showSelected=false;
-                if(x==300&&y==0){
-                	node.text="主Mesh路由";	
-                }else{
-                	node.text="从Mesh路由";	
-                }
-                node.addEventListener("click", function(event){
-					if(node.text=="主Mesh路由"){
-						parent.$(".iframe_holder").attr("src","terminal.html");
-						parent.$(".nav-pills>li").removeClass("active");
-						parent.$(".li_4").addClass("active");
-					}
-					if(node.text=="从Mesh路由"){
-						parent.$(".iframe_holder").attr("src","terminal.html");
-						parent.$(".nav-pills>li").removeClass("active");
-						parent.$(".li_4").addClass("active");
-					}
-						
-				});
-                scene.add(node);                
-                return node;                  
+                node.setLocation(x, y);                
+                scene.add(node);
+                return node;
             }                
-       		 function linkNode(nodeA, nodeZ){
+            
+            function linkNode(nodeA, nodeZ){
                 var link;
                 link = new JTopo.Link(nodeA, nodeZ);               
 //              link.direction = 'vertical';
                 link.strokeColor='137,206,237';
 				link.dashedPattern = 18;//设置线的间隔，显示则是虚线形式，默认为实线
 				link.alpha=0.5;//设置线的透明度
-				link.shadow = false;
-				link.fillColor="255,255,255";
-				link.borderColor="255,255,255";
-				link.shadowColor= "rgba(255,255,255,0.5)";
-				link.showSelected=false;
                 scene.add(link);
                 return link;
             }
-       		 //设置首页拓扑图的位置摆放以及数量关系
-       		 var g1;var count=0;
-       		 g1= node(64,64,300, 0, 'content_icon_machine.png');
-       		 if(child_mesh==0){
-       		 	return;
-       		 }else{
-//     		 	for(var i=1;i<=child_mesh;i++){
-       		 		var i=child_mesh;
-       		 		if(i%2==0){
-       		 			for(var j=1;j<=i/2;j++){
-	       		 			var s1=node(64,64,300-80*j, 20+(j-1)*70, 'content_icon_machine_blue@2x.png');
-	       		 			var s2=node(64,64,300+80*j, 20+(j-1)*70, 'content_icon_machine_blue@2x.png');
-	       		 			linkNode(s1, g1);
-	       		 			linkNode(s2, g1);
-       		 			}
-       		 		}else{
-       		 			if((i-1)%2==0){
-       		 				for(var j=1;j<=(i-1)/2;j++){
-       		 					var s1=node(64,64,300-70*j, 80*(j-1)+30, 'content_icon_machine_blue@2x.png');
-		       		 			var s2=node(64,64,300+70*j, 80*(j-1)+30, 'content_icon_machine_blue@2x.png');
-		       		 			linkNode(s1, g1);
-	            				linkNode(s2, g1);
-       		 				}	       		 			
-       		 			}
-       		 				var s=node(64,64,300, 160, 'content_icon_machine_blue@2x.png');
-       		 				linkNode(s, g1);      		 			
-       		 			
-       		 		}
-       		 		
-//     		 	}
-       		 	
-       		 }
-       		 
-//          var s1 = node(64,64,180, 50, 'content_icon_machine_blue@2x.png');
-//          var s2 = node(64,64,420, 50, 'content_icon_machine_blue@2x.png');
-//          var s3 = node(64,64,200, 130, 'content_icon_machine_blue@2x.png');
-//          var s4 = node(64,64,400, 130, 'content_icon_machine_blue@2x.png');
-//          var s5 = node(64,64,300, 180, 'content_icon_machine_blue@2x.png');
-//           
-//          linkNode(s1, g1);
-//          linkNode(s2, g1);
-//          linkNode(s3, g1);
-//          linkNode(s4, g1);
-//          linkNode(s5, g1);
+            var s1 = node(64,64,180, 50, 'content_icon_machine_blue@2x.png');
+            var s2 = node(64,64,420, 50, 'content_icon_machine_blue@2x.png');
+            var s3 = node(64,64,200, 130, 'content_icon_machine_blue@2x.png');
+            var s4 = node(64,64,400, 130, 'content_icon_machine_blue@2x.png');
+            var s5 = node(64,64,300, 180, 'content_icon_machine_blue@2x.png');
+            var g1 = node(64,64,300, 0, 'content_icon_machine.png');
+            linkNode(s1, g1);
+            linkNode(s2, g1);
+            linkNode(s3, g1);
+            linkNode(s4, g1);
+            linkNode(s5, g1);
             stage.add(scene);
 		});
-		
-		//跳转
-		$(".link_content ul li").click(function(){
-			var href_scape=$(this).find("a").attr("href");
-			if(href_scape=="internet.html"){
-				parent.$(".nav-pills>li").removeClass("active");
-				parent.$(".li_2").addClass("active");				
-			}else
-			if(href_scape=="wifiset.html"){
-				parent.$(".nav-pills>li").removeClass("active");
-				parent.$(".li_3").addClass("active");
-			}else
-			if(href_scape=="terminal.html"){
-				parent.$(".nav-pills>li").removeClass("active");
-				parent.$(".li_4").addClass("active");
-			}else{
-				return;
-			}
-		})
 	</script>
 	</body>
 </html>

@@ -471,7 +471,38 @@ function saveChanges_wan2(form , MultiPppoeFlag, dynamicWanIP)
 		  return false;
 	   }	   
   }
-		
+  if( wanType == 0 ) //static IP
+	{
+		if (form.dns1.value=="")
+		{
+	  		alert(util_save_wan21);
+			return false;
+		}
+		if (form.dns1.value=="0.0.0.0")
+		{
+			alert(util_save_wan22);
+			return false;
+		}
+	  	else 
+		{
+			if ( checkIpAddr(form.dns1, util_gw_check_dns_ip_msg1) == false )
+				return false;
+		}
+	  	    
+	  if (form.dns2 != null){  
+	  	if (form.dns2.value=="")
+	    		form.dns2.value="0.0.0.0";
+	  	if (form.dns2.value!="0.0.0.0") {
+	    		if ( checkIpAddr(form.dns2, util_gw_check_dns_ip_msg2) == false )
+	      			return false;
+	  	}	    		
+	  }
+  }
+	if(wanType==0){
+		document.tcpip.elements["dnsMode"][1].checked = true;
+	}else{
+		document.tcpip.elements["dnsMode"][0].checked = true;
+	}
    return true;
 }
 //-------------------------------------------------------------------------------------------

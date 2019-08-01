@@ -1527,7 +1527,7 @@ int find_head_offset(char *upload_data)
 	int iestr_offset=0;
 	char *dquote;
 	char *dquote1;
-	
+
 	if (upload_data==NULL) {
 		//fprintf(stderr, "upload data is NULL\n");
 		return -1;
@@ -1676,8 +1676,8 @@ int FirmwareUpgrade(char *upload_data, int upload_len, int is_root, char *buffer
 #endif
 	head_offset = find_head_offset(upload_data);
 //	fprintf(stderr,"####%s:%d head_offset=%d upload_data=%p###\n",  __FILE__, __LINE__ , head_offset, upload_data);
-	if (head_offset == -1) {
-		strcpy(buffer, "Invalid file format!");
+	if (head_offset == -1) {       
+		strcpy(buffer, "Invalid file format1!");
 		goto ret_upload;
 	}
 #ifdef DEFSETTING_AUTO_UPDATE
@@ -1740,7 +1740,7 @@ int FirmwareUpgrade(char *upload_data, int upload_len, int is_root, char *buffer
 		else {
 			if (isValidfw == 1)
 				break;
-			strcpy(buffer, ("Invalid file format!"));
+			strcpy(buffer, ("Invalid file format2!"));
 			goto ret_upload;
 		}
 
@@ -3269,7 +3269,7 @@ void formUpload(request *wp, char * path, char * query)
 	//fprintf(stderr,"####%s:%d %d wp->upload_data=%p###\n",  __FILE__, __LINE__ , head_offset, wp->upload_data);
 	//fprintf(stderr,"####%s:%d content_length=%s###contenttype=%s###\n",  __FILE__, __LINE__ ,wp->content_length , wp->content_type);
 	if (head_offset == -1) {
-		strcpy(tmpBuf, "<b>Invalid file format!");
+		strcpy(tmpBuf, "<b>Invalid file format3!");
 		goto ret_upload;
 	}
 	while ((head_offset+sizeof(IMG_HEADER_T)) <  wp->upload_len) {
@@ -3352,7 +3352,7 @@ void formUpload(request *wp, char * path, char * query)
 		else {
 			if (isValidfw == 1)
 				break;
-			strcpy(tmpBuf, "<b>Invalid file format!");
+			strcpy(tmpBuf, "<b>Invalid file format4!");
 			goto ret_upload;
 		}
 
@@ -3539,7 +3539,7 @@ void formPasswordSetup(request *wp, char *path, char *query)
 
 #ifdef LOGIN_URL
 	if (strUser[0])
-		submitUrl = "/login.htm";
+		submitUrl = WEB_PAGE_LOGIN;
 #endif
 
 #ifdef REBOOT_CHECK
@@ -4388,12 +4388,13 @@ void formLogout(request *wp, char *path, char *query)
 	logout_str = req_get_cstream_var(wp, ("logout"), "");
 	if (logout_str[0]) {
 		logout = 1 ;
+	}
+
 #ifdef LOGIN_URL
 		delete_user(wp);
-	    OK_MSG("/login.htm");
+	    send_redirect_perm(wp, WEB_PAGE_LOGIN);
 	    return;
 #endif		
-	}
 
 	return_url = req_get_cstream_var(wp, ("return-url"), "");
 
@@ -5876,12 +5877,55 @@ struct user_profile {
 
 static struct user_profile users[MAX_USER];
 
+/*
+ * Name: base64decode
+ *
+ * Description: Decodes BASE-64 encoded string
+ */
+static int base64decode(void *dst,char *src,int maxlen)
+{
+	int bitval,bits;
+	int val;
+	int len,x,y;
+
+	len = strlen(src);
+	bitval=0;
+	bits=0;
+	y=0;
+
+	for(x=0;x<len;x++)
+	{
+		if ((src[x]>='A')&&(src[x]<='Z')) val=src[x]-'A'; else
+			if ((src[x]>='a')&&(src[x]<='z')) val=src[x]-'a'+26; else
+				if ((src[x]>='0')&&(src[x]<='9')) val=src[x]-'0'+52; else
+					if (src[x]=='+') val=62; else
+						if (src[x]=='-') val=63; else
+							val=-1;
+		if (val>=0)
+		{
+			bitval=bitval<<6;
+			bitval+=val;
+			bits+=6;
+			while (bits>=8)
+			{
+				if (y<maxlen)
+					((char *)dst)[y++]=(bitval>>(bits-8))&0xFF;
+				bits-=8;
+				bitval &= (1<<bits)-1;
+			}
+		}
+	}
+	if (y<maxlen)
+		((char *)dst)[y++]=0;
+	return y;
+}
+
 ///////////////////////////////////////////////////////////////////
 static void delete_user(request *wp)
 {
 	int i;
 	for (i=0; i<MAX_USER; i++) {
-		if (users[i].flag == MAGIC_NUMER && !strcmp(wp->ipaddr, users[i].ipaddr)) {
+		if (users[i].flag == MAGIC_NUMER && !strcmp(wp->remote_ip_addr, users[i].ipaddr)) {
 			users[i].flag = 0;
 			return;
 		}			
@@ -5893,13 +5937,13 @@ static int add_user(request *wp)
 {
 	int i;
 	for (i=0; i<MAX_USER; i++) {
-		if (users[i].flag == MAGIC_NUMER && strcmp(wp->ipaddr, users[i].ipaddr) &&
-			((unsigned long)wp->timestamp)-((unsigned long)users[i].last_time) < ACCESS_TIMEOUT )
+		if (users[i].flag == MAGIC_NUMER && strcmp(wp->remote_ip_addr, users[i].ipaddr) &&
+			((unsigned long)current_time)-((unsigned long)users[i].last_time) < ACCESS_TIMEOUT )
 			continue;
 				
 		users[i].flag = MAGIC_NUMER;		
-		users[i].last_time = wp->timestamp;	
-		strcpy(users[i].ipaddr, wp->ipaddr);				
+		users[i].last_time = current_time;	
+		strcpy(users[i].ipaddr, wp->remote_ip_addr);				
 		return 0;
 	}
 
@@ -5912,10 +5956,23 @@ static int add_user(request *wp)
 int is_valid_user(request *wp)
 {
 	int i;
+    char user_name[MAX_NAME_LEN];
+    char user_password[MAX_NAME_LEN];
+
+    apmib_get(MIB_USER_NAME, user_name);
+    apmib_get(MIB_USER_PASSWORD, user_password);
+    
+    if (strcmp(user_name, "") == 0 && strcmp(user_password, "") == 0) 
+    {
+        return 1;
+    }
+    
 	for (i=0; i<MAX_USER; i++) {
-		if (users[i].flag == MAGIC_NUMER && !strcmp(wp->ipaddr, users[i].ipaddr)) {
-			if (((unsigned long)wp->timestamp)-((unsigned long)users[i].last_time) > ACCESS_TIMEOUT)
+		if (users[i].flag == MAGIC_NUMER && !strcmp(wp->remote_ip_addr, users[i].ipaddr)) {
+			if (((unsigned long)current_time)-((unsigned long)users[i].last_time) > ACCESS_TIMEOUT)
 				return -1; // timeout
+
+            users[i].last_time = current_time;
 			return 1;
 		}
 	}
@@ -5923,11 +5980,34 @@ int is_valid_user(request *wp)
 	return 0; // not a valid user
 }
 
+int isUserExists(char *name)
+{
+    char user_name[MAX_NAME_LEN];
+    
+    apmib_get(MIB_USER_NAME, user_name);
+    if(strcmp(name, user_name) == 0)
+        return 1;
+    else
+        return 0;
+    
+}
+
+int isValidPassword(char *password)
+{
+    char user_password[MAX_NAME_LEN];
+
+    apmib_get(MIB_USER_PASSWORD, user_password);
+    if(strcmp(password, user_password) == 0)
+        return 1;
+    else
+        return 0;
+}
 ///////////////////////////////////////////////////////////////////
 void formLogin(request *wp, char *path, char *query)
 {
-	char *strUser, *strPassword, *userpass;
+	char *strUser, *strPassword;
 	char tmpbuf[200];
+    char decode_buf[128];
 
 	strUser = req_get_cstream_var(wp, ("username"), "");
 	strPassword = req_get_cstream_var(wp, ("password"), "");
@@ -5936,24 +6016,24 @@ void formLogin(request *wp, char *path, char *query)
 		goto login_err;
 	}
 
-	if (!umUserExists(strUser)) {
+    base64decode(decode_buf, strUser, sizeof(decode_buf));
+	if (!isUserExists(decode_buf)) {
 		strcpy(tmpbuf, ("ERROR: Access denied, unknown user!"));
 		goto login_err;
 	}
-	userpass = umGetUserPassword(strUser);
-	if (userpass) {
-		if (strcmp(strPassword, userpass) != 0) {
-			strcpy(tmpbuf, ("ERROR: Access denied, unknown user!"));
-			goto login_err;
-		}
-	}
 
+    base64decode(decode_buf, strPassword, sizeof(decode_buf));
+    if (!isValidPassword(decode_buf)) {
+		strcpy(tmpbuf, ("ERROR: Access denied, password incorrect!"));
+		goto login_err;
+	}
+	
 	if (add_user(wp) < 0) {
 		strcpy(tmpbuf, ("ERROR: Exceed max user number!"));
 		goto login_err;
 	}
 
-	send_redirect_perm(wp, ("home.htm"));
+	send_redirect_perm(wp, (WEB_PAGE_HOME));
 	return;
 
 login_err:
