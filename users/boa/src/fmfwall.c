@@ -1300,6 +1300,280 @@ setErr_filter:
 	ERR_MSG(tmpBuf);
 }
 
+/////////////////////////////////////////////////////////////////////////////
+void formParentContrl(request *wp, char *path, char *query)
+{
+	PARENT_CONTRL_T parentContrlEntry, parentContrltmp;
+    char *strWeekMon,*strWeekTues,*strWeekWed,*strWeekThur,*strWeekFri,*strWeekSat,*strWeekSun,*strStartTime,*strEndTime,*strAddParentContrl,*strDelParentContrl,*strVal,*submitUrl;
+	int num_id, get_id, add_id, del_id, delall_id;
+	int entryNum,intVal,j,i;
+	void *pEntry;
+	char tmpBuf[100];
+	bool timeAddFlag,timeDelFlag;
+	
+#ifndef NO_ACTION
+	int pid;
+#endif
+
+	strDelParentContrl = req_get_cstream_var(wp, ("deleteSelParentContrl"), "");
+	strAddParentContrl = req_get_cstream_var(wp, ("addParentContrl"), "");
+
+	/*check data and add parent control entry*/
+	if (strAddParentContrl[0])
+	   {
+		num_id = MIB_PARENT_CONTRL_TBL_NUM;
+		get_id = MIB_PARENT_CONTRL_TBL;
+		add_id = MIB_PARENT_CONTRL_ADD;
+		del_id = MIB_PARENT_CONTRL_DEL;
+		//delall_id = MIB_PARENT_CONTRL_DELALL;
+		memset(&parentContrlEntry, '\0', sizeof(parentContrlEntry));
+		pEntry = (void *)&parentContrlEntry;
+
+	    strWeekMon = req_get_cstream_var(wp, ("Mon"), "");
+        strWeekTues = req_get_cstream_var(wp, ("Tues"), "");
+	    strWeekWed = req_get_cstream_var(wp, ("Wed"), "");
+        strWeekThur = req_get_cstream_var(wp, ("Thur"), "");
+        strWeekFri = req_get_cstream_var(wp, ("Fri"), "");
+	    strWeekSat = req_get_cstream_var(wp, ("Sat"), "");
+        strWeekSun = req_get_cstream_var(wp, ("Sun"), "");
+	    strStartTime = req_get_cstream_var(wp, ("parent_start_time"), "");
+        strEndTime = req_get_cstream_var(wp, ("parent_end_time"), "");
+
+	   /* same time check*/
+	   if((strWeekMon[0] || strWeekTues[0] || strWeekWed[0]||strWeekThur[0]||strWeekFri[0]||strWeekSat[0]||strWeekSun[0])&& 
+	   (atoi(strEndTime)-atoi(strStartTime)>0))
+	   	{
+		apmib_get(MIB_PARENT_CONTRL_TBL_NUM, (void *)&entryNum);
+	//	printf("------>function_%s_line[%d]: PARENT_CONTRL_TBL_NUM=%d",__FUNCTION__,__LINE__,entryNum);
+		printf("++++++++++++++>function_%s_line[%d] tbl_number=%d:Mon=%d  Tues=%d  Wed=%d Thur=%d  Fri=%d  Sat=%d  Sun=%d  start=%d  end=%d \n", \
+		__FUNCTION__,__LINE__,entryNum,strWeekMon,strWeekTues,strWeekWed,strWeekThur,strWeekFri,strWeekSat,strWeekSun, strEndTime,strEndTime);
+		for(j=1;j<=entryNum;j++)
+		 {
+			memset(&parentContrltmp, 0x00, sizeof(parentContrltmp));
+			*((char *)&parentContrltmp) = (char)j;
+			if ( apmib_get(MIB_PARENT_CONTRL_TBL, (void *)&parentContrltmp))
+			{
+ 				printf("**********************************************************************\n");	
+				printf("(table--%d)tmpMon=%d tmpTues=%d  tmpWed=%d  tmpThur=%d  tmpFri=%d tmpSat=%d  tmpSun=%d  tmpstart=%d  tmpend=%d \n", \
+					j,parentContrltmp.parentContrlWeekMon,parentContrltmp.parentContrlWeekTues,parentContrltmp.parentContrlWeekWed,\
+					parentContrltmp.parentContrlWeekThur,parentContrltmp.parentContrlWeekFri,parentContrltmp.parentContrlWeekSat, \
+					parentContrltmp.parentContrlWeekSun, parentContrltmp.parentContrlStartTime,parentContrltmp.parentContrlEndTime);
+					printf("===========================================================================\n");	
+				
+	           if((atoi(strWeekMon)==parentContrltmp.parentContrlWeekMon)&&(atoi(strWeekTues)==parentContrltmp.parentContrlWeekTues)&&
+			   	 (atoi(strWeekWed)==parentContrltmp.parentContrlWeekWed)&&(atoi(strWeekThur)==parentContrltmp.parentContrlWeekThur)&&
+			   	 (atoi(strWeekFri)==parentContrltmp.parentContrlWeekFri)&&(atoi(strWeekSat)==parentContrltmp.parentContrlWeekSat)&&
+			   	 (atoi(strWeekSun)==parentContrltmp.parentContrlWeekSun)&&(atoi(strStartTime)==parentContrltmp.parentContrlStartTime)&&
+			   	 (atoi(strEndTime)==parentContrltmp.parentContrlEndTime))
+				{
+					strcpy(tmpBuf, ("<script>dw(parent_contrl_rule_exist)</script>"));
+					goto setErr_filter;
+				}					
+			}
+		 }
+	   	}
+		else
+		{
+		  strcpy(tmpBuf, ("<script>dw(parent_contrl_table_null)</script>"));
+		  goto setErr_filter;
+		}
+	    if(strWeekMon[0])
+	    {
+		  parentContrlEntry.parentContrlWeekMon = atoi(strWeekMon);
+	    }
+		else
+		 {
+		  parentContrlEntry.parentContrlWeekMon = 0;
+	    }	
+	    if(strWeekTues[0])
+	    {
+		  parentContrlEntry.parentContrlWeekTues = atoi(strWeekTues);
+	    }
+		else
+		{
+		  parentContrlEntry.parentContrlWeekTues = 0;
+	    }
+	    if(strWeekWed[0])
+	    {
+		  parentContrlEntry.parentContrlWeekWed = atoi(strWeekWed);
+	    }
+		else
+		{
+		  parentContrlEntry.parentContrlWeekWed = 0;
+	    }
+	    if(strWeekThur[0])
+	    {
+		  parentContrlEntry.parentContrlWeekThur = atoi(strWeekThur);
+	    }
+		else
+		{
+		  parentContrlEntry.parentContrlWeekThur = 0;
+	    }
+	    if(strWeekFri[0])
+	    {
+		 parentContrlEntry.parentContrlWeekFri = atoi(strWeekFri);
+	    }
+		else
+		{
+		  parentContrlEntry.parentContrlWeekFri = 0;
+	    }
+	    if(strWeekSat[0])
+	    {
+		 parentContrlEntry.parentContrlWeekSat = atoi(strWeekSat);
+	    }
+	    else
+		{
+		  parentContrlEntry.parentContrlWeekSat = 0;
+	    }
+	    if(strWeekSun[0])
+	    {
+		 parentContrlEntry.parentContrlWeekSun = atoi(strWeekSun);
+	    }
+	   	else
+		{
+		  parentContrlEntry.parentContrlWeekSun = 0;
+	    }
+	    if(strStartTime[0])
+	    {
+		  parentContrlEntry.parentContrlStartTime = atoi(strStartTime);
+	    }
+		else
+		{
+		  parentContrlEntry.parentContrlStartTime = 0;
+	    }
+	    if(strEndTime[0])
+	    {
+		 parentContrlEntry.parentContrlEndTime = atoi(strStartTime);
+	    }
+	    else
+		 {
+		  parentContrlEntry.parentContrlEndTime = 0;
+	    }
+	    if ( !apmib_get(num_id, (void *)&entryNum)) 
+	    {
+		 strcpy(tmpBuf, ("Get entry number error!"));
+		 goto setErr_filter;
+	    }
+	    else
+	    {
+		 if ( (entryNum + 1) > MAX_PARENT_CONTRL_TIME_NUM_LIST) 
+		{
+		   strcpy(tmpBuf, "<script>dw(parent_contrl_table_full)</script>");
+		   goto setErr_filter;
+		}
+	   }
+		/* set to MIB. try to delete it first to avoid duplicate case*/
+		apmib_set(del_id, pEntry);
+		if ( apmib_set(add_id, pEntry) == 0) 
+		{
+			strcpy(tmpBuf, ("Add table entry error!"));
+			goto setErr_filter;
+		}
+	}  //end if(strAddParentContrl[0])
+
+	/* Delete entry */
+	if (strDelParentContrl[0] ) {
+		if ( !apmib_get(num_id, (void *)&entryNum)){
+			strcpy(tmpBuf, ("Get entry number error!"));
+			goto setErr_filter;
+		}
+		for (i=entryNum; i>0; i--) {
+			snprintf(tmpBuf, 20, "select%d", i);
+
+			strVal = req_get_cstream_var(wp, tmpBuf, "");
+			if ( !strcmp(strVal, "ON") ) {
+
+				*((char *)pEntry) = (char)i;
+				if ( !apmib_get(get_id, pEntry)) {
+					strcpy(tmpBuf, ("Get table entry error!"));
+					goto setErr_filter;
+				}
+				if ( !apmib_set(del_id, pEntry)) {
+					strcpy(tmpBuf, ("Delete table entry error!"));
+					goto setErr_filter;
+				}
+			}
+		}
+	}
+	apmib_update_web(CURRENT_SETTING);
+	
+	submitUrl = req_get_cstream_var(wp, "submit-url", "");   // hidden page
+	#if defined(MULTI_WAN_SUPPORT)
+	OK_MSG(submitUrl);
+	return;
+	#else
+#ifdef REBOOT_CHECK
+	if(needReboot == 1)
+	{
+		OK_MSG(submitUrl);
+		return;
+	}
+#endif
+
+	if (submitUrl[0])
+		send_redirect_perm(wp, submitUrl);
+  	return;
+	#endif
+setErr_filter:
+	ERR_MSG(tmpBuf);
+}
+
+/*function to return parent control table value to web*/
+int parentContrlList(request *wp, int argc, char **argv)
+{
+	int nBytesSent=0, parentEntryNum, i;
+	PARENT_CONTRL_T entry;
+
+	if ( !apmib_get(MIB_PARENT_CONTRL_TBL_NUM, (void *)&parentEntryNum)) {
+  		fprintf(stderr, "Get table entry error!\n");
+		return -1;
+	}
+   	printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+	nBytesSent += req_format_write(wp, ("<tr class=\"tbl_head\">"
+     	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_mon)</script></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_tues)</script></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_wed)</script></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_thur)</script></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_fri)</script></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_sat)</script></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_sun)</script></b></font></td>\n"
+      	"<td align=center width=\"12%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_start_time)</script></b></font></td>\n"
+      	"<td align=center width=\"12%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_end_time)</script></b></font></td>\n"
+      	"<td align=center width=\"6%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_select)</script></b></font></td></tr>\n"));
+ 	printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+
+	for (i=1; i<=parentEntryNum; i++) 
+	{
+	 	printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+		*((char *)&entry) = (char)i;
+		 	printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+		//	memset(&entry, 0x00, sizeof(entry));
+		if ( !apmib_get(MIB_PARENT_CONTRL_TBL, (void *)&entry))
+			return -1;
+		printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+		nBytesSent += req_format_write(wp, ("<tr class=\"tbl_body\">"
+		"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"12%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"12%%\" ><font size=\"2\">%d</td>\n"
+       	"<td align=center width=\"6%%\" ><input type=\"checkbox\" name=\"select%d\" value=\"ON\"></td></tr>\n"), 
+		entry.parentContrlWeekMon, entry.parentContrlWeekTues,entry.parentContrlWeekWed, \
+		entry.parentContrlWeekThur,entry.parentContrlWeekFri,entry.parentContrlWeekSat, \
+		entry.parentContrlWeekSun,entry.parentContrlStartTime,entry.parentContrlEndTime, i);
+
+		printf("\n(---**>table num=%d:\n+++++table--%d)tmpMon=%d tmpTues=%d  tmpWed=%d  tmpThur=%d  tmpFri=%d tmpSat=%d  tmpSun=%d  tmpstart=%d  tmpend=%d \n", \
+		parentEntryNum,i,entry.parentContrlWeekMon,entry.parentContrlWeekTues,entry.parentContrlWeekWed,\
+		entry.parentContrlWeekThur,entry.parentContrlWeekFri,entry.parentContrlWeekSat, \
+		entry.parentContrlWeekSun, entry.parentContrlStartTime,entry.parentContrlEndTime);
+	}
+	return nBytesSent;
+}
+
 #if 0
 /////////////////////////////////////////////////////////////////////////////
 void formTriggerPort(request *wp, char *path, char *query)

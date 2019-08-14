@@ -478,9 +478,34 @@ var ipfilter_type = "Filter Type:";
 var ipfilter_rule_exist = 'rule already exist!';
 var ipfilter_comm_oversize = 'Error! Comment length too long.';
 
+/***********	parentControl.htm	************/
 var ipfilter_ip_overlap = 'ip address overlap!';
 var ipfilter_no_ipaddr = 'Error! No ip address to set.';
 var ipfilter_ipaddr_not_within_subnet = 'Invalid IP address! It should be set within the current subnet.';
+var parent_contrl_rule_exist = 'rule already exist!';
+var parent_contrl_rule_null = 'time rule is illegel!';
+var parent_contrl_table_full = 'Cannot add new parent contrl entry because table is full!!';
+var parent_contrl_delete = 'Delete Selected';
+var parent_contrl_delete_confirm = 'Do you really want to delete the selected entry?';
+var parent_contrl_table_null= 'please selcet parent contrl time first!!';
+var parent_contrl_week_mon = 'Mon';
+var parent_contrl_week_tues = 'Tue';
+var parent_contrl_week_wed = 'Wed';
+var parent_contrl_week_thur = 'Thur';
+var parent_contrl_week_fri = 'Fri';
+var parent_contrl_week_sat = 'Sat';
+var parent_contrl_week_sun = 'Sun';
+var parent_contrl_week_start_time = 'From';
+var parent_contrl_week_end_time = 'To';
+var parent_contrl_week_select = 'Select';
+var parent_contrl_save = 'Save';
+var parent_contrl_time_for_hour='(hour)';
+var parent_contrl_time_for_min='(min)';
+var parent_contrl_time_to='(To)';
+
+
+
+
 
 
 

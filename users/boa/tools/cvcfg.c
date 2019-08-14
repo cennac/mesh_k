@@ -80,6 +80,7 @@ extern int inet_aton(const char *cp, struct in_addr *addr);
 #ifdef DEBUG_CVCFG
 static int flash_write_file(char *buf, int len , char * filename);
 #endif
+static void getValParentContrl9(char *value, char **p1, char **p2, char **p3, char **p4, char **p5, char **p6, char **p7,char **p8,char **p9);
 
 //////////////////////////////////////////////////////////////////////////////
 static int _is_hex(char c)
@@ -169,7 +170,7 @@ static int scheduleRuleNum;
 static int capPortalAllowNum;
 #endif
 #ifdef HOME_GATEWAY
-static int macFilterNum, portFilterNum, ipFilterNum, portFwNum, triggerPortNum;
+static int macFilterNum, portFilterNum, ipFilterNum, portFwNum, triggerPortNum,parentContrlNum;
 #if defined(_PRMT_X_TELEFONICA_ES_DHCPOPTION_)
 static int dhcpdOptNum, dhcpcOptNum, servingPoolNum;
 #endif /* #if defined(_PRMT_X_TELEFONICA_ES_DHCPOPTION_) */
@@ -1257,10 +1258,10 @@ static int set_mib(struct all_config *pConfig, int id, void *value, int def_mib,
 	char *p11, *p12, *p13, *p14, *p15, *p16, *p17, *p18, *p19, *p20;
 	char *p21, *p22, *p23, *p24, *p25, *p26, *p27, *p28, *p29, *p30,*p31,*p32,*p33,*p34;
 #else
-	char *p1, *p2, *p3, *p4,*p5,*p6, *p7,*p8;
+	char *p1, *p2, *p3, *p4,*p5,*p6, *p7,*p8,*p9, *p10, *p11, *p12;;
 #ifdef HOME_GATEWAY
 #if defined(GW_QOS_ENGINE) || defined(VPN_SUPPORT) || defined(CONFIG_IPV6)
-	char  *p9, *p10, *p11, *p12;
+	//char  *p9, *p10, *p11, *p12;
 #endif
 
 #if defined(VPN_SUPPORT) || defined(CONFIG_IPV6)
@@ -1303,7 +1304,8 @@ static int set_mib(struct all_config *pConfig, int id, void *value, int def_mib,
 	PORTFILTER_Tp pPortFilter;
 	IPFILTER_Tp pIpFilter;
 	MACFILTER_Tp pMacFilter;
-	TRIGGERPORT_Tp pTriggerPort;
+	PARENT_CONTRL_Tp pprentContrl;
+	TRIGGERPORT_Tp pTriggerPort;  
 
 
 #ifdef GW_QOS_ENGINE
@@ -1789,6 +1791,32 @@ static int set_mib(struct all_config *pConfig, int id, void *value, int def_mib,
 			strcpy(pMacFilter->comment, p2);
 		macFilterNum++;
 		break;
+	case PARENT_CONTRL_ARRAY_T:
+		getValParentContrl9((char *) value,&p1,&p2,&p3,&p4,&p5,&p6,&p7,&p8,&p9);
+		if ((p1 == NULL && p2 == NULL && p3 == NULL && p4 == NULL && p5 == NULL&&p6 == NULL&&p7 == NULL) \
+			||(p8 == NULL && p9 == NULL)){
+			printf("Invalid Parent Contrl arguments!\n");
+			break;
+		}
+
+		parentContrlNum++;
+		if(parentContrlNum>=MAX_PARENT_CONTRL_TIME_NUM_LIST)
+			break;
+		
+		pprentContrl = (PARENT_CONTRL_Tp)(((long)pMib)+pTbl[i].offset+parentContrlNum*sizeof(PARENT_CONTRL_T));
+
+		//memcpy(&pscheduleRule->eco,p1,sizeof(unsigned short));
+		pprentContrl->parentContrlWeekMon = (unsigned short)atoi(p1);
+		pprentContrl->parentContrlWeekTues = (unsigned short)atoi(p2);
+		pprentContrl->parentContrlWeekWed = (unsigned short)atoi(p3);
+		pprentContrl->parentContrlWeekThur = (unsigned short)atoi(p4);
+		pprentContrl->parentContrlWeekFri = (unsigned short)atoi(p5);
+		pprentContrl->parentContrlWeekSat = (unsigned short)atoi(p6);
+		pprentContrl->parentContrlWeekSun = (unsigned short)atoi(p7);
+		pprentContrl->parentContrlStartTime = (unsigned short)atoi(p8);
+		pprentContrl->parentContrlEndTime = (unsigned short)atoi(p9);
+		break;
+
 
 	case PORTFW_ARRAY_T:		
 		#if defined(CONFIG_RTL_PORTFW_EXTEND)		
@@ -4505,6 +4533,7 @@ static void getVal5(char *value, char **p1, char **p2, char **p3, char **p4, cha
 	value = getVal(value, p4);
 	getVal(value, p5);
 }
+
 #if defined(CONFIG_RTK_BRIDGE_VLAN_SUPPORT) || defined(CONFIG_RTL_HW_VLAN_SUPPORT) || defined(_PRMT_X_TELEFONICA_ES_DHCPOPTION_)
 void getVal8(char *value, char **p1, char **p2, char **p3, char **p4, \
 	char **p5, char **p6, char **p7, char **p8)
@@ -4576,6 +4605,21 @@ void getVal6(char *value, char **p1, char **p2, char **p3, char **p4, char **p5,
 }
 #endif
 ////////////////////////////////////////////////////////////////////////////////
+static void getValParentContrl9(char *value, char **p1, char **p2, char **p3, char **p4, 
+	char **p5, char **p6, char **p7,char **p8,char **p9)
+{
+	*p1 = *p2 = *p3 = *p4 = *p5 = *p6 = *p7 = *p8 = *p9 = NULL;
+
+	value = getVal(value, p1);
+	value = getVal(value, p2);
+	value = getVal(value, p3);
+	value = getVal(value, p4);
+	value = getVal(value, p5);
+	value = getVal(value, p6);
+	value = getVal(value, p7);
+	value = getVal(value, p8);
+	getVal(value, p9);
+}
 
 #if defined(CONFIG_IPV6) || defined(_PRMT_X_TELEFONICA_ES_DHCPOPTION_)
 static void getVal9(char *value, char **p1, char **p2, char **p3, char **p4, 

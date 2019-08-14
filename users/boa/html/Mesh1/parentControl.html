@@ -14,31 +14,66 @@
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<script type="text/javascript" src="util_gw.js"> </script>
 	</head>
 <script>
 
+function htmlHourOptions()
+{
+    var html = "";
+    
+    for (var i = 0; i < 24; i ++)
+    {
+        html += '<option value="' + i +'">' + ((i < 10) ? ('0' + i) : i) + '</option>';
+    }
+    
+    return html;
+}
 
+function htmlMinuteOptions()
+{
+    var html = "";
+    
+    for (var i = 0; i < 60; i ++)
+    {
+        html += '<option value="' + i +'">' + ((i < 10) ? ('0' + i) : i) + '</option>';
+    }
+    
+    return html;
+}
 
 function week()
 {
   
 }
 
-function init()
+function Load_Setting()
 {
 
 }
 function click()
 {
+ return true;
+}
+function disableDelButton()
+{
+	disableButton(document.formParentContrlDel.deleteSelParentContrl);
+}
 
+function deleteClick()
+{
+  if ( !confirm(parent_contrl_delete_confirm) ) {
+	return false;
+  }
+  else
+	return true;
 }
 </script>
 
-<body onload="init();">
+<body onload="Load_Setting();">
 <blockquote>
-<h2><script>dw(ddns_header)</script></h2>
 
-<form action=/boafrm/formDdns method=POST name="ddns">
+<form action=/boafrm/formParentContrl method=POST name="formParentContrlAdd">
 <table border="0" width=600>
   <tr>
 	 <td >
@@ -47,25 +82,25 @@ function click()
   </tr>
   <tr>
     <td colspan="2"><font size=2></b>
-	<input type="checkbox" name="Mon" value="ON" ONCLICK=week()>星期一</b>
+	<input type="checkbox" name="Mon" value="1" ONCLICK=week()>星期一</b>
     </td>
     <td colspan="2"><font size=2></b>
-	<input type="checkbox" name="Tues" value="ON" ONCLICK=week()>星期二</b>
+	<input type="checkbox" name="Tues" value="1" ONCLICK=week()>星期二</b>
     </td>
     <td colspan="2"><font size=2></b>
-	<input type="checkbox" name="Wed" value="ON" ONCLICK=week()>星期三</b>
+	<input type="checkbox" name="Wed" value="1" ONCLICK=week()>星期三</b>
     </td>
     <td colspan="2"><font size=2></b>
-	<input type="checkbox" name="Thur" value="ON" ONCLICK=week()>星期四</b>
+	<input type="checkbox" name="Thur" value="1" ONCLICK=week()>星期四</b>
     </td>
     <td colspan="2"><font size=2></b>
-	<input type="checkbox" name="Fri" value="ON" ONCLICK=week()>星期五</b>
+	<input type="checkbox" name="Fri" value="1" ONCLICK=week()>星期五</b>
     </td>
     <td colspan="2"><font size=2></b>
-	<input type="checkbox" name="Sat" value="ON" ONCLICK=week()>星期六</b>
+	<input type="checkbox" name="Sat" value="1" ONCLICK=week()>星期六</b>
     </td>
     <td colspan="2"><font size=2></b>
-	<input type="checkbox" name="Sun" value="ON" ONCLICK=week()>星期天</b>
+	<input type="checkbox" name="Sun" value="1" ONCLICK=week()>星期天</b>
     </td>
   </tr>
 </table>
@@ -83,7 +118,7 @@ function click()
 	 <font size=2> <b> 开始时间:</b> </font>
 	 </td>
 	 <td >
-	 <input type="text" name="start_time" size="6">
+	 <input type="text" name="parent_start_time" size="6">
 	 </td>
    </tr>
    <tr>
@@ -91,14 +126,32 @@ function click()
 	 <font size=2> <b> 结束时间:</b> </font>
 	 </td>
 	 <td >
-	 <input type="text" name="end_time" size="6">
+	 <input type="text" name="parent_end_time" size="6">
 	 </td>
    </tr>
 </table>
 
 <div class="form-group form-group-btn">
-	<button type="submit" value="Save & Apply" name="save_apply" onclick="return click()" class="i18n"></button>
+	<button type="submit" value="Save" name="addParentContrl" onclick="return click()" class="i18n"></button>
+	<script>document.formParentContrl.addParentContrl.value = parent_contrl_save;</script>&nbsp;&nbsp;
 </div>
+</form>
+
+<br>
+<form action=/boafrm/formParentContrl method=POST name="formParentContrlDel">
+  <table border="0" width=500>
+  <tr><font size=2><b><script>dw(macfilter_current_table)</script></b></font></tr>
+  <% parentContrlList(); %>
+  </table>
+  <br>
+
+  <input type="submit" value="Delete Selected" name="deleteSelParentContrl" onClick="return deleteClick()"  class="i18n">
+  <script>document.formParentContrlDel.deleteSelParentContrl.value = parent_contrl_delete;</script>&nbsp;&nbsp;
+ <!-- <input type="hidden" value="/parentControl.htm" name="submit-url"> -->
+ <script>
+	if ( <% getIndex("parentContrlNum"); %> == 0 )
+		disableDelButton();
+ </script>
 </form>
 </blockquote>
 </body>

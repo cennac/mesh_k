@@ -571,6 +571,8 @@ extern void formNewSchedule(request *wp, char *path, char *query);
 extern int wlSchList(request *wp, int argc, char **argv);
 #endif // #if defined(NEW_SCHEDULE_SUPPORT)
 
+extern void formParentContrl(request *wp, char *path, char *query);
+
 #ifdef GET_LAN_DEV_INFO_SUPPORT
 int showClients(request *wp, int argc, char **argv);
 #endif
@@ -820,6 +822,7 @@ extern void formWanTcpipSetup(request *wp, char *path, char *query);
 /* Routines exported in fmfwall.c */
 extern void formPortFw(request *wp, char *path, char *query);
 extern void formFilter(request *wp, char *path, char *query);
+extern void formParentContrl(request *wp, char *path, char *query);
 extern int portFwList(request *wp, int argc, char **argv);
 extern int interfaceList(request *wp, int argc, char **argv);
 #ifdef CONFIG_APP_RTL_QUAGGA
@@ -891,6 +894,8 @@ extern int portFilterList(request *wp, int argc, char **argv);
 extern int ipFilterList(request *wp, int argc, char **argv);
 extern int macFilterList(request *wp, int argc, char **argv);
 extern int urlFilterList(request *wp, int argc, char **argv);
+extern int parentContrlList(request *wp, int argc, char **argv);
+
 extern void formDMZ(request *wp, char *path, char *query);
 #if defined(CONFIG_RTK_VLAN_WAN_TAG_SUPPORT)
 extern void formVlanWAN(request *wp, char *path, char *query);

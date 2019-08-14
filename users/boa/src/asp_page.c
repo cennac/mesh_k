@@ -134,7 +134,8 @@ asp_name_t root_asp[] = {
 	{"ipFilterList", ipFilterList},
 	{"portFilterList", portFilterList},
 	{"macFilterList", macFilterList},
-	{"urlFilterList", urlFilterList},
+	{"urlFilterList", urlFilterList},	
+	{"parentContrlList", parentContrlList},
 	//{"triggerPortList", triggerPortList},
 #ifdef ROUTE_SUPPORT
 	{"staticRouteList", staticRouteList},
@@ -307,6 +308,7 @@ form_name_t root_form[] = {
 
 	{"formPortFw", formPortFw},
 	{"formFilter", formFilter},
+	{"formParentContrl", formParentContrl},	
 	//{"formTriggerPort", formTriggerPort},
 	{"formDMZ", formDMZ},
 	{"formDdns", formDdns},

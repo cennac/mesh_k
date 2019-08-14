@@ -5019,6 +5019,12 @@ if(0)
 			goto error_return;
 		}
 	}
+	if ( action==2 && (!strcmp(mib, "PARENT_CONTRL_TBL") || !strcmp(mib, "DEF_PARENT_CONTRL_TBL")) ) {
+		if (!valNum || (strcmp(value[0], "add") && strcmp(value[0], "del") && strcmp(value[0], "delall"))) {
+			showSetMacFilterHelp();
+			goto error_return;
+		}
+	}
 	if ( action==2 && (!strcmp(mib, "TRIGGERPORT_TBL") || !strcmp(mib, "DEF_TRIGGERPORT_TBL")) ) {
 		if (!valNum || (strcmp(value[0], "add") && strcmp(value[0], "del") && strcmp(value[0], "delall"))) {
 			showSetTriggerPortHelp();
@@ -5215,6 +5221,8 @@ if(0)
 			APMIB_GET(MIB_MACFILTER_TBL_NUM, (void *)&num);
 		else if (!strcmp(mib, "URLFILTER_TBL"))
 			APMIB_GET(MIB_URLFILTER_TBL_NUM, (void *)&num);
+		else if (!strcmp(mib, "PARENT_CONTRL_TBL"))
+			APMIB_GET(MIB_PARENT_CONTRL_TBL_NUM, (void *)&num);
 		else if (!strcmp(mib, "TRIGGERPORT_TBL"))
 			APMIB_GET(MIB_TRIGGERPORT_TBL_NUM, (void *)&num);
 
@@ -6984,8 +6992,8 @@ static int writeDefault(WRITE_DEFAULT_TYPE_T isAll)
 	strcpy((char *)pMib->superPassword, "super");
 #endif
 
-    strcpy((char *)pMib->userName, "KS-LINK_WM126");
-	strcpy((char *)pMib->userPassword, "kslink123");
+    strcpy((char *)pMib->userName, "");
+	strcpy((char *)pMib->userPassword, "");
     
 	pMib->LanDhcpConfigurable=1;
 	
@@ -8480,6 +8488,7 @@ getval:
 	case PORTFILTER_ARRAY_T:
 	case MACFILTER_ARRAY_T:
 	case URLFILTER_ARRAY_T:
+	case PARENT_CONTRL_ARRAY_T:
 	case TRIGGERPORT_ARRAY_T:
 
 #if defined(GW_QOS_ENGINE) || defined(QOS_BY_BANDWIDTH)
@@ -9569,6 +9578,7 @@ static void setMIB(char *name, int id, TYPE_T type, int len, int valNum, char **
 	IPFILTER_T ipFilter;
 	MACFILTER_T macFilter;
 	URLFILTER_T urlFilter;
+	PARENT_CONTRL_T parentContrl={0};
 	TRIGGERPORT_T triggerPort;
 
 #ifdef GW_QOS_ENGINE
@@ -10203,7 +10213,53 @@ static void setMIB(char *name, int id, TYPE_T type, int len, int valNum, char **
 			id = MIB_MACFILTER_DELALL;
 		value = (void *)&macFilter;
 		break;
+		
+		case PARENT_CONTRL_ARRAY_T:
 
+			if ( !strcmp(val[0], "add")) {
+			id = MIB_PARENT_CONTRL_ADD;
+			if ( valNum < 2 ) {
+				printf("input argument is not enough!\n");
+				return;
+			}
+
+			if ( valNum > 9)
+			{
+			 parentContrl.parentContrlWeekMon=atoi(val[1]);
+			 parentContrl.parentContrlWeekTues=atoi(val[2]);
+			 parentContrl.parentContrlWeekWed=atoi(val[3]);
+			 parentContrl.parentContrlWeekThur=atoi(val[4]);
+			 parentContrl.parentContrlWeekFri=atoi(val[5]);
+			 parentContrl.parentContrlWeekSat=atoi(val[6]);
+			 parentContrl.parentContrlWeekSun=atoi(val[7]);
+			 parentContrl.parentContrlStartTime=atoi(val[8]);
+			 parentContrl.parentContrlEndTime=atoi(val[9]);
+			}
+		}
+		else if ( !strcmp(val[0], "del")) {
+			id = MIB_PARENT_CONTRL_DEL;
+			if ( valNum < 2 ) {
+				printf("input argument is not enough!\n");
+				return;
+			}
+			int_val = atoi(val[1]);
+			if ( !APMIB_GET(MIB_MACFILTER_TBL_NUM, (void *)&entryNum)) {
+				printf("Get port forwarding entry number error!");
+				return;
+			}
+			if ( int_val > entryNum ) {
+				printf("Element number is too large!\n");
+				return;
+			}
+			*((char *)&parentContrl) = (char)int_val;
+			if ( !APMIB_GET(MIB_PARENT_CONTRL_TBL, (void *)&parentContrl)) {
+				printf("Get table entry error!");
+				return;
+			}
+		}
+		value = (void *)&parentContrl;
+		break;
+		
 	case URLFILTER_ARRAY_T:
 		if ( !strcmp(val[0], "add")) {
 			id = MIB_URLFILTER_ADD;
@@ -12895,6 +12951,10 @@ next_wlan:
 			APMIB_GET(MIB_MACFILTER_TBL_NUM, (void *)&num);
 		else if ( pTbl[idx].id == MIB_URLFILTER_TBL)
 			APMIB_GET(MIB_URLFILTER_TBL_NUM, (void *)&num);
+		else if ( pTbl[idx].id == MIB_PARENT_CONTRL_TBL)
+		    APMIB_GET(MIB_PARENT_CONTRL_TBL_NUM, (void *)&num);
+		else if ( pTbl[idx].id == MIB_PARENT_CONTRL_TBL)
+		    APMIB_GET(MIB_PARENT_CONTRL_TBL_NUM, (void *)&num);
 		else if ( pTbl[idx].id == MIB_TRIGGERPORT_TBL)
 			APMIB_GET(MIB_TRIGGERPORT_TBL_NUM, (void *)&num);
 #if defined(GW_QOS_ENGINE) || defined(QOS_BY_BANDWIDTH)

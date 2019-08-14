@@ -392,7 +392,25 @@ mib_table_entry_T mib_macfilter_tbl[]={
 #undef MIBDEF
 {0}
 };
-	
+
+
+mib_table_entry_T mib_parent_contrl_tbl[]={
+#ifdef MIB_TLV
+#define MIBDEF(_ctype,	_cname, _crepeat, _mib_name, _mib_type, _mib_parents_ctype, _default_value, _next_tbl, decision_id, reinit_id ) \
+	{_MIBID_NAME(_mib_name), _mib_type, _OFFSET_SIZE_FIELD(_mib_parents_ctype, _cname), _UNIT_SIZE(_ctype), _default_value, _next_tbl, _REINIT_FIELD(decision_id,reinit_id)},
+#else
+#define MIBDEF(_ctype,	_cname, _crepeat, _mib_name, _mib_type, _mib_parents_ctype, _default_value, _next_tbl, decision_id, reinit_id ) \
+	{_MIBID_NAME(_mib_name), _mib_type, FIELD_OFFSET(_mib_parents_ctype, _cname), FIELD_SIZE(_mib_parents_ctype, _cname)},
+#endif
+
+#define MIB_PARENT_CONTRL_IMPORT
+#include "mibdef.h"
+#undef MIB_PARENT_CONTRL_IMPORT
+
+#undef MIBDEF
+{0}
+};
+
 mib_table_entry_T mib_triggerport_tbl[]={
 #ifdef MIB_TLV
 #define MIBDEF(_ctype,	_cname, _crepeat, _mib_name, _mib_type, _mib_parents_ctype, _default_value, _next_tbl, decision_id, reinit_id ) \

@@ -172,7 +172,7 @@ static LINKCHAIN_T meshAclChain;
 //### end
 
 #ifdef HOME_GATEWAY
-static LINKCHAIN_T portFwChain, ipFilterChain, portFilterChain, macFilterChain, triggerPortChain;
+static LINKCHAIN_T portFwChain, ipFilterChain, portFilterChain, macFilterChain,parentContrlChain, triggerPortChain;
 static LINKCHAIN_T urlFilterChain;
 #ifdef ROUTE_SUPPORT
 static LINKCHAIN_T staticRouteChain;
@@ -2729,6 +2729,37 @@ linkchain:
 	}
 	macFilterChain.compareLen = sizeof(MACFILTER_T) - COMMENT_LEN;
 
+	// initialize parent contrl table
+		if ( !init_linkchain(&parentContrlChain, sizeof(PARENT_CONTRL_T), MAX_PARENT_CONTRL_TIME_NUM_LIST)) {
+#if CONFIG_APMIB_SHARED_MEMORY == 1
+			apmib_shm_free(pMib, CSCONF_SHM_KEY);
+			apmib_shm_free(pMibDef, DSCONF_SHM_KEY);
+			apmib_shm_free(pHwSetting, HWCONF_SHM_KEY);
+			apmib_sem_unlock();
+#else
+			free(pMib);
+			free(pMibDef);
+			free(pHwSetting);
+#endif
+			return 0;
+		}
+		for (i=0; i<pMib->parentContrlNum; i++) {
+			if ( !add_linkchain(&parentContrlChain, (char *)&pMib->parentContrlArray[i]) ) {
+#if CONFIG_APMIB_SHARED_MEMORY == 1
+				apmib_shm_free(pMib, CSCONF_SHM_KEY);
+				apmib_shm_free(pMibDef, DSCONF_SHM_KEY);
+				apmib_shm_free(pHwSetting, HWCONF_SHM_KEY);
+				apmib_sem_unlock();
+#else
+				free(pMib);
+				free(pMibDef);
+				free(pHwSetting);
+#endif
+				return 0;
+			}
+		}
+		parentContrlChain.compareLen = sizeof(PARENT_CONTRL_T);
+
 	// initialize url-filter table
 	if ( !init_linkchain(&urlFilterChain, sizeof(URLFILTER_T), MAX_URLFILTER_NUM)) {
 #if CONFIG_APMIB_SHARED_MEMORY == 1
@@ -4334,6 +4365,7 @@ int apmib_reinit(void)
 	free(ipFilterChain.buf);
 	free(portFilterChain.buf);
 	free(macFilterChain.buf);
+	free(parentContrlChain.buf);
 	free(urlFilterChain.buf);
 	free(triggerPortChain.buf);
 #if defined(GW_QOS_ENGINE) || defined(QOS_BY_BANDWIDTH)
@@ -4856,6 +4888,13 @@ GET_NOT_FIND_MIB:
 #endif	
                 index = (int)( *((unsigned char *)value));
  		return get_linkchain(&macFilterChain, (char *)value, index );
+
+	case PARENT_CONTRL_ARRAY_T:
+#if CONFIG_APMIB_SHARED_MEMORY == 1
+			apmib_sem_unlock();
+#endif	
+				index = (int)( *((unsigned char *)value));
+	    return get_linkchain(&parentContrlChain, (char *)value, index );
 
 	case URLFILTER_ARRAY_T:
 #if CONFIG_APMIB_SHARED_MEMORY == 1
@@ -5497,6 +5536,24 @@ int apmib_set(int id, void *value)
 #endif
 		return 1;
 	}
+	if (id == MIB_PARENT_CONTRL_ADD) {
+		ret = add_linkchain(&parentContrlChain, (char *)value);
+		if ( ret )
+		pMib->parentContrlNum++;
+#if CONFIG_APMIB_SHARED_MEMORY == 1
+		apmib_sem_unlock();
+#endif
+		return ret;
+	}
+	if (id == MIB_PARENT_CONTRL_DEL) {
+		ret = delete_linkchain(&parentContrlChain, (char *)value);
+		if ( ret )
+		pMib->parentContrlNum--;
+#if CONFIG_APMIB_SHARED_MEMORY == 1
+			apmib_sem_unlock();
+#endif
+			return ret;
+		}
 
 	if (id == MIB_URLFILTER_ADD) {
 		ret = add_linkchain(&urlFilterChain, (char *)value);
@@ -6438,6 +6495,7 @@ SET_NOT_FIND_MIB:
 	case IPFILTER_ARRAY_T:
 	case PORTFILTER_ARRAY_T:
 	case MACFILTER_ARRAY_T:
+	case PARENT_CONTRL_ARRAY_T:
 	case URLFILTER_ARRAY_T:
 	case TRIGGERPORT_ARRAY_T:
 
@@ -6945,6 +7003,10 @@ int apmib_update(CONFIG_DATA_T type)
 		memset( pMib->macFilterArray, '\0', MAX_FILTER_NUM*sizeof(MACFILTER_T) );
 		for (i=0; i<pMib->macFilterNum; i++) {
 			get_linkchain(&macFilterChain, (void *)&pMib->macFilterArray[i], i+1);
+		}
+		memset( pMib->parentContrlArray, '\0', MAX_PARENT_CONTRL_TIME_NUM_LIST*sizeof(PARENT_CONTRL_T) );
+		for (i=0; i<pMib->parentContrlNum; i++) {
+			get_linkchain(&parentContrlChain, (void *)&pMib->parentContrlArray[i], i+1);
 		}
 		memset( pMib->urlFilterArray, '\0', MAX_URLFILTER_NUM*sizeof(URLFILTER_T) );
 		for (i=0; i<pMib->urlFilterNum; i++) {
@@ -7859,6 +7921,9 @@ int update_linkchain(int fmt, void *Entry_old, void *Entry_new, int type_size)
 			pLinkChain = &portFilterChain;
 		}else if(fmt == MACFILTER_ARRAY_T){
 			pLinkChain = &macFilterChain;
+		}
+		}else if(fmt == PARENT_CONTRL_ARRAY_T){
+			pLinkChain = &parentContrlChain;
 		}else if(fmt == URLFILTER_ARRAY_T){
 			pLinkChain = &urlFilterChain;
 		}else	if(fmt==TRIGGERPORT_ARRAY_T){

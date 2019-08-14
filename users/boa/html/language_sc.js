@@ -478,9 +478,33 @@ var ipfilter_type = 'IP过滤类型:';
 var ipfilter_rule_exist = '规则已经存在!';
 var ipfilter_comm_oversize = '错误! 注释长度太长.';
 
+/*****************parentContrl.htm**********************/
 var ipfilter_ip_overlap = 'ip地址重叠!';
 var ipfilter_no_ipaddr = '错误! 没有设置IP地址.';
 var ipfilter_ipaddr_not_within_subnet = '无效的IP地址!必须设在当前子网下.';
+var parent_contrl_rule_exist = '规则已经存在!';
+var parent_contrl_delete = '删除选中项';
+var parent_contrlr_delete_confirm = '确定删除所选的入口?';
+var parent_contrl_table_null= '请选择家长控制时间!!';
+var parent_contrl_week_mon = '星期一';
+var parent_contrl_week_tues = '星期二';
+var parent_contrl_week_wed = '星期三';
+var parent_contrl_week_thur = '星期四';
+var parent_contrl_week_fri = '星期五';
+var parent_contrl_week_sat = '星期六';
+var parent_contrl_week_sun = '星期天';
+var parent_contrl_week_start_time = '开始时间';
+var parent_contrl_week_end_time = '结束时间';
+var parent_contrl_week_select = '选择';
+var parent_contrl_save = '保存';
+var parent_contrl_time_for_hour='(小时)';
+var parent_contrl_time_for_min='(分钟)';
+var parent_contrl_time_to='(至)';
+
+
+
+
+
 
 
 /***********	Macfilter.htm	************/

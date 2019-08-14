@@ -983,6 +983,9 @@ MIBDEF(unsigned char,	macFilterEnabled, ,	MACFILTER_ENABLED,	BYTE_T, APMIB_T, 0,
 MIBDEF(unsigned char,	macFilterNum, ,	MACFILTER_TBL_NUM,	BYTE_T, APMIB_T, 0, 0,0,0)
 MIBDEF(MACFILTER_T,	macFilterArray, [MAX_FILTER_NUM],	MACFILTER_TBL,	MACFILTER_ARRAY_T, APMIB_T, 0, mib_macfilter_tbl,DECISION_NULL_FUNC_ID,REINIT_FIREWALL_MACFILTER_ID)
 
+MIBDEF(unsigned char,	parentContrlNum, ,	PARENT_CONTRL_TBL_NUM,	BYTE_T, APMIB_T, 0, 0,0,0)
+MIBDEF(PARENT_CONTRL_T,	parentContrlArray, [MAX_PARENT_CONTRL_TIME_NUM_LIST],	PARENT_CONTRL_TBL,	PARENT_CONTRL_ARRAY_T, APMIB_T, 0, mib_parent_contrl_tbl,DECISION_NULL_FUNC_ID,REINIT_PARENT_CONTRL_ID)
+
 MIBDEF(unsigned char,	triggerPortEnabled, ,	TRIGGERPORT_ENABLED,	BYTE_T, APMIB_T, 0, 0,0,0)
 MIBDEF(unsigned char,	triggerPortNum, ,	TRIGGERPORT_TBL_NUM,	BYTE_T, APMIB_T, 0, 0,0,0)
 MIBDEF(TRIGGERPORT_T,	triggerPortArray, [MAX_FILTER_NUM],	TRIGGERPORT_TBL,	TRIGGERPORT_ARRAY_T, APMIB_T, 0, mib_triggerport_tbl,0,0)
@@ -1345,6 +1348,19 @@ MIBDEF(unsigned short,	day,	,	SCHEDULE_DAY,	WORD_T, SCHEDULE_T, 0, 0,DECISION_WL
 MIBDEF(unsigned char,	macAddr, [6],	MACFILTER_MACADDR,	BYTE6_T, MACFILTER_T, 0, 0,0,0)
 MIBDEF(unsigned char,	comment, [COMMENT_LEN],	MACFILTER_COMMENT,	STRING_T, MACFILTER_T, 0, 0,0,0)
 #endif // #ifdef MIB_MACFILTER_IMPORT
+
+#ifdef MIB_PARENT_CONTRL_IMPORT
+/* _ctype,	_cname, _crepeat, _mib_name, _mib_type, _mib_parents_ctype, _default_value, _next_tbl , decision_id,reinit_id*/
+MIBDEF(unsigned short,	parentContrlWeekMon, ,	PARENT_CONTRL_WEEK_MON,	WORD_T, PARENT_CONTRL_T, 0, 0,0,0)
+MIBDEF(unsigned short,	parentContrlWeekTues, ,	PARENT_CONTRL_WEEK_TUES,WORD_T, PARENT_CONTRL_T, 0, 0,0,0)
+MIBDEF(unsigned short,	parentContrlWeekWed, ,	PARENT_CONTRL_WEEK_WED,	WORD_T, PARENT_CONTRL_T, 0, 0,0,0)
+MIBDEF(unsigned short,	parentContrlWeekThur, ,	PARENT_CONTRL_WEEK_THUR,WORD_T, PARENT_CONTRL_T, 0, 0,0,0)
+MIBDEF(unsigned short,	parentContrlWeekFri, ,	PARENT_CONTRL_WEEK_FRI,	WORD_T, PARENT_CONTRL_T, 0, 0,0,0)
+MIBDEF(unsigned short,	parentContrlWeekSat, ,	PARENT_CONTRL_WEEK_SAT,	WORD_T, PARENT_CONTRL_T, 0, 0,0,0)
+MIBDEF(unsigned short,	parentContrlWeekSun, ,	PARENT_CONTRL_WEEK_SUN,	WORD_T, PARENT_CONTRL_T, 0, 0,0,0)
+MIBDEF(unsigned short,	parentContrlStartTime, ,PARENT_CONTRL_START_TIME,WORD_T,PARENT_CONTRL_T, 0, 0,0,0)
+MIBDEF(unsigned short,	parentContrlEndTime, ,	PARENT_CONTRL_END_TIME,	WORD_T, PARENT_CONTRL_T, 0, 0,0,0)
+#endif // #ifdef MIB_PARENT_CONTRL_IMPORT
 
 #ifdef VLAN_CONFIG_SUPPORTED
 #ifdef MIB_VLAN_CONFIG_IMPORT

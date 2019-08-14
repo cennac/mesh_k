@@ -5865,7 +5865,7 @@ setErr:
 #ifdef LOGIN_URL
 
 #define MAX_USER	5
-#define ACCESS_TIMEOUT	 300	// 5m
+#define ACCESS_TIMEOUT	 300*100	// 5m
 
 #define MAGIC_NUMER	7168186
 

@@ -856,7 +856,7 @@ int getInfo(request *wp, int argc, char **argv)
 	    wanRate.rxRate=0;
 		wanRate.txRate=0;
 		getProcIfData(&wanRate);
-		printf("%s:--------->%d:  uplinkRate=%0.5lf  downlink=%0.5lf",__FUNCTION__,__LINE__,wanRate.txRate,wanRate.rxRate);
+		//printf("%s:--------->%d:  uplinkRate=%0.5lf  downlink=%0.5lf",__FUNCTION__,__LINE__,wanRate.txRate,wanRate.rxRate);
 		if( !strcmp(name, "wanUplinkRate"))
 		{
 		  return req_format_write(wp, "%0.5lf  Mbps",wanRate.rxRate);
@@ -8507,6 +8507,13 @@ else if(!strcmp(name, "is_80211r_support"))
 	}
 	else if ( !strcmp(name, "macFilterNum")) {
 		if ( !apmib_get( MIB_MACFILTER_TBL_NUM, (void *)&val) )
+			return -1;
+		sprintf(buffer, "%d", val);
+		req_format_write(wp, buffer);
+		return 0;
+	}
+	else if ( !strcmp(name, "parentContrlNum")) {
+		if ( !apmib_get( MIB_PARENT_CONTRL_TBL_NUM, (void *)&val) )
 			return -1;
 		sprintf(buffer, "%d", val);
 		req_format_write(wp, buffer);
