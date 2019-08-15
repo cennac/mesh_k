@@ -134,7 +134,7 @@ asp_name_t root_asp[] = {
 	{"ipFilterList", ipFilterList},
 	{"portFilterList", portFilterList},
 	{"macFilterList", macFilterList},
-	{"urlFilterList", urlFilterList},	
+	{"urlFilterList", urlFilterList},
 	{"parentContrlList", parentContrlList},
 	//{"triggerPortList", triggerPortList},
 #ifdef ROUTE_SUPPORT
@@ -212,6 +212,9 @@ asp_name_t root_asp[] = {
 #if defined(CONFIG_APP_ZIGBEE)
 	{"zigbee_dev_list",zigbee_dev_list},
 #endif
+    {"setWlanIDX",setWlanIDX},
+    {"showMeshTopology",showMeshTopology},
+    {"getTotalOnlineClientNum",getTotalOnlineClientNum},
 	{NULL, NULL}
 };
 
@@ -219,6 +222,7 @@ asp_name_t root_asp[] = {
 //-----------------------------------------------------------------------------
 form_name_t root_form[] = {
 	{"formWlanSetup", formWlanSetup},
+    {"formWlanSetupAll", formWlanSetupAll},
 	{"formWlanRedirect", formWlanRedirect},
 #if 0
 	{"formWep64", formWep64},
@@ -471,6 +475,7 @@ form_name_t root_form[] = {
 #ifdef RTK_MULTI_AP
 	{"formMultiAP",formMultiAP},
 #endif
+    {"formGuestWlanSetup",formGuestWlanSetup},
 	{NULL, NULL}
 };
 

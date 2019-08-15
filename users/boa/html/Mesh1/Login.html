@@ -6,6 +6,7 @@
 		<title></title>
 		<meta id="i18n_pagename" content="index-common">
 		<meta name="keywords" content=""/>
+		<meta http-equiv="Access-Control-Allow-Origin" content="*">
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>
 		<link rel="stylesheet" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
@@ -14,6 +15,7 @@
 	    <!-- 加载语言包文件 -->
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
+	    <script>if(window.top !== window.self){ window.top.location = window.location;}</script>
 		<style>
 			body{
 				margin: 0;
@@ -30,10 +32,10 @@
 				<form action="/boafrm/formLogin" method="post" name="loginForm" id="loginForm">
 				<div class="login_logo"><img src="img/KSLINK.png"/></div>
 				<div class="login_ingroup">
-					<div class="name_input"><i class="fa fa-user fa-2x"></i><input type="text" id="username" class="i18n-input" selectname="user_name" name="username" value="" onkeyup="login_lengthInfo()"/></div>
+					<div class="name_input"><i class="fa fa-user fa-2x"></i><input type="text" id="username_show" class="i18n-input" selectname="user_name" name="username_show" value="" onkeyup="login_lengthInfo()"/><input type="hidden" id="username" name="username"/></div>
 					<!--<div class="tips_div">初始账号为Wi-Fi名称</div>-->
-					<div class="name_input"><i class="fa fa-lock fa-2x"></i><input type="password" id="password" class="i18n-input" selectname="user_password" name="password" value="" onkeyup="login_lengthInfo()"/></div>
-					<!--<div class="tips_div">初始账号与Wi-Fi密码相同</div>-->
+					<div class="name_input"><i class="fa fa-lock fa-2x"></i><input type="password" id="password_show" class="i18n-input" selectname="user_password" name="password_show" value="" onkeyup="login_lengthInfo()"/><input type="hidden" id="password" name="password"/></div>
+					<div class="tips_div i18n" name="tips_div_login"></div>
 					<div class="name_input comfirm"><input type="button" class="i18n-input" selectname="user_submit" id="Login_lg" name="save_apply" onclick="loginInfo()"/></div>
 				</div>
 				<div class="code">
@@ -46,13 +48,25 @@
 		</div>
 		
 		<script>
+			document.onkeydown = function(e){ 
+				    var ev = document.all ? window.event : e;
+				    if(ev.keyCode==13) {
+				    	loginInfo();
+				     }
+				}
 			$(function(){
-			    $("input[name='username']").focus();
-			});
-			$("#username").click(function(){
+			    $("input[name='username_show']").focus();
+			    var myurl=window.document.location.href;
+		   		var login_url=myurl.split("?");
+		   		if(myurl.indexOf("err_code=1")!=-1){
+		   			$(".tips_div").css("display","block");
+		   		}
+			});	
+			
+			$("#username_show").click(function(){
 		   		$(this).val("");
 		   	})
-		   	$("#password").click(function(){
+		   	$("#password_show").click(function(){
 		   		$(this).val("");
 		   	})
 			 function getValue(id) { 
@@ -60,41 +74,44 @@
 		   }  	
 		   	function login_lengthInfo() {
 		   		//var pwdblank = /\/g;
-			    if(getValue("username").length>30){
+			    if(getValue("username_show").length>30){
 			    	alert("账号长度超过30");
 			    	return false;
 			    }
-			    if(getValue("password").length>30){
+			    if(getValue("password_show").length>30){
 			    	alert("密码长度超过30");
 			    	return false;
 			    }
-			    if(getValue("username").match(/^ +| +$/g)){
+			    if(getValue("username_show").match(/^ +| +$/g)){
 			    	alert("不能包含空格！");
-			    	//this.value=this.value.replace(/^ +| +$/g,'')
+			    	return false;
 			    }
-			    if(getValue("password").match(/^ +| +$/g)){
+			    if(getValue("password_show").match(/^ +| +$/g)){
 			    	alert("不能包含空格！");
+			    	return false;
 			    }
 			}
 		   	function getEncryption() {
-		   		 var str=getValue("username");
-		   		 var str2=getValue("password");
+		   		 var str=getValue("username_show");
+		   		 var str2=getValue("password_show");
 				 var base = new Base64();  
 			     var result = base.encode(str); //加密			     
 			     var result2 = base.encode(str2); //加密
 //			     var result3 = base.decode(result1);//解密
 //			     var result4 = base.decode(result2);//解密
-			     console.log(result)
+//			     console.log(result)
 				 $("#username").val(result);
 				 $("#password").val(result2);
 			} 
-		   	function loginInfo(){	
-		   		
-		      if(getValue("username")=="" || getValue("password")==""){
-		          alert("用户名或密码为空，请输入");
-		         $("#username").focus();
+		   	function loginInfo(){			   		
+		      if(getValue("username_show")=="" || getValue("password_show")==""){
+		           var myurl=window.document.location.href;
+			   		var login_url=myurl.split("?");
+			   		if(myurl.indexOf("err_code=1")!=-1){
+			   			$(".tips_div").css("display","block");
+			   		}
+		         $("#username_show").focus();
 		    }else{
-		    	
 		    	getEncryption();
 				document.loginForm.submit();
 		 		}

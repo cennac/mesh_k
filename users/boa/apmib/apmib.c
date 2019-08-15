@@ -2759,7 +2759,6 @@ linkchain:
 			}
 		}
 		parentContrlChain.compareLen = sizeof(PARENT_CONTRL_T);
-
 	// initialize url-filter table
 	if ( !init_linkchain(&urlFilterChain, sizeof(URLFILTER_T), MAX_URLFILTER_NUM)) {
 #if CONFIG_APMIB_SHARED_MEMORY == 1
@@ -4895,7 +4894,6 @@ GET_NOT_FIND_MIB:
 #endif	
 				index = (int)( *((unsigned char *)value));
 	    return get_linkchain(&parentContrlChain, (char *)value, index );
-
 	case URLFILTER_ARRAY_T:
 #if CONFIG_APMIB_SHARED_MEMORY == 1
 		apmib_sem_unlock();
@@ -7922,7 +7920,7 @@ int update_linkchain(int fmt, void *Entry_old, void *Entry_new, int type_size)
 		}else if(fmt == MACFILTER_ARRAY_T){
 			pLinkChain = &macFilterChain;
 		}
-		}else if(fmt == PARENT_CONTRL_ARRAY_T){
+		else if(fmt == PARENT_CONTRL_ARRAY_T){
 			pLinkChain = &parentContrlChain;
 		}else if(fmt == URLFILTER_ARRAY_T){
 			pLinkChain = &urlFilterChain;

@@ -158,6 +158,8 @@ ifeq ($(CONFIG_DIGEST_AUTHENTICATION),y)
 REALTEK_FILES += md5.c
 endif
 
+REALTEK_FILES += cJSON.c
+
 ifeq ($(CONFIG_ISP_IGMPPROXY_MULTIWAN),y)
 CFLAGS += -DCONFIG_ISP_IGMPPROXY_MULTIWAN
 endif
@@ -224,6 +226,7 @@ ifeq ($(CONFIG_HTTP_FILE_SERVER_SUPPORT),y)
 OBJS += fmhttp_files.o
 endif
 
+LDFLAGS += -lm
 #------------------------------------------------------------------------------
 # targets
 #------------------------------------------------------------------------------

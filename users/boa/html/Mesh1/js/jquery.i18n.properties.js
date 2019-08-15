@@ -1,58 +1,16 @@
-/******************************************************************************
- * jquery.i18n.properties
- *
- * Dual licensed under the GPL (http://dev.jquery.com/browser/trunk/jquery/GPL-LICENSE.txt) and
- * MIT (http://dev.jquery.com/browser/trunk/jquery/MIT-LICENSE.txt) licenses.
- *
- * @version     1.2.7
- * @url         https://github.com/jquery-i18n-properties/jquery-i18n-properties
- * @inspiration Localisation assistance for jQuery (http://keith-wood.name/localisation.html)
- *              by Keith Wood (kbwood{at}iinet.com.au) June 2007
- *
- *****************************************************************************/
+
 
 (function ($) {
 
     $.i18n = {};
 
-    /**
-     * Map holding bundle keys if mode is 'map' or 'both'. Values of this can also be an
-     * Object, in which case the key is a namespace.
-     */
     $.i18n.map = {};
 
     var debug = function (message) {
         window.console && console.log('i18n::' + message);
     };
 
-    /**
-     * Load and parse message bundle files (.properties),
-     * making bundles keys available as javascript variables.
-     *
-     * i18n files are named <name>.js, or <name>_<language>.js or <name>_<language>_<country>.js
-     * Where:
-     *      The <language> argument is a valid ISO Language Code. These codes are the lower-case,
-     *      two-letter codes as defined by ISO-639. You can find a full list of these codes at a
-     *      number of sites, such as: http://www.loc.gov/standards/iso639-2/englangn.html
-     *      The <country> argument is a valid ISO Country Code. These codes are the upper-case,
-     *      two-letter codes as defined by ISO-3166. You can find a full list of these codes at a
-     *      number of sites, such as: http://www.iso.ch/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html
-     *
-     * Sample usage for a bundles/Messages.properties bundle:
-     * $.i18n.properties({
-     *      name:      'Messages',
-     *      language:  'en_US',
-     *      path:      'bundles'
-     * });
-     * @param  name      (string/string[], optional) names of file to load (eg, 'Messages' or ['Msg1','Msg2']). Defaults to "Messages"
-     * @param  language    (string, optional) language/country code (eg, 'en', 'en_US', 'pt_BR'). if not specified, language reported by the browser will be used instead.
-     * @param  path      (string, optional) path of directory that contains file to load
-     * @param  mode      (string, optional) whether bundles keys are available as JavaScript variables/functions or as a map (eg, 'vars' or 'map')
-     * @param  debug     (boolean, optional) whether debug statements are logged at the console
-     * @param  cache        (boolean, optional) whether bundles should be cached by the browser, or forcibly reloaded on each page load. Defaults to false (i.e. forcibly reloaded)
-     * @param  encoding  (string, optional) the encoding to request for bundles. Property file resource bundles are specified to be in ISO-8859-1 format. Defaults to UTF-8 for backward compatibility.
-     * @param  callback     (function, optional) callback function to be called after script is terminated
-     */
+
     $.i18n.properties = function (settings) {
 
         var defaults = {
@@ -103,17 +61,6 @@
             // 1. load base (eg, Messages.properties)
             defaultFileName = settings.path + file + '.properties';
             fileNames = [defaultFileName];
-            // // 2. with language code (eg, Messages_pt.properties)
-            // var shortCode = settings.language.substring(0, 2);
-            // shortFileName = settings.path + file + '_' + shortCode + '.properties';
-            // // 3. with language code and country code (eg, Messages_pt_BR.properties)
-            // if (settings.language.length >= 5) {
-            //     var longCode = settings.language.substring(0, 5);
-            //     longFileName = settings.path + file + '_' + longCode + '.properties';
-            //     fileNames = [defaultFileName, shortFileName, longFileName];
-            // } else {
-            //     fileNames = [defaultFileName, shortFileName];
-            // }
             loadAndParseFiles(fileNames, settings);
         });
 
@@ -123,10 +70,6 @@
         }
     }; // properties
 
-    /**
-     * When configured with mode: 'map', allows access to bundle values by specifying its key.
-     * Eg, jQuery.i18n.prop('com.company.bundles.menu_add')
-     */
     $.i18n.prop = function (key /* Add parameters as function arguments as necessary  */) {
 
         var args = [].slice.call(arguments);
@@ -152,33 +95,9 @@
             return '[' + ((namespace) ? namespace + '#' + key : key) + ']';
         }
 
-        // Place holder replacement
-        /**
-        * Tested with:
-        *   test.t1=asdf ''{0}''
-        *   test.t2=asdf '{0}' '{1}'{1}'zxcv
-        *   test.t3=This is \"a quote" 'a''{0}''s'd{fgh{ij'
-        *   test.t4="'''{'0}''" {0}{a}
-        *   test.t5="'''{0}'''" {1}
-        *   test.t6=a {1} b {0} c
-        *   test.t7=a 'quoted \\ s\ttringy' \t\t x
-        *
-        * Produces:
-        *   test.t1, p1 ==> asdf 'p1'
-        *   test.t2, p1 ==> asdf {0} {1}{1}zxcv
-        *   test.t3, p1 ==> This is "a quote" a'{0}'sd{fgh{ij
-        *   test.t4, p1 ==> "'{0}'" p1{a}
-        *   test.t5, p1 ==> "'{0}'" {1}
-        *   test.t6, p1 ==> a {1} b p1 c
-        *   test.t6, p1, p2 ==> a p2 b p1 c
-        *   test.t6, p1, p2, p3 ==> a p2 b p1 c
-        *   test.t7 ==> a quoted \ s	tringy 		 x
-        */
 
         var i;
         if (typeof(value) == 'string') {
-            // Handle escape characters. Done separately from the tokenizing loop below because escape characters are
-            // active in quoted strings.
             i = 0;
             while ((i = value.indexOf('\\', i)) != -1) {
                 if (value.charAt(i + 1) == 't') {
@@ -196,53 +115,42 @@
                 }
             }
 
-            // Lazily convert the string to a list of tokens.
             var arr = [], j, index;
             i = 0;
             while (i < value.length) {
                 if (value.charAt(i) == '\'') {
-                    // Handle quotes
                     if (i == value.length - 1) {
                         value = value.substring(0, i); // Silently drop the trailing quote
                     } else if (value.charAt(i + 1) == '\'') {
                         value = value.substring(0, i) + value.substring(++i); // Escaped quote
                     } else {
-                        // Quoted string
                         j = i + 2;
                         while ((j = value.indexOf('\'', j)) != -1) {
                             if (j == value.length - 1 || value.charAt(j + 1) != '\'') {
-                                // Found start and end quotes. Remove them
                                 value = value.substring(0, i) + value.substring(i + 1, j) + value.substring(j + 1);
                                 i = j - 1;
                                 break;
                             } else {
-                                // Found a double quote, reduce to a single quote.
                                 value = value.substring(0, j) + value.substring(++j);
                             }
                         }
 
                         if (j == -1) {
-                            // There is no end quote. Drop the start quote
                             value = value.substring(0, i) + value.substring(i + 1);
                         }
                     }
                 } else if (value.charAt(i) == '{') {
-                    // Beginning of an unquoted place holder.
                     j = value.indexOf('}', i + 1);
                     if (j == -1) {
-                        i++; // No end. Process the rest of the line. Java would throw an exception
+                        i++; 
                     } else {
-                        // Add 1 to the index so that it aligns with the function arguments.
                         index = parseInt(value.substring(i + 1, j));
                         if (!isNaN(index) && index >= 0) {
-                            // Put the line thus far (if it isn't empty) into the array
                             var s = value.substring(0, i);
                             if (s !== "") {
                                 arr.push(s);
                             }
-                            // Put the parameter reference into the array
                             arr.push(index);
-                            // Start the processing over again starting from the rest of the line.
                             i = 0;
                             value = value.substring(j + 1);
                         } else {

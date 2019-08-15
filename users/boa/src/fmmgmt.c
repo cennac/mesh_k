@@ -28,6 +28,8 @@
 #include "utility.h"
 #include "mibtbl.h"
 #include "asp_page.h"
+#include "cJSON.h"
+
 
 #ifdef SUPER_NAME_SUPPORT
 #include "auth.h"
@@ -3540,33 +3542,36 @@ void formPasswordSetup(request *wp, char *path, char *query)
 #ifdef LOGIN_URL
 	if (strUser[0])
 		submitUrl = WEB_PAGE_LOGIN;
+
+    delete_user(wp);
 #endif
 
-#ifdef REBOOT_CHECK
-	{
-		char tmpMsg[300];
-		char lan_ip_buf[30], lan_ip[30];
-#ifdef RTK_REINIT_SUPPORT
-		char cmdBuf[64]={0};
-#endif		
-		sprintf(tmpMsg, "%s","<script>dw(password_change_setting)</script><br><br><script>dw(saveconf_not_turnoff_reboot)</script>");
-		apmib_get( MIB_IP_ADDR,  (void *)lan_ip_buf) ;
-		sprintf(lan_ip,"%s",inet_ntoa(*((struct in_addr *)lan_ip_buf)) );
-#ifdef RTK_REINIT_SUPPORT
-		sprintf(cmdBuf,"reinitCli -e %d",REINIT_EVENT_APPLYCAHNGES);
-		system(cmdBuf);
-#endif
-		OK_MSG_FW(tmpMsg, submitUrl,APPLY_COUNTDOWN_TIME,lan_ip);
-#ifdef REBOOT_CHECK
-		run_init_script_flag = 1;
-#endif		
-#ifndef NO_ACTION
-		run_init_script("all");
-#endif	
-	}
-#else
-	OK_MSG(submitUrl);
-#endif
+//#ifdef REBOOT_CHECK
+//	{
+//		char tmpMsg[300];
+//		char lan_ip_buf[30], lan_ip[30];
+//#ifdef RTK_REINIT_SUPPORT
+//		char cmdBuf[64]={0};
+//#endif		
+//		sprintf(tmpMsg, "%s","<script>dw(password_change_setting)</script><br><br><script>dw(saveconf_not_turnoff_reboot)</script>");
+//		apmib_get( MIB_IP_ADDR,  (void *)lan_ip_buf) ;
+//		sprintf(lan_ip,"%s",inet_ntoa(*((struct in_addr *)lan_ip_buf)) );
+//#ifdef RTK_REINIT_SUPPORT
+//		sprintf(cmdBuf,"reinitCli -e %d",REINIT_EVENT_APPLYCAHNGES);
+//		system(cmdBuf);
+//#endif
+//		OK_MSG_FW(tmpMsg, submitUrl,APPLY_COUNTDOWN_TIME,lan_ip);
+//#ifdef REBOOT_CHECK
+//		run_init_script_flag = 1;
+//#endif		
+//#ifndef NO_ACTION
+//		run_init_script("all");
+//#endif	
+//	}
+//#else
+//	OK_MSG(submitUrl);
+//#endif
+    send_redirect_perm(wp, submitUrl);
 	return;
 
 setErr_pass:
@@ -5865,7 +5870,7 @@ setErr:
 #ifdef LOGIN_URL
 
 #define MAX_USER	5
-#define ACCESS_TIMEOUT	 300*100	// 5m
+#define ACCESS_TIMEOUT	 300	// 5m
 
 #define MAGIC_NUMER	7168186
 
@@ -5960,9 +5965,8 @@ int is_valid_user(request *wp)
     char user_password[MAX_NAME_LEN];
 
     apmib_get(MIB_USER_NAME, user_name);
-    apmib_get(MIB_USER_PASSWORD, user_password);
     
-    if (strcmp(user_name, "") == 0 && strcmp(user_password, "") == 0) 
+    if (strcmp(user_name, "") == 0) 
     {
         return 1;
     }
@@ -6007,29 +6011,29 @@ void formLogin(request *wp, char *path, char *query)
 {
 	char *strUser, *strPassword;
 	char tmpbuf[200];
-    char decode_buf[128];
+    int err_code = 0;
 
 	strUser = req_get_cstream_var(wp, ("username"), "");
 	strPassword = req_get_cstream_var(wp, ("password"), "");
 	if ( strUser[0] && !strPassword[0] ) {
-		strcpy(tmpbuf, ("ERROR: Password cannot be empty."));
+		err_code = 0;
 		goto login_err;
 	}
 
-    base64decode(decode_buf, strUser, sizeof(decode_buf));
-	if (!isUserExists(decode_buf)) {
-		strcpy(tmpbuf, ("ERROR: Access denied, unknown user!"));
+    base64decode(tmpbuf, strUser, sizeof(tmpbuf));
+	if (!isUserExists(tmpbuf)) {
+		err_code = 1;
 		goto login_err;
 	}
 
-    base64decode(decode_buf, strPassword, sizeof(decode_buf));
-    if (!isValidPassword(decode_buf)) {
-		strcpy(tmpbuf, ("ERROR: Access denied, password incorrect!"));
+    base64decode(tmpbuf, strPassword, sizeof(tmpbuf));
+    if (!isValidPassword(tmpbuf)) {
+		err_code = 2;
 		goto login_err;
 	}
 	
 	if (add_user(wp) < 0) {
-		strcpy(tmpbuf, ("ERROR: Exceed max user number!"));
+		err_code = 3;
 		goto login_err;
 	}
 
@@ -6037,7 +6041,8 @@ void formLogin(request *wp, char *path, char *query)
 	return;
 
 login_err:
-	ERR_MSG(tmpbuf);
+    sprintf(tmpbuf, WEB_PAGE_LOGIN "?err_code=%d", err_code);
+	send_redirect_perm(wp, tmpbuf);
 }
 #endif // LOGIN_URL
 
@@ -7289,7 +7294,7 @@ int rtk_get_dhcp_client_list(unsigned int *num, struct rtk_dhcp_client_info *pcl
 	int idx=0, ret;
 	char *buf=NULL, *ptr, tmpBuf[100];
 	unsigned int ip, lease;
-	unsigned char mac[6], hostname[64];
+	unsigned char mac[6], hostname[64]={0};
 
 	struct stat status;
 	int pid;
@@ -7448,11 +7453,17 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
 	{//assign all mac in pdevinfo, get mac index. if mac not exist, add it to pdevinfo arrary
 		devInfoIdx=getDstMacIdx(pdevinfo,l2list[i].mac,MAX_STA_NUM);	
 		//printf("%s:%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,maclist[i][0],maclist[i][1],maclist[i][2],maclist[i][3],maclist[i][4],maclist[i][5]);
-		pdevinfo[devInfoIdx].conType=RTK_ETHERNET;
+		if(devInfoIdx < MAX_STA_NUM)
+		{
+    		pdevinfo[devInfoIdx].conType=RTK_ETHERNET;
 
-		GetPortStatus(l2list[i].portNum,&asicConInfo);
-		pdevinfo[devInfoIdx].tx_bytes=asicConInfo.rxBytes;
-		pdevinfo[devInfoIdx].rx_bytes=asicConInfo.txBytes;		
+    		GetPortStatus(l2list[i].portNum,&asicConInfo);
+    		pdevinfo[devInfoIdx].tx_bytes=asicConInfo.rxBytes;
+    		pdevinfo[devInfoIdx].rx_bytes=asicConInfo.txBytes;	
+            pdevinfo[devInfoIdx].rssi = 100;
+            pdevinfo[devInfoIdx].rx_speed = 0;
+            pdevinfo[devInfoIdx].tx_speed = 0;
+		}
 	}
 //	printf("%s:%d \n",__FUNCTION__,__LINE__);
 	
@@ -7465,14 +7476,44 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
 		if(wlanStaList[i].aid && (wlanStaList[i].flag & STA_INFO_FLAG_ASOC))
 		{
 			devInfoIdx=getDstMacIdx(pdevinfo,wlanStaList[i].addr,MAX_STA_NUM);	
+            if(devInfoIdx < MAX_STA_NUM)
+		    {
 #if defined(CONFIG_RTL_92D_SUPPORT)
-			pdevinfo[devInfoIdx].conType=RTK_WIRELESS_5G;
+			    pdevinfo[devInfoIdx].conType=RTK_WIRELESS_5G;
 #else
-			pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
+			    pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
 #endif
-			pdevinfo[devInfoIdx].on_link=1;
-			pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
-			pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+			    pdevinfo[devInfoIdx].on_link=1;
+			    pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
+			    pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+                pdevinfo[devInfoIdx].rssi = wlanStaList[i].rssi;
+                pdevinfo[devInfoIdx].rx_speed = wlanStaList[i].RxOperaRate;
+                pdevinfo[devInfoIdx].tx_speed = wlanStaList[i].txOperaRates;
+            }
+		}
+	}
+
+    bzero(wlanStaList,sizeof(wlanStaList));
+	getWlStaInfo("wlan0-va1", wlanStaList);
+	for(i=0;i<MAX_STA_NUM;i++)
+	{
+		if(wlanStaList[i].aid && (wlanStaList[i].flag & STA_INFO_FLAG_ASOC))
+		{
+			devInfoIdx=getDstMacIdx(pdevinfo,wlanStaList[i].addr,MAX_STA_NUM);	
+            if(devInfoIdx < MAX_STA_NUM)
+		    {
+#if defined(CONFIG_RTL_92D_SUPPORT)
+			    pdevinfo[devInfoIdx].conType=RTK_WIRELESS_5G;
+#else
+			    pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
+#endif
+			    pdevinfo[devInfoIdx].on_link=1;
+			    pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
+			    pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+                pdevinfo[devInfoIdx].rssi = wlanStaList[i].rssi;
+                pdevinfo[devInfoIdx].rx_speed = wlanStaList[i].RxOperaRate;
+                pdevinfo[devInfoIdx].tx_speed = wlanStaList[i].txOperaRates;
+            }
 		}
 	}
 	
@@ -7485,10 +7526,36 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
 		if(wlanStaList[i].aid && (wlanStaList[i].flag & STA_INFO_FLAG_ASOC))
 		{
 			devInfoIdx=getDstMacIdx(pdevinfo,wlanStaList[i].addr,MAX_STA_NUM);
-			pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
-			pdevinfo[devInfoIdx].on_link=1;
-			pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
-			pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+            if(devInfoIdx < MAX_STA_NUM)
+		    {
+    			pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
+    			pdevinfo[devInfoIdx].on_link=1;
+    			pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
+    			pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+                pdevinfo[devInfoIdx].rssi = wlanStaList[i].rssi;
+                pdevinfo[devInfoIdx].rx_speed = wlanStaList[i].RxOperaRate;
+                pdevinfo[devInfoIdx].tx_speed = wlanStaList[i].txOperaRates;
+            }
+		}
+	}
+
+    bzero(wlanStaList,sizeof(wlanStaList));
+	getWlStaInfo("wlan1-va1", wlanStaList);
+	for(i=0;i<MAX_STA_NUM;i++)
+	{
+		if(wlanStaList[i].aid && (wlanStaList[i].flag & STA_INFO_FLAG_ASOC))
+		{
+			devInfoIdx=getDstMacIdx(pdevinfo,wlanStaList[i].addr,MAX_STA_NUM);
+            if(devInfoIdx < MAX_STA_NUM)
+		    {
+    			pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
+    			pdevinfo[devInfoIdx].on_link=1;
+    			pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
+    			pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+                pdevinfo[devInfoIdx].rssi = wlanStaList[i].rssi;
+                pdevinfo[devInfoIdx].rx_speed = wlanStaList[i].RxOperaRate;
+                pdevinfo[devInfoIdx].tx_speed = wlanStaList[i].txOperaRates;
+            }
 		}
 	}
 #endif
@@ -7502,12 +7569,15 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
 		devInfoIdx=getDstMacIdx(pdevinfo,arp_tab[i].mac,MAX_STA_NUM);
 		//printf("%s:%d devInfoIdx=%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,devInfoIdx,
 		//arp_tab[i].mac[0],arp_tab[i].mac[1],arp_tab[i].mac[2],arp_tab[i].mac[3],arp_tab[i].mac[4],arp_tab[i].mac[5]);
-		pdevinfo[devInfoIdx].ip=arp_tab[i].ip;
-		//printf("%s:%d ip=0x%x\n",__FUNCTION__,__LINE__,pdevinfo[devInfoIdx].ip);
-		if(pdevinfo[devInfoIdx].conType==RTK_ETHERNET)
-		//if(sendArpToCheckDevIsAlive(pdevinfo[devInfoIdx].ip,lan_addr.s_addr, lan_mac)==0)
-			pdevinfo[devInfoIdx].on_link=1;
-		//printf("%s:%d \n",__FUNCTION__,__LINE__);
+		if(devInfoIdx < MAX_STA_NUM)
+		{
+    		pdevinfo[devInfoIdx].ip=arp_tab[i].ip;
+    		//printf("%s:%d ip=0x%x\n",__FUNCTION__,__LINE__,pdevinfo[devInfoIdx].ip);
+    		if(pdevinfo[devInfoIdx].conType==RTK_ETHERNET)
+    		//if(sendArpToCheckDevIsAlive(pdevinfo[devInfoIdx].ip,lan_addr.s_addr, lan_mac)==0)
+    			pdevinfo[devInfoIdx].on_link=1;
+    		//printf("%s:%d \n",__FUNCTION__,__LINE__);
+		}
 	}
 
 //dhcp list
@@ -7517,9 +7587,12 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
 	for(i=0;i<dhcp_device_num;i++)
 	{
 		devInfoIdx=getDstMacIdx(pdevinfo,dhcp_client_info[i].mac,MAX_STA_NUM);
-		strcpy(pdevinfo[devInfoIdx].hostname,dhcp_client_info[i].hostname);
-		pdevinfo[devInfoIdx].ip=dhcp_client_info[i].ip;
-		pdevinfo[devInfoIdx].expires=dhcp_client_info[i].expires;
+        if(devInfoIdx < MAX_STA_NUM)
+		{
+    		strcpy(pdevinfo[devInfoIdx].hostname,dhcp_client_info[i].hostname);
+    		pdevinfo[devInfoIdx].ip=dhcp_client_info[i].ip;
+    		pdevinfo[devInfoIdx].expires=dhcp_client_info[i].expires;
+        }
 	}
 	
 	
@@ -7761,4 +7834,318 @@ void formBTRepeaterSetup(request *wp, char *path, char *query)
 	return;
 }
 #endif
+
+
+cJSON * creatJSONMeshStationOBJ(RTK_LAN_DEVICE_INFO_T *devinfo)
+{
+    cJSON *obj;
+    char buf[512];
+    
+    obj = cJSON_CreateObject();
+
+    sprintf(buf,"%02x%02x%02x%02x%02x%02x",devinfo->mac[0], devinfo->mac[1], devinfo->mac[2], devinfo->mac[3], devinfo->mac[4], devinfo->mac[5]);
+    cJSON_AddStringToObject(obj, "station_mac", buf);
+    sprintf(buf, "%d", devinfo->rssi);
+    cJSON_AddStringToObject(obj, "station_rssi", buf);
+    if(devinfo->conType == RTK_ETHERNET)
+    {
+        sprintf(buf,"ETHERNET");
+    }
+    else if(devinfo->conType == RTK_WIRELESS_5G)
+    {
+        sprintf(buf,"5G");
+    }
+    else if(devinfo->conType == RTK_WIRELESS_2G)
+    {
+        sprintf(buf,"2G");
+    }
+    else
+    {
+        sprintf(buf,"ERR");
+    }
+    cJSON_AddStringToObject(obj, "station_connected_band", buf);
+    sprintf(buf, "%d", devinfo->rx_speed);
+    cJSON_AddStringToObject(obj, "station_downlink", buf);
+    sprintf(buf, "%d", devinfo->tx_speed);
+    cJSON_AddStringToObject(obj, "station_uplink", buf);
+
+    strcpy(buf,inet_ntoa((*((struct in_addr *)&(devinfo->ip)))));
+    cJSON_AddStringToObject(obj, "station_ip", buf);
+    cJSON_AddStringToObject(obj, "station_hostname", devinfo->hostname);
+    cJSON_AddStringToObject(obj, "station_brand", devinfo->brand);
+    cJSON_AddStringToObject(obj, "station_link_time", "null");
+#if 0
+            {
+                "station_mac":"40331a573909",
+                "station_rssi":"61",
+                "station_connected_band":"5G",
+                "station_downlink":"150",
+                "station_uplink":"108"
+                "station_ip":"192.168.1.10"
+                "station_hostname":"mate20"
+                "station_brand":"HUAWEI"
+                "station_link_time":"68"
+            }
+    
+#endif
+
+    return obj;
+}
+
+int getMacIdx(RTK_LAN_DEVICE_INFO_T *devinfo, unsigned char mac[6], int max_num)
+{
+	int i = 0;
+
+	for(i=0;i<max_num;i++)
+	{
+		if(memcmp(devinfo[i].mac, mac, 6)== 0)
+		{
+			return i;
+		}
+	}
+	return max_num;
+}
+
+void addExtStationInfoToTopology(cJSON * obj, RTK_LAN_DEVICE_INFO_T *devinfo)
+{
+    cJSON *head;
+    cJSON *pos;
+    cJSON *station_mac;
+    unsigned char mac[6];
+    int idx;
+    char buf[20];
+
+    head = cJSON_GetObjectItem(obj, "mac_address");
+    if(head != NULL)
+    {
+        if(string_to_hex(head->valuestring, mac, 12))
+        {
+            idx = getMacIdx(devinfo, mac, MAX_STA_NUM);
+            if(idx < MAX_STA_NUM)
+            {
+                devinfo[idx].slave_flg = 1;    //mark mesh slave device
+            }
+        }
+    }
+    
+    head = cJSON_GetObjectItem(obj, "station_info");
+    if(head != NULL)
+    {
+        for(pos = head->child; pos != NULL; pos = pos->next)
+        {
+            station_mac = cJSON_GetObjectItem(pos, "station_mac");
+            if(station_mac != NULL)
+            {
+                if(string_to_hex(station_mac->valuestring, mac, 12))
+                {
+                    idx = getMacIdx(devinfo, mac, MAX_STA_NUM);
+                    if(idx < MAX_STA_NUM)
+                    {
+                        strcpy(buf, inet_ntoa((*((struct in_addr *)&(devinfo[idx].ip)))));
+                        cJSON_AddStringToObject(pos, "station_ip", buf);
+                        cJSON_AddStringToObject(pos, "station_hostname", devinfo[idx].hostname);
+                        cJSON_AddStringToObject(pos, "station_brand", devinfo[idx].brand);
+                        cJSON_AddStringToObject(pos, "station_link_time", "null");
+
+                        devinfo[idx].slave_flg = 1;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        printf("[%s:%d] can't find station_info.", __FUNCTION__, __LINE__);
+    }
+
+    head = cJSON_GetObjectItem(obj, "child_devices");
+
+    if(head != NULL)
+    {
+        for(pos = head->child; pos != NULL; pos = pos->next)
+        {
+            addExtStationInfoToTopology(pos, devinfo);
+        }
+    }
+    else
+    {
+        printf("[%s:%d] can't find child_devices.", __FUNCTION__, __LINE__);
+    }
+
+    return;
+}
+
+/*
+{
+       "device_name":"EasyMesh_Device_host",
+       "ip_addr":"192.168.1.211",
+       "mac_address":"cc2d2110f0dc",
+       "neighbor_devices":[
+           {
+               "neighbor_mac":"00e046614455",
+               "neighbor_name":"EasyMesh_Device2",
+               "neighbor_rssi":"43",
+               "neighbor_band":"TBU"
+           }
+       ],
+       "station_info":[
+           {
+               "station_mac":"40331a573909",
+               "station_rssi":"61",
+               "station_connected_band":"5G",
+               "station_downlink":"150",
+               "station_uplink":"108"
+               "station_ip":"192.168.1.10"
+               "station_hostname":"mate20"
+               "station_brand":"HUAWEI"
+               "station_link_time":"68"
+           }
+       ],
+       "child_devices":[
+           Object{...},
+           Object{...}
+       ]
+   }
+*/
+
+cJSON *getMeshTopologyJSON()
+{
+    FILE *fp;
+    cJSON *root;
+    char buf[512];
+    RTK_LAN_DEVICE_INFO_T devinfo[MAX_STA_NUM] = {0};
+    int num = 0;
+    cJSON *obj_station;
+    int i;
+
+    rtk_get_lan_device_info(&num, devinfo, MAX_STA_NUM);
+    
+    fp = fopen("/tmp/topology_json", "r");
+	if (fp == NULL) 
+    {
+        struct in_addr	intaddr;
+        struct sockaddr hwaddr;
+        unsigned char *mac;
+        
+		root = cJSON_CreateObject();
+
+        if (!apmib_get( MIB_MAP_DEVICE_NAME, (void *)buf)) 
+        {
+			sprintf(buf, "%s", "null" );
+		}
+        cJSON_AddStringToObject(root, "device_name", buf);
+
+        getInAddr("br0", IP_ADDR, (void *)&intaddr );
+        sprintf(buf, "%s", inet_ntoa(intaddr) );
+        cJSON_AddStringToObject(root, "ip_addr", buf);
+
+        mac = (unsigned char *)hwaddr.sa_data;
+		sprintf(buf,"%02x%02x%02x%02x%02x%02x",mac[0], mac[1],mac[2], mac[3], mac[4], mac[5]);
+        cJSON_AddStringToObject(root, "mac_address", buf);
+        
+        cJSON_AddItemToObject(root, "neighbor_devices", cJSON_CreateArray());
+
+        cJSON *obj_array;
+        cJSON_AddItemToObject(root, "station_info", obj_array = cJSON_CreateArray());
+        for(i = 0; i < num; i++)
+        {
+            if(devinfo[i].on_link == 1)
+            {
+                obj_station = creatJSONMeshStationOBJ(&devinfo[i]);
+                cJSON_AddItemToArray(obj_array, obj_station);
+            }
+        }
+        
+        cJSON_AddItemToObject(root, "child_devices", cJSON_CreateArray());
+       
+	}
+    else
+    {
+		ssize_t read;
+		size_t  len   = 0;
+		char*	line  = NULL;
+		read = getline(&line, &len, fp);
+		fclose(fp);
+
+        root = cJSON_Parse(line);
+        free(line);
+
+        if(root == NULL)
+        {
+            printf("[%s:%d] cJSON_Parse fail.", __FUNCTION__, __LINE__);
+            return -1;
+        }
+
+        addExtStationInfoToTopology(root, devinfo);
+        cJSON *obj;
+        obj = cJSON_GetObjectItem(root, "station_info");
+        if(obj != NULL)
+        {
+            for(i = 0; i < num; i++)
+            {
+                if(devinfo[i].on_link == 1 && devinfo[i].slave_flg == 0)
+                {
+                    
+                    obj_station = creatJSONMeshStationOBJ(&devinfo[i]);
+                    cJSON_AddItemToArray(obj, obj_station);
+                }
+            }
+        }
+
+    }
+
+    return root;
+}
+
+int showMeshTopology(request *wp, int argc, char **argv)
+{  
+    cJSON *root;
+    char *out;
+    int ret;
+
+    root = getMeshTopologyJSON();
+    out = cJSON_Print(root);
+	cJSON_Delete(root);	
+    ret = req_format_write(wp, "%s", out);
+    free(out);
+
+    return ret;
+}
+
+void CalcOnlineClientNum(cJSON *obj, int *num)
+{
+    cJSON *station_array;
+    cJSON *head;
+    cJSON *pos;
+
+    station_array = cJSON_GetObjectItem(obj, "station_info");
+    *num += cJSON_GetArraySize(station_array);
+
+    head = cJSON_GetObjectItem(obj, "child_devices");
+
+    if(head != NULL)
+    {
+        for(pos = head->child; pos != NULL; pos = pos->next)
+        {
+            CalcOnlineClientNum(pos, num);
+        }
+    }
+    else
+    {
+        printf("[%s:%d] can't find child_devices.", __FUNCTION__, __LINE__);
+    }
+
+    return;
+}
+int getTotalOnlineClientNum(request *wp, int argc, char **argv)
+{
+    int online_num = 0;
+    cJSON *root;
+ 
+    root = getMeshTopologyJSON();
+    CalcOnlineClientNum(root, &online_num);
+    cJSON_Delete(root);	
+     
+    int ret = req_format_write(wp, "%d", online_num);
+}
 

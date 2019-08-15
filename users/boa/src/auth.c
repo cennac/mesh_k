@@ -203,7 +203,7 @@ auth_form_t auth_form[] = {
 #endif
 			{"formPortFw", { 1,1 } },
 			{"formFilter", { 1,1 } },
-			{"formParentContrl", { 1,1 } },			
+        	{"formParentContrl", { 1,1 } },		
 			//{"formTriggerPort", { 1,1 } },
 			{"formDMZ", { 1,1 } },
 			{"formDdns", { 1,1 } },

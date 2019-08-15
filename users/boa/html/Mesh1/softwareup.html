@@ -7,6 +7,7 @@
 		<meta id="i18n_pagename" content="index-common">
 	    <meta name="keywords" content=""/>
 	    <meta name="description" content=""/>
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
 		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
@@ -22,7 +23,7 @@
 				<div class="test"><span class="test_new i18n" name="test_new_fllow"></span></div>
 				<div class="tips"><p class="i18n" name="tips_for_softwareup"></p></div>
 				<div class="soft_up_selectversion">
-					<div class="form-group_smart"><label class="i18n" name="version_softwareup"></label><input type="text" value="<% getInfo("fwVersion"); %>"/></div>
+					<div class="form-group_smart"><label class="i18n" name="version_softwareup"></label><input type="text" class="current_version" value="<% getInfo("fwVersion"); %>"/></div>
 					<div class="form-group_smart"><label class="i18n" name="versionLocal_softwareup"></label>
 						<input type="file" name="binary" id="file" style="display:none">
 						<div class="input-append">  
@@ -58,15 +59,13 @@
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
 	    <script type="text/javascript">
+	    $(".current_version").attr("disabled",true);
 		$('input[id=file]').change(function() {
 			var path = $(this).val();			
 			path = path.split('\\');		
 			path = path[path.length-1];
 			$('#uploadurl').text(path);
-			alert($("#uploadurl").text());
-			if($("#uploadurl").text()!=""||$("#uploadurl").text()!=undefined||$("#uploadurl").text()!=null){
-					$("#Unselected_file").text("");
-				}
+			
 		});
 			var MWJ_progBar = 0;
 			var time=0;
@@ -81,7 +80,6 @@
 					return;
 				var name = str.split(".");
 				var type = name[name.length-1];
-				alert(type);
 				return type;
 			}
 			function sendClicked(F)

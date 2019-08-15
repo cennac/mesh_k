@@ -117,6 +117,10 @@ extern int countDownTime;
 extern int run_init_script_flag;
 #endif
 
+#ifndef GET_LAN_DEV_INFO_SUPPORT
+#define GET_LAN_DEV_INFO_SUPPORT
+#endif
+
 extern int save_cs_to_file();
 
 ///////////////////////////////////////////////////////////////////////////
@@ -572,9 +576,10 @@ extern int wlSchList(request *wp, int argc, char **argv);
 #endif // #if defined(NEW_SCHEDULE_SUPPORT)
 
 extern void formParentContrl(request *wp, char *path, char *query);
-
 #ifdef GET_LAN_DEV_INFO_SUPPORT
 int showClients(request *wp, int argc, char **argv);
+int showMeshTopology(request *wp, int argc, char **argv);
+int getTotalOnlineClientNum(request *wp, int argc, char **argv);
 #endif
 #if defined(CONFIG_RTL_P2P_SUPPORT)
 extern void formWiFiDirect(request *wp, char *path, char *query);
@@ -657,6 +662,7 @@ extern int getIndex(request *wp, int argc, char **argv);
 extern int getInfo(request *wp, int argc, char **argv);
 extern int isConnectPPP();
 extern int FirmwareUpgrade(char *upload_data, int upload_len, int is_root, char *buffer);
+extern int setWlanIDX(request *wp, int argc, char **argv);
 #ifdef MULTI_WAN_SUPPORT
 /*	add by sen_liu 2012.1.13 for webpage multi_wan get mibInfo	*/
 extern int getMultiWanIndex(request *wp, int argc, char **argv);
@@ -696,6 +702,7 @@ extern void SSID_select(request *wp, int argc, char **argv);
 extern void wlFtKhList(request *wp, int argc, char **argv);
 #endif
 extern void formWlanSetup(request *wp, char *path, char *query);
+extern void formWlanSetupAll(request *wp, char *path, char *query);
 extern int wlAcList(request *wp, int argc, char **argv);
 extern void formWlAc(request *wp, char *path, char *query);
 extern void formAdvanceSetup(request *wp, char *path, char *query);
@@ -893,9 +900,8 @@ extern void formDiskPartition(request *wp, char * path, char * query);
 extern int portFilterList(request *wp, int argc, char **argv);
 extern int ipFilterList(request *wp, int argc, char **argv);
 extern int macFilterList(request *wp, int argc, char **argv);
-extern int urlFilterList(request *wp, int argc, char **argv);
 extern int parentContrlList(request *wp, int argc, char **argv);
-
+extern int urlFilterList(request *wp, int argc, char **argv);
 extern void formDMZ(request *wp, char *path, char *query);
 #if defined(CONFIG_RTK_VLAN_WAN_TAG_SUPPORT)
 extern void formVlanWAN(request *wp, char *path, char *query);
@@ -1018,6 +1024,7 @@ extern void formMultiAP(request *wp, char *path, char *query);
 #ifdef CONFIG_APP_BT_REPEATER_CONFIG
 void formBTRepeaterSetup(request *wp, char *path, char *query);
 #endif
+void formGuestWlanSetup(request *wp, char *path, char *query);
 /* variables exported in main.c */
 extern char *WAN_IF;
 extern char *BRIDGE_IF;

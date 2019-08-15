@@ -7,10 +7,10 @@ struct dhcpOfferedAddr {
 	u_int8_t chaddr[16];
 	u_int32_t yiaddr;	/* network order */
 	u_int32_t expires;	/* host order */
-#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD)
+//#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD)
 	char hostname[64]; /* Brad add for get hostname of client */
 	u_int32_t isUnAvailableCurr;	/* Brad add for WEB GUI check */
-#endif
+//#endif
 };
 
 extern unsigned char blank_chaddr[];

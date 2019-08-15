@@ -2,11 +2,13 @@
 <html>
 	<head>
 		<meta charset="utf-8" />
+		<% getIndex("no-cache"); %>
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<title></title>
 		<meta id="i18n_pagename" content="index-common">
 	    <meta name="keywords" content=""/>
 	    <meta name="description" content=""/>
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
 		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
 		<link rel="stylesheet" href="css/bootstrap-switch.min.css" />
@@ -14,16 +16,159 @@
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
-		<script type="text/javascript" src="util_gw.js"> </script>
+		<script type="text/javascript" src="js/util_gw.js"> </script>
+		<SCRIPT language=Javascript src="<% getInfo("lang");%>"></SCRIPT>
+		<SCRIPT>
+		var wlan_channel=new Array();
+		var regDomain=new Array();
+		var defaultChan=new Array();
+		var lastBand=new Array();
+		var lastRegDomain=new Array();
+		var RFType=new Array();
+		var APMode=new Array();
+		var bandIdx=new Array();
+		var bandIdxAP=new Array();
+		var bandIdxClient=new Array();
+		var startChanIdx=new Array();
+		var wlan_idx;
+		
+		var switch_status='<%getIndex("autoWlanEnabled");%>';
+		if(switch_status){
+			lastBand[1] = 0;
+			lastRegDomain[1]= 0;
+			bandIdxAP[1] = -1;
+			bandIdxClient[1] = -1;
+			startChanIdx[1] = 0;
+		}else{
+			lastBand[0] = 0;
+			lastRegDomain[0]= 0;
+			bandIdxAP[0] = -1;
+			bandIdxClient[0] = -1;
+			startChanIdx[0] = 0;
+		}
+	
+
+		// <<-------------------------------------- for WPS
+		function Data_country(country_code,abb,idx_5g,idx_2g,fullname) 
+		{
+		        this.country_code= country_code;
+		        this.abb = abb;
+		        this.idx_5g = idx_5g;
+		        this.idx_2g = idx_2g;
+		        this.fullname = fullname;
+		}
+		
+		function Data_regdomain(regdomain,channelsetnumber,regdomainarea) 
+		{
+		        this.regdoemain = regdomain;
+		        this.channelsetnumber = channelsetnumber;
+		        this.regdomainarea = regdomainarea;
+		}
+	
+		
+		
+		
+		function Set_SSIDbyBand(form, wlan_id, band, index)
+		{
+			var selectText=form.elements["band"+wlan_id].options[index].text.substr(0,1);
+			var bandOption = form.elements["band"+wlan_id].options.value;
+				
+			if(bandOption == 0 || bandOption == 1 || (bandOption == 7 && selectText=='2') || bandOption == 2 || bandOption == 9 || bandOption == 10)
+			{
+				var tmpstr=ssid_2g;
+				if(ssid_2g.match("&quot;")!=null)
+					tmpstr=ssid_2g.replace(/&quot;/g, "\"");
+		
+				if(ssid_2g.match("&#37;")!=null)
+					tmpstr=tmpstr.replace(/&#37;/g, "%");
+		
+				if(ssid_2g.match("&#38;")!=null)
+					tmpstr=tmpstr.replace(/&#38;/g, "&");
+		
+				if(ssid_2g.match("&#39;")!=null)
+					tmpstr=tmpstr.replace(/&#39;/g, "'");
+				
+				if(ssid_2g.match("&#92;")!=null)
+					tmpstr=tmpstr.replace(/&#92;/g, "\\");
+		
+				if(ssid_2g.match("&#62;")!=null)
+					tmpstr=tmpstr.replace(/&#62;/g, ">");
+		
+				if(ssid_2g.match("&#60;")!=null)
+					tmpstr=tmpstr.replace(/&#60;/g, "<");
+				
+				form.elements["ssid"+wlan_idx].value = tmpstr;
+			}
+			else if(bandOption == 3 || (bandOption == 7 && selectText=='5') || bandOption == 11 || bandOption == 63 || bandOption == 71 || bandOption == 75)
+			{
+				//form.elements["ssid"+wlan_idx].value = ssid_5g;
+				var tmpstr=ssid_5g;
+				if(ssid_5g.match("&quot;")!=null)
+					tmpstr=ssid_5g.replace(/&quot;/g, "\"");
+		
+				if(ssid_2g.match("&#37;")!=null)
+					tmpstr=tmpstr.replace(/&#37;/g, "%");
+		
+				if(ssid_2g.match("&#38;")!=null)
+					tmpstr=tmpstr.replace(/&#38;/g, "&");
+					
+				if(ssid_5g.match("&#39;")!=null)
+					tmpstr=tmpstr.replace(/&#39;/g, "'");
+				
+				if(ssid_5g.match("&#92;")!=null)
+					tmpstr=tmpstr.replace(/&#92;/g, "\\");
+		
+				if(ssid_5g.match("&#62;")!=null)
+					tmpstr=tmpstr.replace(/&#62;/g, ">");
+		
+				if(ssid_5g.match("&#60;")!=null)
+					tmpstr=tmpstr.replace(/&#60;/g, "<");
+				
+				form.elements["ssid"+wlan_idx].value = tmpstr;
+			}
+		}
+		function Set_onChangeBand(form, wlan_id, band, index){							
+			updateChan_channebound(form, wlan_id);
+		}
+		
+		function LoadSetting()
+		 {		 	
+			    if(switch_status){
+			    	document.wlanSetup.autoWlanEnabled.checked=false;
+			    	state_false();	
+					updateChan_channebound(document.wlanSetup, wlan_idx);	
+			    }else{			    	
+			    	document.wlanSetup.autoWlanEnabled.checked=true;
+			    	state_true();		
+					updateChan_channebound(document.wlanSetup, wlan_idx);	
+			    }		 
+	
+		}
+		
+		function resetForm()
+		{
+			location=location; 
+		}
+		</SCRIPT>
 	</head>
-	<body onLoad="Load_Setting();">
+	<body onload="LoadSetting();">
 		 		<div class="main_content">
 		 			<div class="wifi_content">
 			 			<div class="wifiset">
+			 				<form role="form" action="/boafrm/formWlanSetupAll" method="POST" name="wlanSetup">
+			 				<input type="hidden" name="wps_clear_configure_by_reg<% getIndex("wlan_idx"); %>" value="0">
+							<input type="hidden" name="Band2G5GSupport" value="<% getIndex("Band2G5GSupport"); %>">
+							<input type="hidden" name="dsf_enable" value="<% getIndex("dsf_enable"); %>">
+							<input type="hidden" name="wlBandMode" value="<% getIndex("wlanBand2G5GSelect"); %>">
+							<input type="hidden" name="regdomain<% getIndex("wlan_idx");%>" value="<% getIndex("regDomain"); %>">
+							<input type="hidden" name="countrystr<% getIndex("wlan_idx");%>" value="<% getInfo("country_str"); %>">
+							<input type="hidden" name="wlan_support_8812e" value="<% getIndex("wlan_support_8812e"); %>">
+							<input type="hidden" name="wlan_support_8192f" value="<% getIndex("wlan_support_8192f"); %>">
+							<input type="hidden" name="wlan_support_ac2g" value="<% getIndex("wlan_support_ac2g"); %>">
 			 				<div class="top_wifiset">
 			 					<div class="intell i18n" name="24g_5g_change_title_wifi"></div>		 					
 				 				<div class="switch_check">
-				 					<input type="checkbox" class="checkbox_switch" data-size="mini" name="status"/>
+				 					<input type="checkbox" class="checkbox_switch" data-size="mini" name="autoWlanEnabled" value="ON"/>
 				 				</div>
 						    </div>
 						    <div class="wifiset_tips">
@@ -31,213 +176,138 @@
 						    </div>
 			 				<hr />
 			 				<div class="content_wifiset">
-			 					<div class="leftset">
-			 						<script>document.getElementsByName("formWlanRedirect0").submit();</script>
-			 						<from role="form" action="/boafrm/formWlanSetup" method="POST" name="wlanSetup">
-			 							<!--<input type="hidden" name="wps_clear_configure_by_reg<% getIndex("wlan_idx"); %>" value="0" />
-										<input type="hidden" name="Band2G5GSupport" value="<% getIndex("Band2G5GSupport"); %>" />
-										<input type="hidden" name="dsf_enable" value="<% getIndex("dsf_enable"); %>" />
-										<input type="hidden" name="wlBandMode" value="<% getIndex("wlanBand2G5GSelect"); %>" />
-										<input type="hidden" name="regdomain<% getIndex("wlan_idx");%>" value="<% getIndex("regDomain"); %>" />
-										<input type="hidden" name="countrystr<% getIndex("wlan_idx");%>" value="<% getInfo("country_str"); %>" />
-										<input type="hidden" name="wlan_support_8812e" value="<% getIndex("wlan_support_8812e"); %>" />
-										<input type="hidden" name="wlan_support_8192f" value="<% getIndex("wlan_support_8192f"); %>" />
-										<input type="hidden" name="wlan_support_ac2g" value="<% getIndex("wlan_support_ac2g"); %>" />-->
+			 					<div class="leftset">	
+			 							<%setWlanIDX ("wlan1");%>
 			 							<div class="form-group title_24g"><span>2.4G</span></div>
-			 							<div class="form-group"><label class="i18n" name="ssid_wifset"></label><input class="form_input" name="ssid<% getIndex("wlan_idx"); %>"  value="<% getIndex("2G_ssid"); %>" placeholder=""/></div>
-					 					<!--<div class="form-group band_24g">
-					 						<label>Band</label>
-					 						<select name="band<% getIndex("wlan_idx"); %>" onChange="updateBand(document.wlanSetup, wlan_idx);Set_onChangeBand(document.wlanSetup, wlan_idx, document.wlanSetup.band<% getIndex("wlan_idx"); %>, document.wlanSetup.band<% getIndex("wlan_idx"); %>.selectedIndex);Set_SSIDbyBand(document.wlanSetup, wlan_idx,document.wlanSetup.band<% getIndex("wlan_idx"); %>, document.wlanSetup.band<% getIndex("wlan_idx"); %>.selectedIndex)">
-					 							<option value="">2.4GHz(B)</option>
-					 							<option value="">2.4GHz(G)</option>
-					 							<option value="">2.4GHz(N)</option>
-					 							<option value="">2.4GHz(B+G)</option>
-					 							<option value="">2.4GHz(G+N)</option>
-					 							<option value="">2.4GHz(B+G+N)</option>
-					 						</select>	
-					 						<i class="fa fa-caret-down type_down"></i>
-					 					</div>-->
+			 							<div class="form-group" style="display: none;">
+			 								<select name="band1" onChange="updateBand(document.wlanSetup, 1);Set_onChangeBand(document.wlanSetup, 1, document.wlanSetup.band1, document.wlanSetup.band1.selectedIndex);Set_SSIDbyBand(document.wlanSetup, 1,document.wlanSetup.band1, document.wlanSetup.band1.selectedIndex)">
+										     	<SCRIPT>
+													RFType[1]= <% getIndex("RFType"); %>;
+													APMode[1]= <% getIndex("wlanMode"); %>;
+													var val = <% getIndex("band"); %>;
+													if (val > 1)
+										    			bandIdx[1]= val - 1;
+													else
+														bandIdx[1]= val;
+													bandIdxAP[1]=bandIdx[1];
+													bandIdxClient[1]=bandIdx[1];
+													showBand(document.wlanSetup, 1);
+										     	</SCRIPT>
+										 	</select>
+			 							</div>
+			 							<div class="form-group"><label class="i18n" name="ssid_wifset"></label><input class="form_input" id="ssid_forwifi" name="ssid1"  value="<% getInfo("ssid"); %>" placeholder=""/></div>
+					 					<div class="form-group" style="display: none;">
+					 						<select name="channelbound1" onChange="update_controlsideband(document.wlanSetup, 1); showtxrate_updated(document.wlanSetup,document.wlanSetup.band1.options[document.wlanSetup.band1.selectedIndex].value, 1, <% getIndex("rf_used"); %>)">
+									     		<option value="0">20MHz</option>
+												<option value="1">40MHz</option>
+												<option value="2">80MHz</option>
+												<option value="3">20/40MHz</option>
+												<SCRIPT>
+													use_40m = <% getIndex("ChannelBonding"); %>;
+													document.wlanSetup.elements["channelbound" + 1].selectedIndex=use_40m;
+												</SCRIPT>
+										 	</select>
+					 					</div>
+					 					<div class="form-group" style="display: none;">
+					 						<select name="controlsideband1">
+
+	 										</select>
+					 					</div>
 					 					<div class="form-group chenal_select">
 					 						<label class="i18n" name="channel_select_wifiset"></label>
-					 						<select name="chan<% getIndex("wlan_idx"); %>" onChange="updateChan_selectedIndex(document.wlanSetup, wlan_idx);">
-					 							<option value="" class="i18n" name="Auto_widiset">Auto(DFS)</option>
-					 							<option value="">142</option>
-					 							<option value="">112</option>
-					 							<option value="">1689</option>
-					 							<option value="">156</option>
-					 							<option value="">1253</option>
-					 						</select>	
-					 						<i class="fa fa-caret-down type_down"></i>
+					 						<select  name="chan1" onChange="updateChan_selectedIndex(document.wlanSetup, 1);"> </select>
+											    <SCRIPT>
+												regDomain[1] = <% getIndex("regDomain"); %>;
+												defaultChan[1] = <% getIndex("channel"); %>;
+											
+												wlan_channel[1] = defaultChan[1];
+												updateChan(document.wlanSetup, 1);
+											    </SCRIPT>	
+					 						<span class="caret" style="position: relative;left: -40px;"></span>
 					 					</div>
 					 					<div class="form-group">
 					 						<label class="i18n" name="encryption_wifiset"></label>
-					 						<select name="" class="encryption_one">
+					 						<select name="" class="encryption_one" id="method" name="method1">
 					 							<option value="0" class="i18n" name="disable_wifiset"></option>
 					 							<option value="4">WPA2-PSK(AES)</option>
 					 							<option value="6">WPA-PSK/WPA2-PSK</option>
-					 							<!--<option value="">WEP</option>-->
 					 						</select>	
-					 						<i class="fa fa-caret-down type_down"></i>
+					 						<span class="caret" style="position: relative;left: -40px;"></span>
 					 					</div>
-					 					<div class="form-group wpa2_aes_24g"><label class="i18n" name="encryption_key1_wifiset"></label><input class="form_input" type="password" name="pskValue<% getIndex("wlan_idx"); %>"/></div>
-					 					<div class="form-group wpa_mixed_24g"><label class="i18n" name="encryption_key2_wifiset"></label><input class="form_input" type="password" name="pskValue<% getIndex("wlan_idx"); %>" /></div>
-					 					<div class="wep_24g">
-						 					<div class="form-group-self">
-						 						<label class="renzheng">认证</label>
-						 						<div class="radio_group">
-							 						<label>
-														<input type="radio" name="optionsRadios">开放系统
-													</label>
-													<label>
-														<input type="radio" name="optionsRadios" checked>共享密钥
-													</label>
-													<label>
-														<input type="radio" name="optionsRadios" >自动
-													</label>
-												</div>
-						 					</div>
-						 					<div class="form-group">
-						 						<label>密钥长度</label>
-						 						<select name="">
-						 							<option value="">64-bit</option>
-						 							<option value="">128-bit</option>
-						 						</select>	
-						 						<i class="fa fa-caret-down type_down"></i>
-						 					</div>
-						 					<div class="form-group">
-						 						<label>密钥格式</label>
-						 						<select name="">
-						 							<option value="">Hex(10&nbsp;&nbsp;characters)</option>
-						 							<option value="">ASCII(5&nbsp;&nbsp;characters)</option>
-						 						</select>	
-						 						<i class="fa fa-caret-down type_down"></i>
-						 					</div>
-						 					<div class="form-group"><label>加密密钥</label><input class="form_input" type="password" placeholder="请输入" value="630478"/></div>
-						 				</div>
-					 					<!--<div class="form-group form-group-btn"><button>保存</button></div>-->
-					 				</from>
+					 					<div class="form-group wpa2_aes_24g"><label class="i18n" name="encryption_key1_wifiset"></label><input class="form_input" type="password" name="pskValue<% getIndex("wlan_idx"); %>" id="wpapsk"/></div>
+					 					<div class="form-group wpa_mixed_24g"><label class="i18n" name="encryption_key2_wifiset"></label><input class="form_input" type="password" name="wapiPskValue<% getIndex("wlan_idx"); %>" id="wapipsk" /></div>
 			 					</div>
 			 					<div class="rightset">
-			 						<from role="form">
-			 							<script>document.getElementsByName("formWlanRedirect1").submit();</script>
+			 						<%setWlanIDX ("wlan0");%>
 			 							<div class="form-group title_5g"><span>5G</span></div>
-			 							<div class="form-group for_5g"><label class="i18n" name="ssid_5g_wifset"></label><input class="form_input" type="text" name="ssid<% getIndex("wlan_idx"); %>"  value="<% getIndex("5G_ssid"); %>" placeholder=""/></div>
-					 					<!--<div class="form-group for_5g">
-					 						<label>Band</label>
-					 						<select name="band<% getIndex("wlan_idx"); %>" onChange="updateBand(document.wlanSetup, wlan_idx);Set_onChangeBand(document.wlanSetup, wlan_idx, document.wlanSetup.band<% getIndex("wlan_idx"); %>, document.wlanSetup.band<% getIndex("wlan_idx"); %>.selectedIndex);Set_SSIDbyBand(document.wlanSetup, wlan_idx,document.wlanSetup.band<% getIndex("wlan_idx"); %>, document.wlanSetup.band<% getIndex("wlan_idx"); %>.selectedIndex)">
-					 							<option value="">2.4GHz(B)</option>
-					 							<option value="">2.4GHz(G)</option>
-					 							<option value="">2.4GHz(N)</option>
-					 							<option value="">2.4GHz(B+G)</option>
-					 							<option value="">2.4GHz(G+N)</option>
-					 							<option value="">2.4GHz(B+G+N)</option>
-					 							<SCRIPT>
-													RFType[wlan_idx]= <% getIndex("RFType"); %>;
-													APMode[wlan_idx]= <% getIndex("wlanMode"); %>;
+			 							<div class="form-group" style="display: none;">
+			 								<select name="band0" onChange="updateBand(document.wlanSetup, 0);Set_onChangeBand(document.wlanSetup, 0, document.wlanSetup.band0, document.wlanSetup.band0.selectedIndex);Set_SSIDbyBand(document.wlanSetup, 0,document.wlanSetup.band0, document.wlanSetup.band0.selectedIndex)">
+										     	<SCRIPT>
+													RFType[0]= <% getIndex("RFType"); %>;
+													APMode[0]= <% getIndex("wlanMode"); %>;
 													var val = <% getIndex("band"); %>;
 													if (val > 0)
-										    			bandIdx[wlan_idx]= val - 1;
+										    			bandIdx[0]= val - 1;
 													else
-														bandIdx[wlan_idx]= val;
-									
-									//	if (APMode[wlan_idx]!=1)
-													bandIdxAP[wlan_idx]=bandIdx[wlan_idx];
-									//	else
-													bandIdxClient[wlan_idx]=bandIdx[wlan_idx];
-													showBand(document.wlanSetup, wlan_idx);
+														bandIdx[0]= val;
+													bandIdxAP[0]=bandIdx[0];
+													bandIdxClient[0]=bandIdx[0];
+													showBand(document.wlanSetup, 0);
 										     	</SCRIPT>
-					 						</select>	
-					 						<i class="fa fa-caret-down type_down"></i>
-					 					</div>-->
+										 	</select>
+			 							</div>
+			 							<div class="form-group for_5g"><label class="i18n" name="ssid_5g_wifset"></label><input class="form_input" type="text" name="ssid0"  value="<% getInfo("ssid"); %>" placeholder=""/></div>
+					 					<div class="form-group" style="display: none;">
+					 						<select name="channelbound0" onChange="update_controlsideband(document.wlanSetup, 0); showtxrate_updated(document.wlanSetup,document.wlanSetup.band0.options[document.wlanSetup.band0.selectedIndex].value, 0, <% getIndex("rf_used"); %>)">
+									     		<option value="0">20MHz</option>
+												<option value="1">40MHz</option>
+												<option value="2">80MHz</option>
+												<option value="3">20/40MHz</option>
+												<SCRIPT>
+													use_40m = <% getIndex("ChannelBonding"); %>;
+													document.wlanSetup.elements["channelbound" + 0].selectedIndex=use_40m;
+												</SCRIPT>
+										 	</select>
+					 					</div>
+					 					<div class="form-group" style="display: none;">
+					 						<select name="controlsideband0">
+
+	 										</select>
+					 					</div>
 					 					<div class="form-group for_5g">
 					 						<label class="i18n" name="channel_5g_select_wifiset"></label>
-					 						<select name="chan<% getIndex("wlan_idx"); %>" onChange="updateChan_selectedIndex(document.wlanSetup, wlan_idx);">
-					 							<option value="" class="i18n" name="Auto_widiset">Auto(DFS)</option>
-					 							<option value="">142</option>
-					 							<option value="">112</option>
-					 							<option value="">1689</option>
-					 							<option value="">156</option>
-					 							<option value="">1253</option>
-					 							 <SCRIPT>
-												regDomain[wlan_idx] = <% getIndex("regDomain"); %>;
-												defaultChan[wlan_idx] = <% getIndex("channel"); %>;
+					 						<select  name="chan0" onChange="updateChan_selectedIndex(document.wlanSetup, 0);"> </select>
+											    <SCRIPT>
+												regDomain[0] = <% getIndex("regDomain"); %>;
+												defaultChan[0] = <% getIndex("channel"); %>;
 											
-												wlan_channel[wlan_idx] = defaultChan[wlan_idx];
-												updateChan(document.wlanSetup, wlan_idx);
-											    </SCRIPT>
-					 						</select>	
-					 						<i class="fa fa-caret-down type_down"></i>
+												wlan_channel[0] = defaultChan[0];
+												updateChan(document.wlanSetup, 0);
+											    </SCRIPT>		
+					 						<span class="caret" style="position: relative;left: -40px;"></span>
 					 					</div>
 					 					<div class="form-group for_5g">
 					 						<label class="i18n" name="encryption_5g_wifiset"></label>
 					 						<select name="" class="encryption_two">
 					 							<option value="0" class="i18n" name="disable_wifiset"></option>
 					 							<option value="4">WPA2-PSK(AES)</option>
-					 							<option value="6">WPA-PSK/WPA2-PSK</option>
-					 							<!--<option value="">WEP</option>-->
+					 							<option value="6">WPA-PSK/WPA2-PSK</option>					 			
 					 						</select>	
-					 						<i class="fa fa-caret-down type_down"></i>
+					 						<span class="caret" style="position: relative;left: -40px;"></span>
 					 					</div>
-					 					<div class="form-group wpa2_aes_5g"><label class="i18n" name="encryption_5g_key1_wifiset"></label><input class="form_input" type="password" name="pskValue<% getIndex("wlan_idx"); %>"/></div>
-					 					<div class="form-group wpa_mixed_5g"><label class="i18n" name="encryption_5g_key2_wifiset"></label><input class="form_input" type="password" name="pskValue<% getIndex("wlan_idx"); %>"/></div>
-					 					<!--<div class="wep_5g">
-						 					<div class="form-group-self">
-						 						<label class="renzheng">认证</label>
-						 						<div class="radio_group">
-							 						<label>
-														<input type="radio" name="optionsRadios2" checked>开放系统
-													</label>
-													<label>
-														<input type="radio" name="optionsRadios2" >共享密钥
-													</label>
-													<label>
-														<input type="radio" name="optionsRadios2" >自动
-													</label>
-												</div>
-						 					</div>
-						 					<div class="form-group">
-						 						<label>密钥长度</label>
-						 						<select name="">
-						 							<option value="">64-bit</option>
-						 							<option value="">128-bit</option>
-						 						</select>	
-						 						<i class="fa fa-caret-down type_down"></i>
-						 					</div>
-						 					<div class="form-group">
-						 						<label>密钥格式</label>
-						 						<select name="">
-						 							<option value="">Hex(10&nbsp;&nbsp;characters)</option>
-						 							<option value="">ASCII(5&nbsp;&nbsp;characters)</option>
-						 						</select>	
-						 						<i class="fa fa-caret-down type_down"></i>
-						 					</div>
-						 					<div class="form-group"><label>加密密钥</label><input class="form_input" type="password" placeholder="请输入" value="630478"/></div>
-						 				</div>-->
-					 					 <script>
-									  	var usedBand=new Array();
-										usedBand[wlan_idx] = <% getIndex("band"); %>;
-									   	updateState(document.wlanSetup, wlan_idx);
-										var mssid_num=<%getIndex("wlan_mssid_num");%>;
-										if(mssid_num == 0)
-											   disableButton(document.wlanSetup.elements["multipleAP"+<% getIndex("wlan_idx"); %>]);
-									  </script>
-					 				</from>
+					 					<div class="form-group wpa2_aes_5g"><label class="i18n" name="encryption_5g_key1_wifiset"></label><input class="form_input" type="password" name=""/></div>
+					 					<div class="form-group wpa_mixed_5g"><label class="i18n" name="encryption_5g_key2_wifiset"></label><input class="form_input" type="password" name=""/></div>
 			 					</div>			 					
 			 				</div>
 			 				<div class="form-group form-group-btn">
 			 					<% getInfo("apply_direct_comment_start");%>
 			 					<button type="submit" value="Save & Apply" class="i18n" name="save_apply" onClick="return saveChanges_basic(document.wlanSetup, wlan_idx)"></button>
-			 					<script>document.wlanSetup.save_apply.value = wlbasic_save_apply;</script>
 			 					<% getInfo("apply_direct_comment_end");%>
 			 				</div>
+			 			</form>
 			 			</div>
 		 			</div>
 		 		</div>
-		 	<!--</div>-->
-		 	<!--<div class="footer-wrap">
-		 		<p>深圳金信诺高新技术股份有限公司@copyright 2019</p>
-		 	</div>-->
-		 <!--</div>-->
 		
 		<script src="js/jquery.js"></script>
 		<script src="js/bootstrap.js"></script>
@@ -248,13 +318,8 @@
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
 		<script type="text/javascript">
-    	window.onload=function(){
-//	  	$('[name="status"]').bootstrapSwitch('state',true);
-//		$('input[name="status"]').prop('checked', true);
-						$(".leftset").css("float","none");
-		               	$(".leftset").css("margin-left","auto");
-		               	$(".leftset").css("margin-right","auto");
-        $('[name="status"]').bootstrapSwitch({  
+    	$(document).ready(function(){
+        	$('.checkbox_switch').bootstrapSwitch({  //开关按钮
 		        onText:"",  
 		        offText:"",  
 		        onColor:"success",  
@@ -262,63 +327,60 @@
 		        size : "mini",    // 设置控件大小,从小到大  (mini/small/normal/large)  
 		        onSwitchChange:function(event,state){  
 		            if(state==true){  
-		               $(".title_24g,.title_5g,.for_5g,.wep_5g,.band_24g,.chenal_select").css("display","none");  
-		                $(".wifiset_tips").css("display","block");
-		                $(".leftset").css("float","none");
-		               	$(".leftset").css("margin-left","auto");
-		               	$(".leftset").css("margin-right","auto");
+		               state_true();
 		            }else{  		                
-		                 $(".title_24g,.title_5g,.for_5g,.chenal_select,.band_24g").css("display","block");  
-		                $(".wifiset_tips").css("display","none"); 
-		                $(".leftset").css("float","left");
-		               	$(".leftset").css("margin-left","none");
-		               	$(".leftset").css("margin-right","none");
+		               state_false(); 
 		           }  
 		      	}  
-			}).bootstrapSwitch('state',true);
+			})
+			
 			
         	$(".encryption_one").change(function(){
 					var changevalue=$(this).val();
 					if(changevalue==0){
-						$(".wpa2_aes_24g").css("display","none");
-						$(".wpa_mixed_24g").css("display","none");
-						$(".wep_24g").css("display","none");
+						$(".wpa2_aes_24g,.wpa_mixed_24g,.wep_24g").css("display","none");
 					}
 					if(changevalue==4){
-						$(".wpa_mixed_24g").css("display","none");
-						$(".wep_24g").css("display","none");
+						$(".wpa_mixed_24g,.wep_24g").css("display","none");
 						$(".wpa2_aes_24g").css("display","block");
 					}
 					if(changevalue==6){
-						$(".wep_24g").css("display","none");
+						$(".wep_24g,.wpa2_aes_24g").css("display","none");
 						$(".wpa_mixed_24g").css("display","block");
-						$(".wpa2_aes_24g").css("display","none");
-					}
-					if(changevalue=="WEP"){
-						$(".wep_24g").css("display","block");
-						$(".wpa_mixed_24g").css("display","none");
-						$(".wpa2_aes_24g").css("display","none");
 					}
 				})
         	$(".encryption_two").change(function(){
 					var changevalue=$(this).val()
 					if(changevalue==0){
-						$(".wpa2_aes_5g").css("display","none");
-						$(".wpa_mixed_5g").css("display","none");
-						$(".wep_5g").css("display","none");
+						$(".wpa2_aes_5g,.wep_5g,.wpa_mixed_5g").css("display","none");
 					}
 					if(changevalue==4){
-						$(".wpa_mixed_5g").css("display","none");
-						$(".wep_5g").css("display","none");
+						$(".wpa_mixed_5g,.wep_5g").css("display","none");
 						$(".wpa2_aes_5g").css("display","block");
 					}
 					if(changevalue==6){
-						$(".wep_5g").css("display","none");
+						$(".wep_5g,.wpa2_aes_5g").css("display","none");
 						$(".wpa_mixed_5g").css("display","block");
-						$(".wpa2_aes_5g").css("display","none");
 					}
 				})
-	    }
+	    	})
+	    	
+    		function state_true(){//state为true时页面的状态
+				$(".title_24g,.title_5g,.for_5g,.wep_5g,.band_24g,.chenal_select").css("display","none");  
+		        $(".wifiset_tips").css("display","block");		                
+		        $(".leftset").css("float","none");
+		        $(".leftset").css("margin-left","auto");
+		        $(".leftset").css("margin-right","auto");
+			}
+			function state_false(){//state为false时页面的状态
+				$(".title_24g,.title_5g,.for_5g,.chenal_select,.band_24g").css("display","block");  
+		        $(".wifiset_tips").css("display","none"); 
+		        $(".leftset").css("float","left");
+		        $(".leftset").css("margin-left","none");
+		        $(".leftset").css("margin-right","none");
+			}
+			
     	</script>
+    	
 	</body>
 </html>

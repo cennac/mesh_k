@@ -1653,24 +1653,44 @@ int process_header_end(request * req)
 
 #ifdef LOGIN_URL
 
-                if((is_valid_user(req) != 1) && (strcmp(req->request_uri, WEB_PAGE_LOGIN) != 0))
-                {
-                    if(!(req->request_uri && req->header_referer && strstr(req->header_referer, WEB_PAGE_LOGIN))) //not login page request
-                    {
-//                        if(strstr(req->header_referer, "formLogin")   //not login err return
-//    				    && (strncmp(req->request_uri,"/util_gw.js", strlen("/util_gw.js"))==0 
-//    				        || strncmp(req->request_uri,"/style.css", strlen("/style.css"))==0 
-//    				        || strncmp(req->request_uri,"/language_", strlen("/language_"))==0))
-//                        {
-//    					    ;
-//    				    }
-//                        else
-//                        {
-                            send_redirect_perm(req, (WEB_PAGE_LOGIN));
-                            return 0;
-//                        }
-                    }
-                }
+    int need_auth_flg;
+
+    if((is_valid_user(req) != 1) && (strcmp(req->request_uri, WEB_PAGE_LOGIN) != 0)) //not auth and not login page
+    {
+        need_auth_flg = 1;
+
+        if(req->request_uri && req->header_referer)
+        {
+            if(strstr(req->header_referer, WEB_PAGE_LOGIN)) //request frome login page,no need auth
+            {
+                need_auth_flg = 0;
+            }
+
+            //login err return,no need auth
+//            if( strstr(req->header_referer, "formLogin"))
+//            {
+//    	        if(strncmp(req->request_uri,"/util_gw.js", strlen("/util_gw.js"))==0 
+//    	            || strncmp(req->request_uri,"/style.css", strlen("/style.css"))==0 
+//    	            || strncmp(req->request_uri,"/language_", strlen("/language_"))==0)
+//    	        {
+//                    need_auth_flg = 0;
+//                }
+//            }
+
+            //some browser not have correct header_referer for "/css/libs/font-awesome.css",so exclude
+            if(strstr(req->request_uri,"/css/libs/font-awesome.css"))
+            {
+                need_auth_flg = 0;
+            }
+
+        }
+
+        if(need_auth_flg)
+        {
+            send_redirect_perm(req, (WEB_PAGE_LOGIN));
+            return 0;       
+	    }
+    }
 
 #endif
 

@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
 		<title></title>
 		<meta id="i18n_pagename" content="index-common">
-	    
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
 		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
@@ -24,8 +24,8 @@
 					</div>
 				</div>
 				<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_macfilter"></p></div>
-				<div class="form-group_smart firewall"><label class="i18n" name="macaddress_macfilter"></label><input class="form_input" type="text" name="mac" placeholder="请输入" /></div>
-				<div class="form-group_smart firewall"><label class="i18n" name="mactips_macfilter">&nbsp;</label><input class="form_input" type="text" name="comment" placeholder="请输入" /></div>
+				<div class="form-group_smart firewall"><label class="i18n" name="macaddress_macfilter"></label><input class="form_input" type="text" name="mac"  /></div>
+				<div class="form-group_smart firewall"><label class="i18n" name="mactips_macfilter">&nbsp;</label><input class="form_input" type="text" name="comment"  /></div>
 				<div class="form-group form-group-btn firewall">
 					<button class="i18n" type="submit" value="Save" name="addFilterMac" onClick="return addClick()"></button><button class="i18n" type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" ></button><button  class="i18n" type="reset" value="Reset" name="reset"></button>
 				</div>
@@ -74,7 +74,7 @@
 					</div>
 				</div>
 				<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_ipfilter"></p></div>
-				<div class="form-group_smart ip_filter"><label class="i18n" name="origin_address_ipfilter"></label><input class="form_input ipfilter_input" type="text" placeholder="请输入" /><input class="form_input ipfilter_input" type="text" placeholder="请输入" /><input class="form_input ipfilter_input" type="text" placeholder="请输入" /><input class="form_input ipfilter_input" type="text" placeholder="请输入" /></div>
+				<div class="form-group_smart ip_filter"><label class="i18n" name="origin_address_ipfilter"></label><input class="form_input ipfilter_input" type="text"  />.<input class="form_input ipfilter_input" type="text"  />.<input class="form_input ipfilter_input" type="text"  />.<input class="form_input ipfilter_input" type="text"  /></div>
 				<div class="longTime form-group ip_filter">
 					<label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="potorl_ipfilter"></label>
 					<select name="">
@@ -82,9 +82,9 @@
 						<option value="">TCP</option>
 						<option value="">UDP</option>
 					</select>
-					<i class="fa fa-caret-down type_down"></i>
+					<span class="caret" style="position: relative;left: -30px;"></span>
 				</div>
-				<div class="form-group_smart firewall ip_filter"><label class="i18n" name="iptips_ipfilter">&nbsp;</label><input class="form_input" type="text" placeholder="请输入" /></div>
+				<div class="form-group_smart firewall ip_filter"><label class="i18n" name="iptips_ipfilter">&nbsp;</label><input class="form_input" type="text"  /></div>
 				<div class="form-group form-group-btn firewall">
 					<button type="submit" value="Save" name="addFilterIp" onClick="return addClick()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" class="i18n"></button><button  type="reset" value="Reset" name="reset" class="i18n"></button>
 				</div>
@@ -142,7 +142,7 @@
 				<div class="up_dowm">
 			        <input type="radio"><span class="i18n" name="white_name_urlfilter"></span>
 				</div>
-				<div class="form-group_smart firewall"><label class="i18n" name="url_address_urlfilter"></label><input class="form_input" type="text" placeholder="请输入" /></div>
+				<div class="form-group_smart firewall"><label class="i18n" name="url_address_urlfilter"></label><input class="form_input" type="text"  /></div>
 				<div class="form-group form-group-btn firewall">
 					<button type="submit" value="Save" name="addFilterUrl" onClick="return addClick()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
 				</div>

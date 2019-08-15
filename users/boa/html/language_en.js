@@ -478,10 +478,10 @@ var ipfilter_type = "Filter Type:";
 var ipfilter_rule_exist = 'rule already exist!';
 var ipfilter_comm_oversize = 'Error! Comment length too long.';
 
-/***********	parentControl.htm	************/
 var ipfilter_ip_overlap = 'ip address overlap!';
 var ipfilter_no_ipaddr = 'Error! No ip address to set.';
 var ipfilter_ipaddr_not_within_subnet = 'Invalid IP address! It should be set within the current subnet.';
+/***********	parentControl.htm	************/
 var parent_contrl_rule_exist = 'rule already exist!';
 var parent_contrl_rule_null = 'time rule is illegel!';
 var parent_contrl_table_full = 'Cannot add new parent contrl entry because table is full!!';
@@ -502,9 +502,6 @@ var parent_contrl_save = 'Save';
 var parent_contrl_time_for_hour='(hour)';
 var parent_contrl_time_for_min='(min)';
 var parent_contrl_time_to='(To)';
-
-
-
 
 
 

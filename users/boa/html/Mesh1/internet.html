@@ -7,6 +7,7 @@
 		<meta id="i18n_pagename" content="index-common">
 	    <meta name="keywords" content=""/>
 	    <meta name="description" content=""/>
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
 		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>		 
 		<link rel="stylesheet" type="text/css" href="css/compiled/theme_styles.css"/>
@@ -16,6 +17,9 @@
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 		<script type="text/javascript" src="util_gw.js"> </script>
 		<script type="text/javascript">	
+			$(".type_down").click(function(){
+					 $("select").trigger("click");
+				})
 			var initialDnsMode, pppConnectStatus=0;
 			var MultiPppoeEnable= <% getIndex("multiPppoe"); %>;
 			var wan_connection_type=0;
@@ -68,7 +72,7 @@
 			 							<option value="autoIp" class="i18n" name="staticIp_dhcp"></option>
 			 							<option value="ppp" class="i18n" name="staticIp_pppoe"></option>
 			 						</select>	
-			 						<i class="fa fa-caret-down type_down"></i>
+			 						<span class="caret" style="position: relative;left: -40px;"></span>
 			 					</div>
 			 					<div class="form-group static_ip"><label class="i18n" name="ipAddr_internet"></label><input class="form_input" type="text" name="wan_ip" value="<% getInfo("wan-ip-rom"); %>"/></div>
 			 					<div class="form-group static_ip"><label class="i18n" name="subnet_internet"></label><input class="form_input" type="text" name="wan_mask" value="<% getInfo("wan-mask-rom"); %>" /></div>
@@ -138,24 +142,25 @@
 			var wan_access_port_en = <%getIndex("wanAccessPortEnable");%>;
 			$(document).ready(function(){
 				$(".type_select").change(function(){
-					var changevalue=$(this).find("option:selected").text();
-					if(changevalue=="static Ip"){
+					var changevalue=$(this).val();
+					if(changevalue=="fixedIp"){
 						$(".static_ip").css("display","block");
 						$(".pppoe").css("display","none");
 						$(".DHCP").css("display","none");
 						document.tcpip.dnsMode[1].checked = true ;
 					}
-					if(changevalue=="DHCP"){
+					if(changevalue=="autoIp"){
 						$(".static_ip").css("display","none");
 						$(".pppoe").css("display","none");
 						$(".DHCP").css("display","block");
 					}
-					if(changevalue=="PPPoE"){
+					if(changevalue=="ppp"){
 						$(".static_ip").css("display","none");
 						$(".pppoe").css("display","block");
 						$(".DHCP").css("display","none");
 					}
 				});
+				
 				
 				var interval = setInterval(increment,100);
 				  var current = 0;

@@ -7,17 +7,27 @@
 		<meta id="i18n_pagename" content="index-common">
 	    <meta name="keywords" content=""/>
 	    <meta name="description" content=""/>
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
 		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
-		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 	</head>
-	<body>
-		<div class="guest_net">
-			<div class="form-group_environment environment_channel"><label class="i18n" name="ssid_environment"></label><label class="i18n" name="channel_environment"></label></div>
-			<div class="form-group_environment"><label>JLGF</label><label>-57dBm</label></div>
+	<body onload="opera()">
+		<div class="guest_net_environment">
+			<form action=/boafrm/formWlSiteSurvey method=POST name="formWlSiteSurvey">
+				<input type="hidden" value="Site Survey" name="refresh">&nbsp;&nbsp;  
+			  <input type="hidden" value="/pocket_sitesurvey.htm" name="submit-url">
+			  <input type="hidden" value="" name="ifname">
+			  <table border="1" style="width: 90%;margin: 0 auto;">
+			  
+			  <% wlSiteSurveyTbl(); %>
+			  </table>
+			  <br>
+			  
+			 
+			</form>
 		</div>
 		<script src="js/jquery.js"></script>
 		<script src="js/bootstrap.js"></script>
@@ -27,9 +37,17 @@
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
 		<script>
-			$(document).ready(function(){
-				
-			})
+			function opera()
+			{
+				if(top.location != self.location){  
+					var a = window.parent.document.getElementsByTagName('iframe');  
+					for (var i=0; i<a.length; i++){  
+						if (a[i].name == self.name) {  
+							a[i].height = document.body.scrollHeight; return;  
+						}  
+					}  
+				}  
+			}
 		</script>
 	</body>
 </html>

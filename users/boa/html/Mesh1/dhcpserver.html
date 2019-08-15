@@ -7,6 +7,7 @@
 		<meta id="i18n_pagename" content="index-common">
 	    <meta name="keywords" content=""/>
 	    <meta name="description" content=""/>
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
 		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
@@ -27,9 +28,9 @@
 								<option value="1" class="i18n" name="Client_dhcp"></option>
 								<option value="2" class="i18n" name="Server_dhcp"></option>
 							</select>
-						<i class="fa fa-caret-down type_down"></i>
+						<span class="caret" style="position: relative;left: -40px;"></span>
 					</div>
-					<div class="form_group_dhcp"><label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="clientRange_dhcp"></label><input class="form_input_dhcp" type="text" name="dhcpRangeStart"  value="<% getInfo("dhcpRangeStart"); %>" />-<input class="form_input_dhcp" type="text" name="dhcpRangeEnd"  value="<% getInfo("dhcpRangeEnd"); %>" /></div>
+					<div class="form_group_dhcp"><label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="clientRange_dhcp"></label><input style="margin-left: 16px;margin-right: 10px;" class="form_input_dhcp" type="text" name="dhcpRangeStart"  value="<% getInfo("dhcpRangeStart"); %>" />-<input class="form_input_dhcp" type="text" name="dhcpRangeEnd" style="margin-right: 16px;margin-left: 10px;" value="<% getInfo("dhcpRangeEnd"); %>" /></div>
 					<div class="dhcp_server_btn">
 						<button type="button" value="Show Client" name="dhcpClientTbl" onClick="dhcpTblClick('/dhcptbl.htm')" class="i18n"></button>
 					</div>

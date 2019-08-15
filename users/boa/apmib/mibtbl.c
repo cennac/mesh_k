@@ -392,8 +392,7 @@ mib_table_entry_T mib_macfilter_tbl[]={
 #undef MIBDEF
 {0}
 };
-
-
+	
 mib_table_entry_T mib_parent_contrl_tbl[]={
 #ifdef MIB_TLV
 #define MIBDEF(_ctype,	_cname, _crepeat, _mib_name, _mib_type, _mib_parents_ctype, _default_value, _next_tbl, decision_id, reinit_id ) \
@@ -410,7 +409,6 @@ mib_table_entry_T mib_parent_contrl_tbl[]={
 #undef MIBDEF
 {0}
 };
-
 mib_table_entry_T mib_triggerport_tbl[]={
 #ifdef MIB_TLV
 #define MIBDEF(_ctype,	_cname, _crepeat, _mib_name, _mib_type, _mib_parents_ctype, _default_value, _next_tbl, decision_id, reinit_id ) \

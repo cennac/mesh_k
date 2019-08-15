@@ -339,9 +339,9 @@ int main(int argc, char *argv[])
 	initDhcpdOption(DHCP_VI_VENSPEC, option125[OPT_LEN], option125+OPT_DATA);
 #endif
 
-#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
+//#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
 	char *hostname;
-#endif
+//#endif
 #if defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
 	char logbuf[500];
 #endif
@@ -764,9 +764,9 @@ int main(int argc, char *argv[])
 			}
 #endif
 
-#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
+//#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
 			hostname = get_option(&packet, DHCP_HOST_NAME);
-#endif
+//#endif
 			if (requested) memcpy(&requested_align, requested, 4);
 			if (server_id) memcpy(&server_id_align, server_id, 4);
 			if (requested && (ntohl(requested_align) < ntohl(server_config.start) || 
@@ -939,7 +939,7 @@ int main(int argc, char *argv[])
 					}						
 #endif // #if 0					
 				}
-#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
+//#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
 				/* Brad add for get hostname of dhcp client */
 			if (hostname) {
 					bytes = hostname[-1];
@@ -951,7 +951,7 @@ int main(int argc, char *argv[])
 				{
 					lease->hostname[0] = '\0';
 				}
-#endif
+//#endif
 #if defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
 	if(hostname){	
 		sprintf(logbuf, "exlog /tmp/log_web.lck /tmp/log_web \"tag:SYSACT;log_num:13;msg:DHCP lease IP %u.%u.%u.%u to %s;note:%02x-%02x-%02x-%02x-%02x-%02x;\""\

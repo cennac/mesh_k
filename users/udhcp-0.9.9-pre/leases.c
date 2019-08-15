@@ -83,7 +83,7 @@ void clear_lease(u_int8_t *chaddr, u_int32_t yiaddr)
 	}
 #endif	
 }
-#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
+//#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD) || defined(CONFIG_RTL8196C_EC)
 struct dhcpOfferedAddr *add_lease_fromfile(u_int8_t *chaddr, u_int32_t yiaddr, unsigned long lease, char *hostname)
 {
 	struct dhcpOfferedAddr *oldest;
@@ -121,7 +121,7 @@ struct dhcpOfferedAddr *add_lease_fromfile(u_int8_t *chaddr, u_int32_t yiaddr, u
 
 	return oldest;
 }
-#endif
+//#endif
 /* add a lease into the table, clearing out any old ones */
 struct dhcpOfferedAddr *add_lease(u_int8_t *chaddr, u_int32_t yiaddr, unsigned long lease)
 {

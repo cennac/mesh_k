@@ -24,6 +24,7 @@
 #include "deviceProcIf.h"
 
 #define FW_VERSION	fwVersion
+static struct ifstatRate wanRate;
 
 //#define SDEBUG(fmt, args...) printf("[%s %d]"fmt,__FUNCTION__,__LINE__,## args)
 #define SDEBUG(fmt, args...) {}
@@ -483,6 +484,7 @@ int getInfo(request *wp, int argc, char **argv)
 	time_t current_secs;
 	char *iface=NULL;
 	OPMODE_T opmode=-1;
+	int ret = 2;
 	
 #ifdef RTK_USB3G
 	DHCP_T   wantype = -1;
@@ -851,22 +853,20 @@ int getInfo(request *wp, int argc, char **argv)
 							day, hr, mn, sec);
 	}
 	else if(( !strcmp(name, "wanUplinkRate"))||( !strcmp(name, "wanDownlinkRate"))) {
-		struct ifstatRate wanRate;
         wanRate.ifname="eth1";
-	    wanRate.rxRate=0;
-		wanRate.txRate=0;
-		getProcIfData(&wanRate);
-		//printf("%s:--------->%d:  uplinkRate=%0.5lf  downlink=%0.5lf",__FUNCTION__,__LINE__,wanRate.txRate,wanRate.rxRate);
+		do{
+			ret=getProcIfData(&wanRate);
+		  }while(EXIT_FAILURE==ret);
+
+		//printf("%s:--------->%d:  uplinkRate=%0.2lf  downlink=%0.2lf",__FUNCTION__,__LINE__,wanRate.txRate,wanRate.rxRate);
 		if( !strcmp(name, "wanUplinkRate"))
 		{
-		  return req_format_write(wp, "%0.5lf  Mbps",wanRate.rxRate);
+		  return req_format_write(wp, "%dKB",(int)(wanRate.txRate));
 		}
 		else if( !strcmp(name, "wanDownlinkRate"))
 		{
-		 return req_format_write(wp, "%0.5lf Mbps",wanRate.txRate);
-		}
-
-		
+		 return req_format_write(wp, "%dKB",(int)(wanRate.rxRate));
+		}	
 	}
 	else if( !strcmp(name, "smtpclient_enable")) {
 		#ifdef  CONFIG_APP_SMTP_CLIENT
@@ -7306,7 +7306,7 @@ int getIndex(request *wp, int argc, char **argv)
 	char *name, buffer[50];
 	char WLAN_IF_ori[40], inner_buf[2048];
 	char isis_net[70];
-	int chan, val;
+	int chan, val, val2;
 	REG_DOMAIN_T domain;
 	WEP_T wep;
 	DHCP_T dhcp;
@@ -7321,10 +7321,12 @@ int getIndex(request *wp, int argc, char **argv)
 #ifdef UNIVERSAL_REPEATER
 	int id;
 #endif
-	char tmpStr[20];
-    	int wlan_idx_keep=0;
+	char tmpStr[100];
+	int wlan_idx_keep=0;
+    int old_wlan_idx;
+    int old_vwlan_idx;
     	
-    	memset(tmpStr ,'\0',20);
+    	memset(tmpStr ,'\0',100);
 	wlan_idx_keep = wlan_idx;
 
 #if 0
@@ -11767,6 +11769,91 @@ else if ( !strcmp(name, "wps_either_ap_or_vxd")) {
 			return 0;
 		}
 #endif
+    else if ( !strcmp(name, "autoWlanEnabled")) {      
+		if ( !apmib_get(MIB_AUTO_WLAN_ENABLED, (void *)&val) )
+			return -1;
+		sprintf(buffer, "%d", val);
+		req_format_write(wp, buffer);
+		return 0;
+	}
+    else if ( !strcmp(name, "guest_wlan_enabled")) {      
+    
+        old_wlan_idx = wlan_idx;
+        old_vwlan_idx = vwlan_idx;
+        vwlan_idx = 2;
+        wlan_idx = 0;
+		if ( !apmib_get(MIB_WLAN_WLAN_DISABLED, (void *)&val) )
+		{
+            wlan_idx = old_wlan_idx;
+            vwlan_idx = old_vwlan_idx;
+			return -1;
+		}
+
+        wlan_idx = 1;
+        if ( !apmib_get(MIB_WLAN_WLAN_DISABLED, (void *)&val2) )
+		{
+            wlan_idx = old_wlan_idx;
+            vwlan_idx = old_vwlan_idx;
+			return -1;
+		}
+        if(val && val2)
+        {
+            val = 0;
+        }
+        else
+        {
+            val = 1;
+        }
+        sprintf(buffer, "%d", val);
+		req_format_write(wp, buffer);
+
+        wlan_idx = old_wlan_idx;
+        vwlan_idx = old_vwlan_idx;
+		return 0;
+	}
+    else if ( !strcmp(name, "guest_ssid")) {      
+
+        old_wlan_idx = wlan_idx;
+        old_vwlan_idx = vwlan_idx;
+        wlan_idx = 1;
+        vwlan_idx = 2;
+		if ( !apmib_get(MIB_WLAN_SSID, (void *)tmpStr) )
+		{
+            wlan_idx = old_wlan_idx;
+            vwlan_idx = old_vwlan_idx;
+			return -1;
+		}
+		req_format_write(wp, tmpStr);
+
+        wlan_idx = old_wlan_idx;
+        vwlan_idx = old_vwlan_idx;
+		return 0;
+	}
+    else if ( !strcmp(name, "guest_password")) {      
+    
+        old_wlan_idx = wlan_idx;
+        old_vwlan_idx = vwlan_idx;
+        wlan_idx = 1;
+        vwlan_idx = 2;
+		if ( !apmib_get(MIB_WLAN_WPA_PSK, (void *)tmpStr) )
+		{
+            wlan_idx = old_wlan_idx;
+            vwlan_idx = old_vwlan_idx;
+			return -1;
+		}
+		req_format_write(wp, tmpStr);
+
+        wlan_idx = old_wlan_idx;
+        vwlan_idx = old_vwlan_idx;
+		return 0;
+	}
+    else if ( !strcmp(name, "guest_active_time")) {      
+		if ( !apmib_get(MIB_GUEST_NEWORK_VALID_TIME, (void *)&val) )
+			return -1;
+        sprintf(buffer, "%d", val);
+		req_format_write(wp, buffer);
+		return 0;
+	}
 	else
 	{
 FMGET_FAIL:
@@ -12416,4 +12503,19 @@ int getModeCombobox(request *wp, int argc, char **argv)
    	  	return 0;
 #endif
 }
+
+int setWlanIDX(request *wp, int argc, char **argv)
+{
+    char *name;
+
+    name = argv[0];
+	if (name == NULL) 
+    {
+   		fprintf(stderr, "setWlanIDX: Insufficient args\n");
+   		return -1;
+   	}
+
+    return SetWlan_idx(name);
+}
+
 

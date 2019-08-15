@@ -19,6 +19,11 @@
 #define SYS_TIME_NOT_SYNC_CA "/var/tmp/notSyncSysTime"
 #endif
 
+#ifndef GET_LAN_DEV_INFO_SUPPORT
+#define GET_LAN_DEV_INFO_SUPPORT
+#endif
+
+
 typedef enum { IP_ADDR, DST_IP_ADDR, SUBNET_MASK, DEFAULT_GATEWAY, HW_ADDR } ADDR_T;
 
 /* type define */
@@ -281,6 +286,11 @@ typedef struct rtk_lan_device_info{
 	//get from proc/rtl865x/asicCounter
 	unsigned int rx_bytes;
 	unsigned int tx_bytes;
+
+    unsigned char slave_flg;    //device link in mesh slave
+    unsigned int rx_speed;      
+    unsigned int tx_speed;
+    unsigned char	rssi;
 	
 }RTK_LAN_DEVICE_INFO_T, *RTK_LAN_DEVICE_INFO_Tp;
 enum LAN_LINK_TYPE {

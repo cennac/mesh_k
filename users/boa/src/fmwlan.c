@@ -3628,6 +3628,55 @@ void formWlanSetup(request *wp, char *path, char *query)
 setErr_wlan:
 	ERR_MSG(tmpBuf);
 }
+    
+void formWlanSetupAll(request *wp, char *path, char *query)
+{
+    char *submit_url;
+    char *str_val = NULL;
+    int flg;
+    int mode = -1;
+    char tmpBuf[MAX_MSG_BUFFER_SIZE] = {0};
+    int old_idx;
+    
+
+    str_val = req_get_cstream_var(wp, "autoWlanEnabled", "");
+    if (!strcmp(str_val, "1"))
+		flg = 1;
+	else
+		flg = 0;
+	if (apmib_set(MIB_AUTO_WLAN_ENABLED, (void *)&flg) == 0) 
+    {
+  		strcpy(tmpBuf, ("<script>dw(wlbasic_invalid_mode)</script>"));
+		goto setErr_wlan;
+	}
+
+    old_idx = wlan_idx;
+    
+    wlan_idx = 0;
+    if(wlanHandler(wp, tmpBuf, &mode, wlan_idx) < 0)
+		goto setErr_wlan ;
+
+    if(wpaHandler(wp, tmpBuf, wlan_idx) < 0)
+        goto setErr_wlan ;
+
+    wlan_idx = 1;
+    if(wlanHandler(wp, tmpBuf, &mode, wlan_idx) < 0)
+		goto setErr_wlan ;
+
+    if(wpaHandler(wp, tmpBuf, wlan_idx) < 0)
+        goto setErr_wlan ;
+    
+    apmib_update_web(CURRENT_SETTING);
+
+    submit_url = req_get_cstream_var(wp, ("submit-url"), "");   // hidden page	
+	OK_MSG(submit_url);
+    wlan_idx = old_idx;
+	return;
+
+setErr_wlan:
+    wlan_idx = old_idx;
+	ERR_MSG(tmpBuf);
+}
 
 int wepHandler(request *wp, char *tmpBuf, int wlan_id)
 {
@@ -13338,3 +13387,164 @@ setErr_ft:
 }
 
 #endif
+
+void formGuestWlanSetup(request *wp, char *path, char *query)
+{
+	char *submit_url;
+	char *str_val = NULL;
+	int len;
+    int val;
+	char tmpBuf[MAX_MSG_BUFFER_SIZE] = {0};	
+	int old_wlan_idx;
+	int old_vwlan_idx;
+
+    old_wlan_idx = wlan_idx;
+    old_vwlan_idx = vwlan_idx;
+
+    vwlan_idx = 2;
+    wlan_idx = 0;
+    for(wlan_idx = 0; wlan_idx < 2; wlan_idx++)
+    {
+    	str_val = req_get_cstream_var(wp, "guest_wlan_enabled", "");
+        if(!strcmp(str_val, "1"))
+        {
+            val = 0;
+            if (apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&val) == 0)
+        	{
+        		strcpy(tmpBuf, ("<script>dw(wlbasic_set_disable_flag)</script>"));
+        		goto setErr;
+        	}
+        }
+        else
+        {
+            val = 1;
+            if (apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&val) == 0)
+        	{
+        		strcpy(tmpBuf, ("<script>dw(wlbasic_set_disable_flag)</script>"));
+        		goto setErr;
+        	}
+        }
+    	str_val = req_get_cstream_var(wp, "guest_ssid", "");
+        if(str_val[0])
+        {
+        	if (apmib_set(MIB_WLAN_SSID, (void *)str_val) == 0)
+        	{
+        		strcpy(tmpBuf, ("<script>dw(wlbasic_set_ssid_error)</script>"));
+        		goto setErr;
+        	}
+        }
+        
+        val = AP_MODE;
+        if ( apmib_set( MIB_WLAN_MODE, (void *)&val) == 0) 
+        {
+    		strcpy(tmpBuf, ("<script>dw(wlbasic_set_mib_wlan_mode_error)</script>"));
+    		goto setErr;
+    	}
+        
+    	str_val = req_get_cstream_var(wp, "guest_password", "");
+        if(str_val[0])
+        {
+//            val = 1;
+//            if ( apmib_set(MIB_WLAN_WPA2_PRE_AUTH, (void *)&val) == 0) 
+//            {
+//				strcpy(tmpBuf, ("<script>dw(wl_Set_MIB_WLAN_WPA_CIPHER_SUITE_fai)</script>"));
+//				goto setErr;
+//			}			
+
+            val = WPA_AUTH_PSK;
+			if ( apmib_set(MIB_WLAN_WPA_AUTH, (void *)&val) == 0) 
+            {
+				strcpy(tmpBuf, ("<script>dw(wl_Set_MIB_WLAN_WPA_AUTH_fai)</script>"));
+				goto setErr;
+			}
+            
+            val = ENCRYPT_WPA2;
+            if (apmib_set(MIB_WLAN_ENCRYPT, (void *)&val) == 0)
+        	{
+        		strcpy(tmpBuf, ("<script>dw(wl_Set_MIB_WLAN_ENCRYPT_mib)</script>"));
+        		goto setErr;
+        	}
+            val = WPA_CIPHER_AES;
+            if ( apmib_set(MIB_WLAN_WPA2_CIPHER_SUITE, (void *)&val) == 0) 
+            {
+    			strcpy(tmpBuf, ("<script>dw(wl_Set_MIB_WLAN_WPA2_CIPHER_SUITE_fai)</script>"));
+    			goto setErr;							
+    		}
+
+            val = WSC_ENCRYPT_AES;
+			apmib_set(MIB_WLAN_WSC_ENC, (void *)&val);
+            val = WPA_AUTH_PSK;
+			apmib_set(MIB_WLAN_WSC_AUTH, (void *)&val);
+            val = WDS_ENCRYPT_DISABLED;
+            apmib_set( MIB_WLAN_WDS_ENCRYPT, (void *)&val);
+            
+        	val = 0;	
+        	if (apmib_set(MIB_WLAN_PSK_FORMAT, (void *)&val) == 0)
+        	{
+        		strcpy(tmpBuf, ("<script>dw(wl_Set_MIB_WLAN_PSK_FORMAT_fai)</script>"));
+        		goto setErr;
+        	}
+        	
+        	len = strlen(str_val);
+        	if (len == 0 || len > (MAX_PSK_LEN - 1) || len < MIN_PSK_LEN)
+        	{
+        		strcpy(tmpBuf, ("<script>dw(wl_Err_inv_psk_value)</script>"));
+        		goto setErr;
+        	}
+        	
+        	
+        	if (!apmib_set(MIB_WLAN_WPA_PSK, (void *)str_val))
+        	{
+        		strcpy(tmpBuf, ("<script>dw(wl_Set_MIB_WLAN_WPA_PSK_err)</script>"));
+        		goto setErr;
+        	}
+        }
+        else
+        {
+            val = ENCRYPT_DISABLED;
+            if (apmib_set(MIB_WLAN_ENCRYPT, (void *)&val) == 0)
+        	{
+        		strcpy(tmpBuf, ("<script>dw(wl_Set_MIB_WLAN_ENCRYPT_mib)</script>"));
+        		goto setErr;
+        	}
+        }
+    }
+    	
+    	
+	str_val = req_get_cstream_var(wp, "guest_active_time", "");
+    if(str_val[0])
+    {
+        val = atoi(str_val);
+        if (apmib_set(MIB_GUEST_NEWORK_VALID_TIME, (void *)&val) == 0)
+    	{
+    		strcpy(tmpBuf, ("set guest time err!"));
+    		goto setErr;
+    	}
+    }
+
+    val = 1;
+    if (apmib_set(MIB_GUEST_NEWORK_SET_FLG, (void *)&val) == 0)
+    {
+        printf("MIB_GUEST_NEWORK_SET_FLG set err.");
+    }
+   
+	apmib_update_web(CURRENT_SETTING);
+	
+	submit_url = req_get_cstream_var(wp, ("submit-url"), ""); // hidden page	
+	OK_MSG(submit_url);
+	wlan_idx = old_wlan_idx;
+    vwlan_idx = old_vwlan_idx;
+	return;
+	
+setErr:
+    wlan_idx = old_wlan_idx;
+    vwlan_idx = old_vwlan_idx;
+	ERR_MSG(tmpBuf);
+}
+
+
+
+
+
+
+

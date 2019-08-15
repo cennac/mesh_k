@@ -6717,25 +6717,33 @@ static int writeDefault(WRITE_DEFAULT_TYPE_T isAll)
                        {
                        	    if(0 == idx)
                                	sprintf((char *)pMib->wlan[idx][i].ssid, "RTK 11n AP VAP%d", i);
-				    else
-					sprintf((char *)pMib->wlan[idx][i].ssid, "RTK 11n AP %d VAP%d", idx,i);
+        				    else
+        					sprintf((char *)pMib->wlan[idx][i].ssid, "RTK 11n AP %d VAP%d", idx,i);
+
+                            if(i == 2)
+                            {
+                                strcpy(pMib->wlan[idx][i].ssid, "KS-LINK_WM126_GUEST" );
+                            }
                        }				   
                        else if(i == 0)
 #endif			
 			  {
-#ifdef FOR_DUAL_BAND
-					if(0 == idx)
-                       	strcpy(pMib->wlan[idx][i].ssid, "RTK 11n AP 5G" );
-					else if(1 == idx)
-                       	strcpy(pMib->wlan[idx][i].ssid, "RTK 11n AP 2.4G" );
-					else
-						sprintf(pMib->wlan[idx][i].ssid, "RTK 11n AP %d",idx);
-#else
-					if(0 == idx)
-                               	strcpy((char *)pMib->wlan[idx][i].ssid, "RTK 11n AP" );
-				    else
-					sprintf((char *)pMib->wlan[idx][i].ssid, "RTK 11n AP %d",idx);
-#endif
+//#ifdef FOR_DUAL_BAND
+//					if(0 == idx)
+//                       	strcpy(pMib->wlan[idx][i].ssid, "RTK 11n AP 5G" );
+//					else if(1 == idx)
+//                       	strcpy(pMib->wlan[idx][i].ssid, "RTK 11n AP 2.4G" );
+//					else
+//						sprintf(pMib->wlan[idx][i].ssid, "RTK 11n AP %d",idx);
+//#else
+//					if(0 == idx)
+//                               	strcpy((char *)pMib->wlan[idx][i].ssid, "RTK 11n AP" );
+//				    else
+//					sprintf((char *)pMib->wlan[idx][i].ssid, "RTK 11n AP %d",idx);
+//#endif
+                    
+                    strcpy(pMib->wlan[idx][i].ssid, "KS-LINK_WM126" );
+
 #if defined(CONFIG_APP_APPLE_MFI_WAC)
 					if(isAll){
 						sprintf(((char *)pMib->wlan[idx][i].ssid), "WAC_%02X%02X%02X", hwmib.wlan[idx].macAddr[3], hwmib.wlan[idx].macAddr[4], hwmib.wlan[idx].macAddr[5]);
@@ -6992,8 +7000,8 @@ static int writeDefault(WRITE_DEFAULT_TYPE_T isAll)
 	strcpy((char *)pMib->superPassword, "super");
 #endif
 
-    strcpy((char *)pMib->userName, "");
-	strcpy((char *)pMib->userPassword, "");
+    strcpy((char *)pMib->userName, "KS-LINK_WM126");
+	strcpy((char *)pMib->userPassword, "kslink123");
     
 	pMib->LanDhcpConfigurable=1;
 	
@@ -7606,6 +7614,7 @@ pMib-> repeaterEnabled1 =0;
 	strcpy(pMib->httpRedirectHost, "www.realtek.com");
 #endif
 #endif
+    pMib->autoWlanEnabled = 0;
 
 	data = (char *)pMib;
 #ifdef _LITTLE_ENDIAN_
@@ -10213,10 +10222,9 @@ static void setMIB(char *name, int id, TYPE_T type, int len, int valNum, char **
 			id = MIB_MACFILTER_DELALL;
 		value = (void *)&macFilter;
 		break;
-		
-		case PARENT_CONTRL_ARRAY_T:
+	case PARENT_CONTRL_ARRAY_T:
 
-			if ( !strcmp(val[0], "add")) {
+	if ( !strcmp(val[0], "add")) {
 			id = MIB_PARENT_CONTRL_ADD;
 			if ( valNum < 2 ) {
 				printf("input argument is not enough!\n");
@@ -10259,7 +10267,6 @@ static void setMIB(char *name, int id, TYPE_T type, int len, int valNum, char **
 		}
 		value = (void *)&parentContrl;
 		break;
-		
 	case URLFILTER_ARRAY_T:
 		if ( !strcmp(val[0], "add")) {
 			id = MIB_URLFILTER_ADD;

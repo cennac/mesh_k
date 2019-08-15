@@ -7,6 +7,7 @@
 		<meta id="i18n_pagename" content="index-common">
 	    <meta name="keywords" content=""/>
 	    <meta name="description" content=""/>
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
 		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
@@ -29,7 +30,7 @@
 					</div>
 				</div>
 				<div class="up_dowm">
-			        <input type="checkbox" name="automaticUplinkSpeed" value="ON" onclick="updateLinkState(1)"><span class="i18n" name="AutoUplinkspeed_smart"></span>
+			        <input type="checkbox" name="automaticUplinkSpeed" value="ON" <% getIndex("qosAutoUplinkSpeed");%> onclick="updateLinkState(1)"><span class="i18n" name="AutoUplinkspeed_smart"></span>
 				</div>
 				<div class="form-group_smart"><label class="i18n" name="Uplinkspeed_smart"></label><input class="form_input" type="text" name="manualUplinkSpeed" value="<% getInfo("qosManualUplinkSpeed"); %>"/>Kbps</div>
 				<div class="up_dowm">
@@ -116,33 +117,35 @@
 			function Load_Setting()//页面初始化
 			{
 				if ( <% getIndex("qosEnabled"); %> ){
-					$('[name="enabled"]').bootstrapSwitch('state', true);
-					enableTextField(document.formQosAdd.automaticUplinkSpeed);
+//					$('[name="enabled"]').bootstrapSwitch('state', true);
+					document.formQosAdd.enabled.checked=false;
+					disableTextField(document.formQosAdd.automaticUplinkSpeed);
+	 				disableTextField(document.formQosAdd.automaticDownlinkSpeed);
+	 				disableTextField(document.formQosAdd.manualUplinkSpeed);
+	 				disableTextField(document.formQosAdd.manualDownlinkSpeed);
+				} else {
+//					$('[name="enabled"]').bootstrapSwitch('state',false);
+					document.formQosAdd.enabled.checked=true;					
+	 				enableTextField(document.formQosAdd.automaticUplinkSpeed);
 					enableTextField(document.formQosAdd.automaticDownlinkSpeed);
 					if(document.formQosAdd.automaticUplinkSpeed.checked) {
 						disableTextField(document.formQosAdd.manualUplinkSpeed);
-						document.formQosAdd.manualUplinkSpeed.value.visible = "false";
+						document.formQosAdd.manualUplinkSpeed.value.visible=false;
 					} else {
 						enableTextField(document.formQosAdd.manualUplinkSpeed);
-						document.formQosAdd.manualUplinkSpeed.value.visible = "true";
+						document.formQosAdd.manualUplinkSpeed.value.visible=true;
 					}
 					if(document.formQosAdd.automaticDownlinkSpeed.checked) {
 						disableTextField(document.formQosAdd.manualDownlinkSpeed);
-						document.formQosAdd.manualDownlinkSpeed.value.visible = "false";
+						document.formQosAdd.manualDownlinkSpeed.value.visible=false;
 					} else {
 						enableTextField(document.formQosAdd.manualDownlinkSpeed);
-						document.formQosAdd.manualDownlinkSpeed.value.visible = "true";
+						document.formQosAdd.manualDownlinkSpeed.value.visible=true;
 					}
-					} else {
-						$('[name="enabled"]').bootstrapSwitch('state',false);
-						disableTextField(document.formQosAdd.automaticUplinkSpeed);
-	 					disableTextField(document.formQosAdd.automaticDownlinkSpeed);
-	 					disableTextField(document.formQosAdd.manualUplinkSpeed);
-	 					disableTextField(document.formQosAdd.manualDownlinkSpeed);
 				}
-				if ( <% getIndex("qosAutoUplinkSpeed"); %> )
+				if ( <% getIndex("qosAutoUplinkSpeed"); %> ){
 				document.formQosAdd.automaticUplinkSpeed.checked = true;
-					
+				}	
 				
 			}
 			function updateLinkState(key){//自动上行下载选项

@@ -59,6 +59,8 @@ endif
 ifdef CONFIG_RTL_AP_PACKAGE 
 CONFIG_RTL_AP = CONFIG_RTL_AP_PACKAGE
 endif
+
+SHOW_LAN_DEV_INFO = 1
 #------------------------------------------------------------------------------
 
 MAKE=make

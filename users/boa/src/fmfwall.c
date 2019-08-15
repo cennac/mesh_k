@@ -1300,6 +1300,7 @@ setErr_filter:
 	ERR_MSG(tmpBuf);
 }
 
+
 /////////////////////////////////////////////////////////////////////////////
 void formParentContrl(request *wp, char *path, char *query)
 {
@@ -1573,7 +1574,6 @@ int parentContrlList(request *wp, int argc, char **argv)
 	}
 	return nBytesSent;
 }
-
 #if 0
 /////////////////////////////////////////////////////////////////////////////
 void formTriggerPort(request *wp, char *path, char *query)
