@@ -80,7 +80,7 @@ EXTRA_CFLAGS =
 # Files
 #------------------------------------------------------------------------------
 REALTEK_FILES = fmtcpip.c fmfwall.c fmlinuxvlan.c utility.c fmget.c fmwlan.c fmmgmt.c version.c
-KING_SIGNAL_FILES = deviceProcIf.c
+KING_SIGNAL_FILES = deviceProcIf.c remoteUpgrade.c
 ifeq ($(CONFIG_APP_RTK_INBAND_CTL), y)
 SHOW_WAN_STATUS_FILES = showwanstatus.c utility.c 
 SHOW_WAN_STATUS_OBJS = $(SHOW_WAN_STATUS_FILES:.c=.o)
