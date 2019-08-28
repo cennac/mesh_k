@@ -24,6 +24,7 @@
 extern int setFirewallIptablesRules(int argc, char** argv);
 extern int Last_WAN_Mode;
 extern int link_down_restart_dhcp6c;
+int getInAddr( char *interface, int type, void *pAddr );
 
 void start_dns_relay(void);
 void start_igmpproxy(char *wan_iface, char *lan_iface);
