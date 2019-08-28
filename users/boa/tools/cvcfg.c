@@ -1814,7 +1814,8 @@ static int set_mib(struct all_config *pConfig, int id, void *value, int def_mib,
 		pprentContrl->parentContrlWeekSat = (unsigned short)atoi(p6);
 		pprentContrl->parentContrlWeekSun = (unsigned short)atoi(p7);
 		pprentContrl->parentContrlStartTime = (unsigned short)atoi(p8);
-		pprentContrl->parentContrlEndTime = (unsigned short)atoi(p9);
+		pprentContrl->parentContrlEndTime = (unsigned short)atoi(p9);		
+		strcpy(pprentContrl->parentContrlTerminal,p9);
 		break;
 
 	case PORTFW_ARRAY_T:		

@@ -13,28 +13,33 @@
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
-		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 	</head>
-	<body>
+	<body onload="Load_Setting1();">
 		<div class="guest_net">
-			<div class="form-group_smart" style="margin-bottom: 10px;">
-				<!--<label style="width: 50px;"></label>-->
-				<label class="i18n" name="guestmode_guest"></label>
-				<div class="switch_check">
-					<input type="checkbox" class="checkbox_switch" data-size="mini" name="status" />
+			<form  action="/boafrm/formGuestWlanSetup" method="POST" name="formGuest">
+				<div class="form-group_smart" style="margin-bottom: 10px;">
+					<!--<input type="hidden" name="guest_active_time" class="guest_active_time" value=""/>-->
+					<label class="i18n" name="guestmode_guest"></label>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch" data-size="mini" name="guest_wlan_enabled" value=""/>
+					</div>
 				</div>
-			</div>
-			<div class="form-group_smart hide_msg"><label class="i18n" name="wifiname_guest"></label><input class="form_input" type="text" placeholder="" /></div>
-			<div class="form-group_smart hide_msg"><label class="i18n" name="wifipassword_guest"></label><input class="form_input" type="text" placeholder="" /></div>
-			<div class="form-group-self hide_msg">
-				<label class="guest_renzheng i18n" name="renzheng_guest"></label>
-				<!--<div class="radio_group">-->
-				<!--<span style="width: 60px"></span>-->
-				<div style="display: inline-block;"><input type="radio" name="optionsRadios3"><span class="i18n-input" selectname="guest_net_4"></span></div>
-				<div style="display: inline-block;"><input type="radio" name="optionsRadios3"><span class="i18n-input" selectname="guest_net_8"></span></div>
-				<div style="display: inline-block;"><input type="radio" name="optionsRadios3"><span class="i18n-input" selectname="guest_net_long"></span></div>
-				<!--</div>-->
-			</div>
+				<div class="form-group_smart hide_msg"><label class="i18n" name="wifiname_guest"></label><input class="form_input" type="text" value="<% getIndex("guest_ssid");%>" name="guest_ssid"/></div>
+				<div class="form-group_smart hide_msg"><label class="i18n" name="wifipassword_guest"></label><input class="form_input" type="password" value="<%  getIndex("guest_password");%>"  name="guest_password"/></div>
+				<div class="form-group-self hide_msg">
+					<label class="guest_renzheng i18n" name="renzheng_guest"></label>
+					<div style="display: inline-block;"><input type="radio" name="guest_active_time" value="4" class="radio4"><span class="i18n-input" selectname="guest_net_4"></span></div>
+					<div style="display: inline-block;"><input type="radio" name="guest_active_time" value="8" class="radio8"><span class="i18n-input" selectname="guest_net_8"></span></div>
+					<div style="display: inline-block;"><input type="radio" name="guest_active_time" value="0" class="radio0"><span class="i18n-input" selectname="guest_net_long"></span></div>
+					
+					<input type="hidden" value="/guest_net.html" name="submit-url">
+				</div>
+				<div class="form-group form-group-btn">
+					<% getInfo("apply_direct_comment_start");%>
+					<button type="submit" value="Save & Apply" class="i18n internet_submit" name="save_apply" onClick="return saveChanges_guest()"></button>
+					<% getInfo("apply_direct_comment_end");%>
+				</div>
+			</form>
 		</div>
 		<script src="js/jquery.js"></script>
 		<script src="js/bootstrap.js"></script>
@@ -44,9 +49,11 @@
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
 		<script>
+			var guest_wlan_enabled_status='<%getIndex("guest_wlan_enabled");%>';
+//			var guest_wlan_enabled_status='1';
 			$(document).ready(function(){
 				//开关按钮
-				$('[name="status"]').bootstrapSwitch({
+				$('[name="guest_wlan_enabled"]').bootstrapSwitch({
 					onText: "",
 					offText: "",
 					onColor: "info",
@@ -62,6 +69,55 @@
 	
 				})
 			})
+			//页面初始化
+			function Load_Setting1()
+			{
+				if ( guest_wlan_enabled_status=='1' ){
+					$('[name="guest_wlan_enabled"]').bootstrapSwitch('state',true);
+					$(".hide_msg").css("display","block");
+				} else {
+					$('[name="guest_wlan_enabled"]').bootstrapSwitch('state',false);					
+	 				$(".hide_msg").css("display","none");
+				}
+				var radio_check_value='<%getIndex("guest_active_time");%>';
+				if(radio_check_value==4){
+					$(".radio4").prop("checked",true);
+				}
+				if(radio_check_value==8){
+					$(".radio8").prop("checked",true);
+				}
+				if(radio_check_value==0){
+					$(".radio0").prop("checked",true);
+				}
+								
+			}
+			function saveChanges_guest(){
+				 var status_value_submit= $('[name="guest_wlan_enabled"]').bootstrapSwitch('state');
+				if(status_value_submit){
+					document.formGuest.guest_wlan_enabled.value=1;
+				}else{
+					document.formGuest.guest_wlan_enabled.value=0;
+				}
+				if(document.formGuest.guest_ssid.length==0){
+					document.formGuest.guest_ssid.focus();
+					return false;
+				}else{
+					return true;
+				}
+				if(document.formGuest.guest_password.length==0){
+					document.formGuest.guest_password.focus();
+					return false;
+				}else{
+					return true;
+				}
+				if(document.formGuest.guest_active_time.length==0){
+					document.formGuest.guest_active_time.focus();
+					return false;
+				}else{
+					return true;
+				}
+				return true;
+			}
 		</script>
 	</body>
 </html>

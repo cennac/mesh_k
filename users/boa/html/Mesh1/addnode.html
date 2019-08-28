@@ -15,13 +15,14 @@
 		<link rel="stylesheet" href="css/main.css" />
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 	</head>
-	<body>
+	<body onload="Load_Setting()">
 		<div class="guest_net">
-			<form action="" method="post" name="addnode_form">				
-				<div class="form-group_smart"><label class="i18n" name="sn_addnode"></label><input class="form_input" type="text" id="snpassword" placeholder="" onkeyup="addCheck()"/></div>
+			<form action="/boafrm/formAddMeshNode" method="post" name="addnode_form">				
+				<div class="form-group_smart"><label class="i18n" name="sn_addnode"></label><input class="form_input" type="text" id="snpassword" name="sn" onkeyup="addCheck()"/></div>
 				<div class="form-group form-group-btn node_btn">
-					<button type="submit" value="Save" name="addnode" class="i18n"></button>
+					<button type="submit" value="Save" name="addnode" class="i18n addnode_button"></button>
 				</div>
+				<input type="hidden" value="/addnode.html" name="submit-url">
 			</form>
 			
 		</div>
@@ -45,14 +46,21 @@
 					return false;
 				}
 				if(getValue("snpassword").length>21){
-					alert("SN码位数不正确");
+					alert("SN码位数超出范围，请输入21位有效数字");
 					return false;
 				}
-				document.addnode_form.addnode.disabled=true;
+				if(getValue("snpassword").length==21){
+					document.addnode_form.addnode.disabled=false;
+				document.addnode_form.addnode.style.backgroundColor="#89CEED";
+				}				
 			}
 			function getValue(id) { 
 			 	return document.getElementById(id).value; 		        
 		   	}
+			function Load_Setting(){
+				document.addnode_form.addnode.disabled=true;
+				document.addnode_form.addnode.style.backgroundColor="#ccc";
+			}
 		</script>
 	</body>
 </html>

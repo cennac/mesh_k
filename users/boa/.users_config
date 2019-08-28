@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # RLX Linux builder
-# Fri Aug  2 08:33:13 2019
+# Wed Aug 21 15:11:01 2019
 #
 
 #
@@ -90,7 +90,7 @@ CONFIG_RTK_BLUETOOTH_CONFIGURATION_IN_FLASH=y
 # CONFIG_APP_PHP is not set
 CONFIG_APP_BOA=y
 # CONFIG_APP_TAR is not set
-CONFIG_APP_BOA_CGI=y
+# CONFIG_APP_BOA_CGI is not set
 # CONFIG_APP_BOA_IPV6_SUPPORT is not set
 CONFIG_APP_BOA_NEW_UI=y
 # CONFIG_APP_MULTI_USERS is not set

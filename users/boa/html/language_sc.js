@@ -500,6 +500,8 @@ var parent_contrl_save = '保存';
 var parent_contrl_time_for_hour='(小时)';
 var parent_contrl_time_for_min='(分钟)';
 var parent_contrl_time_to='(至)';
+var parent_contrl_terminal='终端';
+
 
 
 /***********	Macfilter.htm	************/

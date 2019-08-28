@@ -1655,7 +1655,7 @@ int process_header_end(request * req)
 
     int need_auth_flg;
 
-    if((is_valid_user(req) != 1) && (strcmp(req->request_uri, WEB_PAGE_LOGIN) != 0)) //not auth and not login page
+    if((is_valid_user(req) != 1) && (!strstr(req->request_uri, WEB_PAGE_LOGIN))) //not auth and not login page
     {
         need_auth_flg = 1;
 

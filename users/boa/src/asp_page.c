@@ -135,7 +135,8 @@ asp_name_t root_asp[] = {
 	{"portFilterList", portFilterList},
 	{"macFilterList", macFilterList},
 	{"urlFilterList", urlFilterList},
-	{"parentContrlList", parentContrlList},
+	{"parentContrlList", parentContrlList},	
+	{"parentContrlTerminalList", parentContrlTerminalList},
 	//{"triggerPortList", triggerPortList},
 #ifdef ROUTE_SUPPORT
 	{"staticRouteList", staticRouteList},
@@ -222,7 +223,6 @@ asp_name_t root_asp[] = {
 //-----------------------------------------------------------------------------
 form_name_t root_form[] = {
 	{"formWlanSetup", formWlanSetup},
-    {"formWlanSetupAll", formWlanSetupAll},
 	{"formWlanRedirect", formWlanRedirect},
 #if 0
 	{"formWep64", formWep64},
@@ -475,7 +475,12 @@ form_name_t root_form[] = {
 #ifdef RTK_MULTI_AP
 	{"formMultiAP",formMultiAP},
 #endif
-    {"formGuestWlanSetup",formGuestWlanSetup},
+    {"formWlanSetupAll", formWlanSetupAll},
+    {"formGuestWlanSetup",formGuestWlanSetup},  
+    {"formReboot",formReboot},
+    {"formLEDControl",formLEDControl},
+    {"formAddMeshNode",formAddMeshNode},
+    {"fromTimerReboot",fromTimerReboot},    
 	{NULL, NULL}
 };
 
@@ -483,7 +488,7 @@ form_name_t root_form[] = {
 #ifdef CSRF_SECURITY_PATCH
 #include <time.h>
 
-#define EXPIRE_TIME					300	// in sec
+#define EXPIRE_TIME					360	// in sec
 #define MAX_TBL_SIZE				4
 
 struct goform_entry {

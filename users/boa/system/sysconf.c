@@ -1123,6 +1123,10 @@ int main(int argc, char** argv)
 			sendArp();
 			#endif
 		}
+		else if(argv[2] && (strcmp(argv[2], "parentControl")==0))	//it will be call by set_staticIP function
+		{
+          setFirewallIptablesRules(argc,argv);
+		}
 		else
 		{
 			setFirewallIptablesRules(argc,argv);

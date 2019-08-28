@@ -15,30 +15,38 @@
 		<link rel="stylesheet" href="css/main.css" />
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 	</head>
-	<body>
+	<body onload="setting()">
 		<div class="guest_net">
-			<div class="form-group_smart  systemmanage_button" style="margin-bottom: 10px;">
-				<!--<label style="width: 50px;"></label>-->
-				<label class="i18n" name="sleep_system"></label>
-				<div class="switch_check">
-					<input type="checkbox" class="checkbox_switch" data-size="mini" name="status" />
+				<div class="form-group_smart systemmanage_button" style="margin-bottom: 10px;">
+					<label class="i18n" name="sleep_system"></label>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch1" data-size="mini" name="status" />
+					</div>
 				</div>
-			</div>
-			<div class="form-group_smart systemmanage_button">
-				<label class="i18n" name="now_system"></label>
-				<button type="submit" value="Save" name="save_apply" class="i18n"></button>
-			</div>
-			<div class="form-group_smart systemmanage_button">
-				<label class="i18n" name="ResetSettings_system"></label>
-				<button type="submit" value="Save" name="save_reset" class="i18n"></button>
-			</div>
-			<div class="form-group_smart  systemmanage_button" style="margin-bottom: 10px;">
-				<!--<label style="width: 50px;"></label>-->
-				<label class="i18n" name="light_system"></label>
-				<div class="switch_check">
-					<input type="checkbox" class="checkbox_switch" data-size="mini" name="status" />
+			<form action="/boafrm/formReboot" method="post" name="manage1">	
+				<div class="form-group_smart systemmanage_button">
+					<label class="i18n" name="now_system"></label>
+					<button type="submit" name="save_apply" class="i18n" value="1"></button>				
 				</div>
-			</div>
+				<input type="hidden" value="/systemmanage.html" name="submit-url">
+			</form>
+			<form action="/boafrm/formSaveConfig" method="post" name="manage2">
+				<div class="form-group_smart systemmanage_button">
+					<label class="i18n" name="ResetSettings_system"></label>					
+					<button type="reset" name="reset" class="i18n" value="1"></button>	
+				</div>
+				<input type="hidden" value="/systemmanage.html" name="submit-url">
+			</form>
+			<form action="/boafrm/formLEDControl" method="post" name="manage3">
+				<div class="form-group_smart  systemmanage_button" style="margin-bottom: 10px;">
+					<label class="i18n" name="light_system"></label>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch2" data-size="mini" name="led_enabled" value="1"/>
+					</div>
+					<button type="submit" name="save" class="i18n" value="1"></button>
+				</div>				
+				<input type="hidden" value="/systemmanage.html" name="submit-url">
+			</form>
 		</div>
 		<script src="js/jquery.js"></script>
 		<script src="js/bootstrap.js"></script>
@@ -50,7 +58,7 @@
 		<script>
 			$(document).ready(function(){
 				//开关按钮
-				$('[name="status"]').bootstrapSwitch({
+				$('.checkbox_switch1').bootstrapSwitch({
 					onText: "",
 					offText: "",
 					onColor: "success",
@@ -58,14 +66,37 @@
 					size: "small",
 					onSwitchChange: function(event, state) {
 						if (state == true) {
-	//						alert('已打开');
+//							$(".checkbox_switch2").val(1);
 						} else {
-	//						alert('已关闭');
+//							$(".checkbox_switch2").val(0);
+						}
+					}
+	
+				});
+				$('[name="led_enabled"]').bootstrapSwitch({
+					onText: "",
+					offText: "",
+					onColor: "success",
+					offColor: "info",
+					size: "small",
+					onSwitchChange: function(event, state) {
+						if (state == true) {
+							$(".checkbox_switch2").val('1');
+						} else {
+							$(".checkbox_switch2").val('0');
 						}
 					}
 	
 				})
 			})
+			function setting(){
+				var status_led='<%getIndex("led_enabled");%>';
+				if(status_led=='0'){
+					$('[name="led_enabled"]').bootstrapSwitch('state', false);
+				}else{
+					$('[name="led_enabled"]').bootstrapSwitch('state', true);
+				}
+			}
 		</script>
 	</body>
 </html>

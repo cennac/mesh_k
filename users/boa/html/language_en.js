@@ -502,6 +502,8 @@ var parent_contrl_save = 'Save';
 var parent_contrl_time_for_hour='(hour)';
 var parent_contrl_time_for_min='(min)';
 var parent_contrl_time_to='(To)';
+var parent_contrl_terminal='Terminal';
+
 
 
 

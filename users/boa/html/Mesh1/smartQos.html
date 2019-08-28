@@ -13,7 +13,6 @@
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
-		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 		<script src="js/util_gw.js"></script>
 		<script src="js/util_qos.js"></script>
 	</head>
@@ -72,6 +71,7 @@
 	    <script src="js/language.js"></script>
 		<script>
 			var advanced_qos_enable=<%getIndex("advancedIpqosEnable")%>;
+			var qosEnabled_status='<% getIndex("qosEnabled"); %>';
 			$(document).ready(function(){
 				//开关按钮
 				$('.checkbox_switch').bootstrapSwitch({
@@ -83,6 +83,7 @@
 					onSwitchChange: function(event, state) {
 						if (state == true) {
 							//打开
+							$(".checkbox_switch").val("ON");
 							enableTextField(document.formQosAdd.automaticUplinkSpeed);
  							enableTextField(document.formQosAdd.automaticDownlinkSpeed);
  							if (document.formQosAdd.automaticUplinkSpeed.checked) {  	
@@ -103,6 +104,7 @@
 							  }													
 						} else {							
  							//关闭
+ 							$(".checkbox_switch").val("OFF");
 							disableTextField(document.formQosAdd.automaticUplinkSpeed);
  							disableTextField(document.formQosAdd.automaticDownlinkSpeed);
  							disableTextField(document.formQosAdd.manualUplinkSpeed);
@@ -116,16 +118,16 @@
 			})
 			function Load_Setting()//页面初始化
 			{
-				if ( <% getIndex("qosEnabled"); %> ){
-//					$('[name="enabled"]').bootstrapSwitch('state', true);
-					document.formQosAdd.enabled.checked=false;
+				if ( qosEnabled_status =='0'){
+					$('[name="enabled"]').bootstrapSwitch('state', false);
+//					document.formQosAdd.enabled.checked=false;
 					disableTextField(document.formQosAdd.automaticUplinkSpeed);
 	 				disableTextField(document.formQosAdd.automaticDownlinkSpeed);
 	 				disableTextField(document.formQosAdd.manualUplinkSpeed);
 	 				disableTextField(document.formQosAdd.manualDownlinkSpeed);
 				} else {
-//					$('[name="enabled"]').bootstrapSwitch('state',false);
-					document.formQosAdd.enabled.checked=true;					
+					$('[name="enabled"]').bootstrapSwitch('state',true);
+//					document.formQosAdd.enabled.checked=true;					
 	 				enableTextField(document.formQosAdd.automaticUplinkSpeed);
 					enableTextField(document.formQosAdd.automaticDownlinkSpeed);
 					if(document.formQosAdd.automaticUplinkSpeed.checked) {

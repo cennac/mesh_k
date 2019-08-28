@@ -14,7 +14,7 @@
 #endif
 #elif defined(CONFIG_RTL_8198C) || defined(CONFIG_RTL_8196C) || defined(CONFIG_RTL_8198) || defined(CONFIG_RTL_819XD) || defined(CONFIG_RTL_8196E) || defined(CONFIG_RTL_8197F)
 //unsigned char *fwVersion="v3.0";
-unsigned char *fwVersion="WM V1.0.1";
+unsigned char *fwVersion="WM V1.0.3";
 #else
  unsigned char *fwVersion="v1.2f";
 #endif

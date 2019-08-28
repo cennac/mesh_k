@@ -57,6 +57,7 @@ DEPEND = ./.depend
 
 #------------------------------------------------------------------------------
 APMIB_DIR=../apmib
+BOA_SRC_DIR=../src
 
 #------------------------------------------------------------------------------
 # EXTRA_CFLAGS
@@ -265,7 +266,7 @@ endif
 all: depend $(TARGET)
 
 $(SYSCONFIG): Makefile $(REALTEK_SYS_OBJS) $(APMIB_DIR)/$(APMIB_LIB)
-	$(CC) -o $@ $(REALTEK_SYS_OBJS) $(LDFLAGS) -L$(APMIB_DIR) -lapmib
+	$(CC) -o $@ $(REALTEK_SYS_OBJS) $(LDFLAGS) -L$(BOA_SRC_DIR) -L$(APMIB_DIR) -lapmib
 	$(STRIP) $@
 
 $(INTERNET_PPP): Makefile $(REALTEK_INTERNET_PPP_OBJS)	$(APMIB_DIR)/$(APMIB_LIB)

@@ -11854,6 +11854,35 @@ else if ( !strcmp(name, "wps_either_ap_or_vxd")) {
 		req_format_write(wp, buffer);
 		return 0;
 	}
+    else if ( !strcmp(name, "led_enabled")) {      
+        if ( !apmib_get(MIB_LED_ENABLE, (void *)&val) )
+			return -1;
+		sprintf(buffer, "%d", val);
+		req_format_write(wp, buffer);
+		return 0;
+	}
+    else if ( !strcmp(name, "timer_reboot_enabled")) {      
+        if ( !apmib_get(MIB_DEV_RESTART_ENABLE, (void *)tmpStr) )
+			return -1;
+        if(!strcmp(tmpStr, "on"))
+        {
+            val = 1;
+        }
+        else
+        {
+            val = 0;
+        }
+		sprintf(buffer, "%d", val);
+		req_format_write(wp, buffer);
+		return 0;
+	}
+    else if ( !strcmp(name, "timer_reboot_time")) {      
+        if ( !apmib_get(MIB_DEV_RESTART_TIME, (void *)tmpStr) )
+			return -1;         
+
+		req_format_write(wp, tmpStr);
+		return 0;
+	}
 	else
 	{
 FMGET_FAIL:
@@ -12004,33 +12033,33 @@ int getDHCPModeCombobox(request *wp, int argc, char **argv)
 	apmib_get( MIB_WLAN_MODE, (void *)&val);
 	apmib_get(MIB_DHCP,(void *)&lan_dhcp_mode);
 	apmib_get( MIB_OP_MODE, (void *)&operation_mode);
-#if defined(CONFIG_DOMAIN_NAME_QUERY_SUPPORT)
+#if defined(CONFIG_DOMAIN_NAME_QUERY_SUPPORT)      
         if((operation_mode==1 && (val==0 ||val==1)) || (operation_mode==0)){
-	       if(lan_dhcp_mode == 0){
-	 		return req_format_write(wp,"<option selected value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
-	 							"<option value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
-	 							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>"
-	 							  "<option value=\"15\"><script>dw(tcpip_lan_dhcp_auto)</script></option>");
-	      	  }
-		if(lan_dhcp_mode == 1){
-	 		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
-	 							"<option selected value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
-	 							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>"
-	 							  "<option value=\"15\"><script>dw(tcpip_lan_dhcp_auto)</script></option>");
-	      	  }
-		if(lan_dhcp_mode == 2){
-	 		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
-	 							"<option  value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
-	 							 "<option selected value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>"
-	 							  "<option value=\"15\"><script>dw(tcpip_lan_dhcp_auto)</script></option>");
-	      	  }
-	       if(lan_dhcp_mode == 15){
-	 		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
-	 							"<option  value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
-	 							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>"
-	 							 "<option selected value=\"15\"><script>dw(tcpip_lan_dhcp_auto)</script></option>");
-	      	  }
-    	}
+           if(lan_dhcp_mode == 0){
+        		return req_format_write(wp,"<option selected value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
+        							"<option value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
+        							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>"
+        							  "<option value=\"15\"><script>dw(tcpip_lan_dhcp_auto)</script></option>");
+          	  }
+        if(lan_dhcp_mode == 1){
+        		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
+        							"<option selected value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
+        							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>"
+        							  "<option value=\"15\"><script>dw(tcpip_lan_dhcp_auto)</script></option>");
+          	  }
+        if(lan_dhcp_mode == 2){
+        		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
+        							"<option  value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
+        							 "<option selected value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>"
+        							  "<option value=\"15\"><script>dw(tcpip_lan_dhcp_auto)</script></option>");
+          	  }
+           if(lan_dhcp_mode == 15){
+        		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
+        							"<option  value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
+        							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>"
+        							 "<option selected value=\"15\"><script>dw(tcpip_lan_dhcp_auto)</script></option>");
+          	  }
+        }		
 #elif defined(CONFIG_RTL_ULINKER)
 		if((operation_mode==1 && (val==0 ||val==1)) || (operation_mode==0) || (operation_mode==2)){
 		   if(lan_dhcp_mode == 0){
@@ -12059,21 +12088,56 @@ int getDHCPModeCombobox(request *wp, int argc, char **argv)
 			  }
 		}
 #else
- 	if(lan_dhcp_mode == 0){
- 		return req_format_write(wp,"<option selected value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
- 							"<option value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
- 							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>");
-      	  }
-	if(lan_dhcp_mode == 1){
- 		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
- 							"<option selected value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
- 							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>");
-      	  }
-	if(lan_dhcp_mode == 2){
- 		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
- 							"<option  value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
- 							 "<option selected value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>");
-      	  }
+// 	if(lan_dhcp_mode == 0){
+// 		return req_format_write(wp,"<option selected value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
+// 							"<option value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
+// 							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>");
+//      	  }
+//	if(lan_dhcp_mode == 1){
+// 		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
+// 							"<option selected value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
+// 							 "<option value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>");
+//      	  }
+//	if(lan_dhcp_mode == 2){
+// 		return req_format_write(wp,"<option  value=\"0\"><script>dw(tcpip_lan_dhcp_disabled)</script></option>"
+// 							"<option  value=\"1\"><script>dw(tcpip_lan_dhcp_client)</script></option>"
+// 							 "<option selected value=\"2\"><script>dw(tcpip_lan_dhcp_server)</script></option>");
+//      	  }
+    if ((operation_mode == 1 && (val == 0 || val == 1)) || (operation_mode == 0))
+            {
+                if (lan_dhcp_mode == 0)
+                {
+                    return req_format_write(wp, "<option selected value=\"0\" class=\"i18n\" name=\"Disable_dhcp\"></option>"
+                    "<option value=\"1\" class=\"i18n\" name=\"Client_dhcp\"></option>"
+                    "<option value=\"2\" class=\"i18n\" name=\"Server_dhcp\"></option>"
+                    "<option value=\"15\" class=\"i18n\" name=\"auto_dhcp\"></option>");
+                }
+            
+                if (lan_dhcp_mode == 1)
+                {
+                    return req_format_write(wp, "<option  value=\"0\" class=\"i18n\" name=\"Disable_dhcp\"></option>"
+                    "<option selected value=\"1\" class=\"i18n\" name=\"Client_dhcp\"></option>"
+                    "<option value=\"2\" class=\"i18n\" name=\"Server_dhcp\"></option>"
+                    "<option value=\"15\" class=\"i18n\" name=\"auto_dhcp\"></option>");
+                }
+            
+                if (lan_dhcp_mode == 2)
+                {
+                    return req_format_write(wp, "<option  value=\"0\" class=\"i18n\" name=\"Disable_dhcp\"></option>"
+                    "<option  value=\"1\" class=\"i18n\" name=\"Client_dhcp\"></option>"
+                    "<option selected value=\"2\" class=\"i18n\" name=\"Server_dhcp\"></option>"
+                    "<option value=\"15\" class=\"i18n\" name=\"auto_dhcp\"></option>");
+                }
+            
+                if (lan_dhcp_mode == 15)
+                {
+                    return req_format_write(wp, "<option  value=\"0\" class=\"i18n\" name=\"Disable_dhcp\"></option>"
+                    "<option  value=\"1\" class=\"i18n\" name=\"Client_dhcp\"></option>"
+                    "<option value=\"2\" class=\"i18n\" name=\"Server_dhcp\"></option>"
+                    "<option selected value=\"15\" class=\"i18n\" name=\"auto_dhcp\"></option>");
+                }
+            }
+
 #endif
 	return 0;
 }

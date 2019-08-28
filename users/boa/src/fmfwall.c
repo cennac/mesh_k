@@ -28,6 +28,8 @@
 #include "apmib.h"
 #include "utility.h"
 #include "asp_page.h"
+#include "cJSON.h"
+#define  PARENT_CONTRL_SET_COMMAND "sysconf firewall parentControl"
 
 #ifdef QOS_BY_BANDWIDTH
 #if defined (CONFIG_RTL_8198)|| defined (CONFIG_RTL_8198C) || defined (CONFIG_RTL_8367R_SUPPORT) || defined(CONFIG_RTL_83XX_SUPPORT)
@@ -1305,20 +1307,29 @@ setErr_filter:
 void formParentContrl(request *wp, char *path, char *query)
 {
 	PARENT_CONTRL_T parentContrlEntry, parentContrltmp;
-    char *strWeekMon,*strWeekTues,*strWeekWed,*strWeekThur,*strWeekFri,*strWeekSat,*strWeekSun,*strStartTime,*strEndTime,*strAddParentContrl,*strDelParentContrl,*strVal,*submitUrl;
+    char *strWeekMon,*strWeekTues,*strWeekWed,*strWeekThur,*strWeekFri,*strWeekSat,*strWeekSun,*strStartTime,*strEndTime,*strAddParentContrl,*strDelParentContrl,*strVal,*submitUrl,*strTerminal,*strTerminalSelect;
 	int num_id, get_id, add_id, del_id, delall_id;
-	int entryNum,intVal,j,i;
+	int entryNum,intVal,j;
 	void *pEntry;
 	char tmpBuf[100];
 	bool timeAddFlag,timeDelFlag;
-	
+	int staNum = 0;
+	int i=0;
+	char terminalIndex[32]={0};
+	char terminalSelectIndex[32]={0};
+	char staInfo[256]={0};
+	char tmp[30]={0};
+
+	RTK_LAN_DEVICE_INFO_T devinfo[MAX_STA_NUM] = {0};
+		
+	rtk_get_lan_device_info(&staNum, devinfo, MAX_STA_NUM);
 #ifndef NO_ACTION
 	int pid;
 #endif
 
 	strDelParentContrl = req_get_cstream_var(wp, ("deleteSelParentContrl"), "");
 	strAddParentContrl = req_get_cstream_var(wp, ("addParentContrl"), "");
-
+    
 	/*check data and add parent control entry*/
 	if (strAddParentContrl[0])
 	   {
@@ -1345,27 +1356,22 @@ void formParentContrl(request *wp, char *path, char *query)
 	   (atoi(strEndTime)-atoi(strStartTime)>0))
 	   	{
 		apmib_get(MIB_PARENT_CONTRL_TBL_NUM, (void *)&entryNum);
-	//	printf("------>function_%s_line[%d]: PARENT_CONTRL_TBL_NUM=%d",__FUNCTION__,__LINE__,entryNum);
-		printf("++++++++++++++>function_%s_line[%d] tbl_number=%d:Mon=%d  Tues=%d  Wed=%d Thur=%d  Fri=%d  Sat=%d  Sun=%d  start=%d  end=%d \n", \
-		__FUNCTION__,__LINE__,entryNum,strWeekMon,strWeekTues,strWeekWed,strWeekThur,strWeekFri,strWeekSat,strWeekSun, strEndTime,strEndTime);
 		for(j=1;j<=entryNum;j++)
 		 {
 			memset(&parentContrltmp, 0x00, sizeof(parentContrltmp));
 			*((char *)&parentContrltmp) = (char)j;
 			if ( apmib_get(MIB_PARENT_CONTRL_TBL, (void *)&parentContrltmp))
 			{
- 				printf("**********************************************************************\n");	
-				printf("(table--%d)tmpMon=%d tmpTues=%d  tmpWed=%d  tmpThur=%d  tmpFri=%d tmpSat=%d  tmpSun=%d  tmpstart=%d  tmpend=%d \n", \
-					j,parentContrltmp.parentContrlWeekMon,parentContrltmp.parentContrlWeekTues,parentContrltmp.parentContrlWeekWed,\
-					parentContrltmp.parentContrlWeekThur,parentContrltmp.parentContrlWeekFri,parentContrltmp.parentContrlWeekSat, \
-					parentContrltmp.parentContrlWeekSun, parentContrltmp.parentContrlStartTime,parentContrltmp.parentContrlEndTime);
-					printf("===========================================================================\n");	
-				
+ 				printf("(table--%d)tmpMon=%d tmpTues=%d  tmpWed=%d  tmpThur=%d  tmpFri=%d tmpSat=%d  tmpSun=%d  tmpstart=%d  tmpend=%d \n", \
+				j,parentContrltmp.parentContrlWeekMon,parentContrltmp.parentContrlWeekTues,parentContrltmp.parentContrlWeekWed,\
+				parentContrltmp.parentContrlWeekThur,parentContrltmp.parentContrlWeekFri,parentContrltmp.parentContrlWeekSat, \
+				parentContrltmp.parentContrlWeekSun, parentContrltmp.parentContrlStartTime,parentContrltmp.parentContrlEndTime);
+					
 	           if((atoi(strWeekMon)==parentContrltmp.parentContrlWeekMon)&&(atoi(strWeekTues)==parentContrltmp.parentContrlWeekTues)&&
-			   	 (atoi(strWeekWed)==parentContrltmp.parentContrlWeekWed)&&(atoi(strWeekThur)==parentContrltmp.parentContrlWeekThur)&&
-			   	 (atoi(strWeekFri)==parentContrltmp.parentContrlWeekFri)&&(atoi(strWeekSat)==parentContrltmp.parentContrlWeekSat)&&
-			   	 (atoi(strWeekSun)==parentContrltmp.parentContrlWeekSun)&&(atoi(strStartTime)==parentContrltmp.parentContrlStartTime)&&
-			   	 (atoi(strEndTime)==parentContrltmp.parentContrlEndTime))
+			   (atoi(strWeekWed)==parentContrltmp.parentContrlWeekWed)&&(atoi(strWeekThur)==parentContrltmp.parentContrlWeekThur)&&
+			   (atoi(strWeekFri)==parentContrltmp.parentContrlWeekFri)&&(atoi(strWeekSat)==parentContrltmp.parentContrlWeekSat)&&
+			   (atoi(strWeekSun)==parentContrltmp.parentContrlWeekSun)&&(atoi(strStartTime)==parentContrltmp.parentContrlStartTime)&&
+			   (atoi(strEndTime)==parentContrltmp.parentContrlEndTime))
 				{
 					strcpy(tmpBuf, ("<script>dw(parent_contrl_rule_exist)</script>"));
 					goto setErr_filter;
@@ -1444,12 +1450,39 @@ void formParentContrl(request *wp, char *path, char *query)
 	    }
 	    if(strEndTime[0])
 	    {
-		 parentContrlEntry.parentContrlEndTime = atoi(strStartTime);
+		 parentContrlEntry.parentContrlEndTime = atoi(strEndTime);
 	    }
 	    else
 		 {
 		  parentContrlEntry.parentContrlEndTime = 0;
 	    }
+
+        memset(staInfo,0,sizeof(staInfo));
+		for (i=1; i<=staNum; i++) 
+	     {	 
+		 sprintf(terminalIndex,"parentContrlSta%d",i);
+		 sprintf(terminalSelectIndex,"terminalSelect%d",i);
+		 strTerminal= req_get_cstream_var(wp, (terminalIndex), "");
+		 strTerminalSelect= req_get_cstream_var(wp, (terminalSelectIndex), "");
+		 if(strTerminalSelect[0])
+		  {
+		    if(!strcmp(strTerminalSelect, "ON")) 
+		    {
+			 memset(tmp,0,sizeof(tmp));
+			 if(staNum == 1)
+			 {  
+			  strcpy(tmp,strTerminal);
+			 }
+			 else
+			 {
+			  sprintf(tmp,"%s;",strTerminal);
+			 }
+             strcat(staInfo,tmp); 
+		    }
+		  }
+	     }
+		if(strlen(staInfo))
+        strncpy(parentContrlEntry.parentContrlTerminal,staInfo,strlen(staInfo));
 	    if ( !apmib_get(num_id, (void *)&entryNum)) 
 	    {
 		 strcpy(tmpBuf, ("Get entry number error!"));
@@ -1497,6 +1530,17 @@ void formParentContrl(request *wp, char *path, char *query)
 		}
 	}
 	apmib_update_web(CURRENT_SETTING);
+#ifndef NO_ACTION
+	pid = fork();
+        if (pid) {
+	      	waitpid(pid, NULL, 0);
+	}
+        else if (pid == 0) {
+		snprintf(tmpBuf, 100, "%s/%s", _CONFIG_SCRIPT_PATH, _FIREWALL_SCRIPT_PROG);
+		execl( tmpBuf, _FIREWALL_SCRIPT_PROG, NULL);
+               	exit(1);
+        }
+#endif
 	
 	submitUrl = req_get_cstream_var(wp, "submit-url", "");   // hidden page
 	#if defined(MULTI_WAN_SUPPORT)
@@ -1518,7 +1562,7 @@ void formParentContrl(request *wp, char *path, char *query)
 setErr_filter:
 	ERR_MSG(tmpBuf);
 }
-
+#if 0
 /*function to return parent control table value to web*/
 int parentContrlList(request *wp, int argc, char **argv)
 {
@@ -1529,29 +1573,31 @@ int parentContrlList(request *wp, int argc, char **argv)
   		fprintf(stderr, "Get table entry error!\n");
 		return -1;
 	}
-   	printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+
 	nBytesSent += req_format_write(wp, ("<tr class=\"tbl_head\">"
-     	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_mon)</script></b></font></td>\n"
-      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_tues)</script></b></font></td>\n"
-      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_wed)</script></b></font></td>\n"
-      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_thur)</script></b></font></td>\n"
-      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_fri)</script></b></font></td>\n"
-      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_sat)</script></b></font></td>\n"
-      	"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_sun)</script></b></font></td>\n"
-      	"<td align=center width=\"12%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_start_time)</script></b></font></td>\n"
-      	"<td align=center width=\"12%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_end_time)</script></b></font></td>\n"
-      	"<td align=center width=\"6%%\" ><font size=\"2\"><b><script>dw(parent_contrl_week_select)</script></b></font></td></tr>\n"));
+     	"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_mon\"></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_tues\"></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_wed\"></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_thur\"></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_fri\"></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_sat\"></b></font></td>\n"
+      	"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_sun\"></b></font></td>\n"
+      	"<td align=center width=\"12%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_start_time\"></b></font></td>\n"
+      	"<td align=center width=\"12%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_end_time\"></b></font></td>\n"
+      	"<td align=center width=\"12%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_terminal\"></b></font></td>\n"
+      	"<td align=center width=\"6%%\" ><font size=\"2\"><b class=\"i18n\" name=\"parent_contrl_week_select\"></b></font></td></tr>\n"));
  	printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
 
 	for (i=1; i<=parentEntryNum; i++) 
 	{
-	 	printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+
 		*((char *)&entry) = (char)i;
-		 	printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+
 		//	memset(&entry, 0x00, sizeof(entry));
 		if ( !apmib_get(MIB_PARENT_CONTRL_TBL, (void *)&entry))
 			return -1;
-		printf("++++++++++++++>function_%s_line[%d]------contrl-NUM=%d\n",__FUNCTION__,__LINE__,parentEntryNum);
+		printf("------>function_%s_line[%d]: \n",__FUNCTION__,__LINE__);
+
 		nBytesSent += req_format_write(wp, ("<tr class=\"tbl_body\">"
 		"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
       	"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
@@ -1562,18 +1608,130 @@ int parentContrlList(request *wp, int argc, char **argv)
       	"<td align=center width=\"10%%\" ><font size=\"2\">%d</td>\n"
       	"<td align=center width=\"12%%\" ><font size=\"2\">%d</td>\n"
       	"<td align=center width=\"12%%\" ><font size=\"2\">%d</td>\n"
+      	"<td align=center width=\"12%%\" ><font size=\"2\">%s</td>\n"
        	"<td align=center width=\"6%%\" ><input type=\"checkbox\" name=\"select%d\" value=\"ON\"></td></tr>\n"), 
 		entry.parentContrlWeekMon, entry.parentContrlWeekTues,entry.parentContrlWeekWed, \
 		entry.parentContrlWeekThur,entry.parentContrlWeekFri,entry.parentContrlWeekSat, \
-		entry.parentContrlWeekSun,entry.parentContrlStartTime,entry.parentContrlEndTime, i);
+		entry.parentContrlWeekSun,entry.parentContrlStartTime,entry.parentContrlEndTime,entry.parentContrlTerminal, i);
+		printf("------>function_%s_line[%d]: \n",__FUNCTION__,__LINE__);
 
-		printf("\n(---**>table num=%d:\n+++++table--%d)tmpMon=%d tmpTues=%d  tmpWed=%d  tmpThur=%d  tmpFri=%d tmpSat=%d  tmpSun=%d  tmpstart=%d  tmpend=%d \n", \
-		parentEntryNum,i,entry.parentContrlWeekMon,entry.parentContrlWeekTues,entry.parentContrlWeekWed,\
+		printf("\n(---+++++table--%d)tmpMon=%d tmpTues=%d  tmpWed=%d  tmpThur=%d  tmpFri=%d tmpSat=%d  tmpSun=%d  tmpstart=%d  tmpend=%d terminal=%s\n", \
+		i,entry.parentContrlWeekMon,entry.parentContrlWeekTues,entry.parentContrlWeekWed,\
 		entry.parentContrlWeekThur,entry.parentContrlWeekFri,entry.parentContrlWeekSat, \
-		entry.parentContrlWeekSun, entry.parentContrlStartTime,entry.parentContrlEndTime);
+		entry.parentContrlWeekSun, entry.parentContrlStartTime,entry.parentContrlEndTime,entry.parentContrlTerminal);
 	}
 	return nBytesSent;
 }
+
+#endif
+
+void convertIntToString(int i, char *string)  
+{  
+   int digits=0,j=0;   
+   j=i;  
+   for( digits=1;j>10;j/=10) 
+   	{
+     digits*=10; 
+   	}
+   for(;digits>0;digits/=10)  
+    {  
+     *string++='0'+i/digits;  
+     i%=digits;  
+    }  
+   *string='\0';  
+}  
+
+
+cJSON *getParentControlListJSON()
+{
+	int nBytesSent=0, parentEntryNum;
+	PARENT_CONTRL_T entry;
+	cJSON *topRoot;
+    cJSON *root;
+	cJSON *parameters;
+	char tmpString[5]={0};
+    RTK_LAN_DEVICE_INFO_T devinfo[MAX_STA_NUM] = {0};
+    int i;
+
+	if ( !apmib_get(MIB_PARENT_CONTRL_TBL_NUM, (void *)&parentEntryNum)) {
+  		fprintf(stderr, "Get table entry error!\n");
+		return -1;
+	}
+	topRoot = cJSON_CreateObject();
+    for (i=1; i<=parentEntryNum; i++) 
+	{   
+	   	*((char *)&entry) = (char)i;
+		if ( !apmib_get(MIB_PARENT_CONTRL_TBL, (void *)&entry))
+			return -1;
+		printf("\ntmpMon=%d tmpTues=%d  tmpWed=%d  tmpThur=%d  tmpFri=%d tmpSat=%d  tmpSun=%d  tmpstart=%d  tmpend=%d terminal=%s\n", \
+		entry.parentContrlWeekMon,entry.parentContrlWeekTues,entry.parentContrlWeekWed,\
+		entry.parentContrlWeekThur,entry.parentContrlWeekFri,entry.parentContrlWeekSat, \
+		entry.parentContrlWeekSun, entry.parentContrlStartTime,entry.parentContrlEndTime,entry.parentContrlTerminal);	
+		sprintf(tmpBuf,"select%d",i);
+	    cJSON_AddItemToObject(topRoot, tmpBuf,root=cJSON_CreateArray());
+	    cJSON_AddItemToArray(root,parameters=cJSON_CreateObject());		
+	    cJSON_AddStringToObject(parameters,"parentContrlMon",entry.parentContrlWeekMon?"1":"0");
+		cJSON_AddStringToObject(parameters,"parentContrlWeekTues",entry.parentContrlWeekTues?"1":"0");
+		cJSON_AddStringToObject(parameters,"parentContrlWeekThur",entry.parentContrlWeekThur?"1":"0");	
+		cJSON_AddStringToObject(parameters,"parentContrlWeekWed",entry.parentContrlWeekWed?"1":"0");
+		cJSON_AddStringToObject(parameters,"parentContrlWeekThur",entry.parentContrlWeekThur?"1":"0");
+		cJSON_AddStringToObject(parameters,"parentContrlWeekFri",entry.parentContrlWeekFri?"1":"0");
+		cJSON_AddStringToObject(parameters,"parentContrlWeekSat",entry.parentContrlWeekSat?"1":"0");
+		cJSON_AddStringToObject(parameters,"parentContrlWeekSun",entry.parentContrlWeekSun?"1":"0");
+		memset(tmpString,0,sizeof(tmpString));
+		convertIntToString(entry.parentContrlStartTime,tmpString);
+		cJSON_AddStringToObject(parameters,"parentContrlStartTime",tmpString);
+		memset(tmpString,0,sizeof(tmpString));
+		convertIntToString(entry.parentContrlEndTime,tmpString);
+		cJSON_AddStringToObject(parameters,"parentContrlEndTime",tmpString);
+		cJSON_AddStringToObject(parameters,"parentContrlTerminal",entry.parentContrlTerminal);
+
+	}
+	printf("-------------->\n%s\n-------------->\n",cJSON_Print(topRoot));
+	
+    return topRoot;
+}
+
+int parentContrlList(request *wp, int argc, char **argv)
+{  
+    cJSON *root;
+    char *out;
+    int ret;
+    root = getParentControlListJSON();
+    out = cJSON_Print(root);
+	cJSON_Delete(root);	
+    ret = req_format_write(wp, "%s", out);
+    free(out);
+    return ret;
+}
+
+/*function to return parent control terminal value to web*/
+int parentContrlTerminalList(request *wp, int argc, char **argv)
+{
+	RTK_LAN_DEVICE_INFO_T devinfo[MAX_STA_NUM] = {0};
+	int nBytesSent=0;
+    int num = 0;
+	int i=0;
+	 char macEntry[30]={0};
+	rtk_get_lan_device_info(&num, devinfo, MAX_STA_NUM);
+	 
+	for (i=1; i<=num; i++) 
+	{
+	     sprintf(macEntry,"%02X:%02X:%02X:%02X:%02X:%02X", devinfo[i-1].mac[0], devinfo[i-1].mac[1], devinfo[i-1].mac[2], devinfo[i-1].mac[3],devinfo[i-1].mac[4],devinfo[i-1].mac[5]);
+		nBytesSent += req_format_write(wp, ("<tr class=\"tbl_body\">"
+
+      	"<td align=center width=\"12%%\" ><p>%s</p><input type=hidden name=\"parentContrlSta%d\" value=\"%s\" size=\"2\"></td>\n"
+      	     	
+       	"<td align=center width=\"6%%\" ><input type=\"checkbox\" name=\"terminalSelect%d\" value=\"ON\"></td></tr>\n"), 
+        strncmp(devinfo[i-1].hostname,"---",3)?devinfo[i-1].hostname:macEntry,i,strncmp(devinfo[i-1].hostname,"---",3)?devinfo[i-1].hostname:macEntry, i);
+
+		printf("\n(---**>table num=%d:\n------table--%d)terminal=%s \n", \
+		num,i,strncmp(devinfo[i-1].hostname,"---",3)?devinfo[i-1].hostname:"PC-temimal");
+	}
+	printf("------>function_%s_line[%d]: \n",__FUNCTION__,__LINE__);
+	return nBytesSent;
+}
+
 #if 0
 /////////////////////////////////////////////////////////////////////////////
 void formTriggerPort(request *wp, char *path, char *query)
@@ -2376,10 +2534,10 @@ int ipFilterList(request *wp, int argc, char **argv)
 	}
 
 	nBytesSent += req_format_write(wp, ("<tr class=\"tbl_head\">"
-      	"<td align=center width=\"30%%\" ><font size=\"2\"><b><script>dw(ipfilter_tbl_local_addr)</script></b></font></td>\n"
-      	"<td align=center width=\"25%%\" ><font size=\"2\"><b><script>dw(ipfilter_tbl_proto)</script></b></font></td>\n"
-      	"<td align=center width=\"25%%\" ><font size=\"2\"><b><script>dw(ipfilter_tbl_comm)</script></b></font></td>\n"
-      	"<td align=center width=\"20%%\" ><font size=\"2\"><b><script>dw(ipfilter_tbl_select)</script></b></font></td></tr>\n"));
+      	"<td align=center width=\"30%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_origin_address_ipfilter\"></b></font></td>\n"
+      	"<td align=center width=\"25%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_pro_address_ipfilter\"></b></font></td>\n"
+      	"<td align=center width=\"25%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_tips_address_ipfilter\"></b></font></td>\n"
+      	"<td align=center width=\"20%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_select_address_ipfilter\"></b></font></td></tr>\n"));
 
 	for (i=1; i<=entryNum; i++) {
 		*((char *)&entry) = (char)i;
@@ -2437,9 +2595,9 @@ int macFilterList(request *wp, int argc, char **argv)
 	}
 
 	nBytesSent += req_format_write(wp, ("<tr class=\"tbl_head\">"
-      	"<td align=center width=\"50%%\" ><font size=\"2\"><b><script>dw(macfilter_macaddr)</script></b></font></td>\n"
-      	"<td align=center width=\"30%%\" ><font size=\"2\"><b><script>dw(macfilter_comment)</script></b></font></td>\n"
-      	"<td align=center width=\"20%%\" ><font size=\"2\"><b><script>dw(macfilter_select)</script></b></font></td></tr>\n"));
+      	"<td align=center width=\"50%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_macaddress_firewall\"></b></font></td>\n"
+      	"<td align=center width=\"30%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_tips_firewall\"></b></font></td>\n"
+      	"<td align=center width=\"20%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_select_firewall\"></b></font></td></tr>\n"));
 
 	for (i=1; i<=entryNum; i++) {
 		*((char *)&entry) = (char)i;
@@ -2480,14 +2638,14 @@ int urlFilterList(request *wp, int argc, char **argv)
 	}
 #ifdef URL_FILTER_USER_MODE_SUPPORT	
 		nBytesSent += req_format_write(wp, ("<tr class=\"tbl_head\">"
-			"<td align=center width=\"30%%\" ><font size=\"2\"><b><script>dw(urlfilter_urladdr)</script></b></font></td>\n"
-			"<td align=center width=\"25%%\" ><font size=\"2\"><b><script>dw(urlfilter_ipaddr)</script></b></font></td>\n"
+			"<td align=center width=\"30%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_urladdress_urlfilter\"></b></font></td>\n"
+			"<td align=center width=\"25%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_select_urlfilter\"></b></font></td>\n"
 			"<td align=center width=\"25%%\" ><font size=\"2\"><b><script>dw(urlfilter_macaddr)</script></b></font></td>\n"
 			"<td align=center width=\"20%%\" ><font size=\"2\"><b><script>dw(urlfilter_select)</script></b></font></td></tr>\n"));
 #else
 	nBytesSent += req_format_write(wp, ("<tr class=\"tbl_head\">"
-      	"<td align=center width=\"70%%\" ><font size=\"2\"><b><script>dw(urlfilter_urladdr)</script></b></font></td>\n"
-      	"<td align=center width=\"30%%\" ><font size=\"2\"><b><script>dw(urlfilter_select)</script></b></font></td></tr>\n"));
+      	"<td align=center width=\"70%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_urladdress_urlfilter\"></b></font></td>\n"
+      	"<td align=center width=\"30%%\" ><font size=\"2\"><b class=\"i18n\" name=\"th_select_urlfilter\"></b></font></td></tr>\n"));
 #endif
 	for (i=1; i<=entryNum; i++) {
 		*((char *)&entry) = (char)i;

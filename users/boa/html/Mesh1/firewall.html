@@ -11,140 +11,106 @@
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
-		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 	</head>
-	<body>
+	<body onload="Load_Setting();">
 		<div class="guest_net_parent">
-			<form action="/boafrm/formFilter" method="POST" name="formFilterAdd">
+			
 			<div>
-				<div class="form-group" style="margin-bottom: 10px;">
-					<div class="intell guest_mode i18n" name="macFliter_title_macfilter">&nbsp;</div>
-					<div class="switch_check">
-						<input type="checkbox" class="checkbox_switch" data-size="mini" name="enabled" id="checkbox_switch1"/>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterAdd">
+					<div class="form-group" style="margin-bottom: 10px;">
+						<div class="intell guest_mode i18n" name="macFliter_title_macfilter">&nbsp;</div>
+						<div class="switch_check">
+							<input type="checkbox" class="checkbox_switch" data-size="mini" name="enabled1"  id="checkbox_switch1"/>
+						</div>
+						<input type="hidden" name="enabled" value="ON" class="switch_check1"/>
 					</div>
-				</div>
-				<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_macfilter"></p></div>
-				<div class="form-group_smart firewall"><label class="i18n" name="macaddress_macfilter"></label><input class="form_input" type="text" name="mac"  /></div>
-				<div class="form-group_smart firewall"><label class="i18n" name="mactips_macfilter">&nbsp;</label><input class="form_input" type="text" name="comment"  /></div>
-				<div class="form-group form-group-btn firewall">
-					<button class="i18n" type="submit" value="Save" name="addFilterMac" onClick="return addClick()"></button><button class="i18n" type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" ></button><button  class="i18n" type="reset" value="Reset" name="reset"></button>
-				</div>
-				<div>
-					<p class="current_table i18n" name="currect_table_macfilter"></p>
-					<div class="table-responsive"> 　　　　　　　　 			    		
-						<table class="table table-bordered">
-						  	<thead>
-						    	<tr>
-						      		<th class="i18n" name="th_macaddress_firewall"></th>
-						      		<th class="i18n" name="th_tips_firewall"></th>
-						      		<th class="i18n" name="th_select_firewall"></th>
-						    	</tr>
-						  	</thead>
-						  	<tbody>
-							    <tr>
-							      	<td>7H:8D:45:9F</td>
-							      	<td>Bangalore</td>
-							      	<td></td>
-							    </tr>
-							    <tr>
-							      	<td>7H:8D:45:9F</td>
-							      	<td>Bangalore</td>
-							      	<td></td>
-							    </tr>
-							    <tr>
-							      	<td>7H:8D:45:9F</td>
-							      	<td>Bangalore</td>
-							      	<td></td>
-							    </tr>
-						  	</tbody>
-						</table>						 
-			    	</div>
-			    	<div class="form-group form-group-btn firewall">
-						<button type="submit" value="Delete Selected" name="deleteSelFilterMac" onClick="return deleteClick()" class="i18n"></button><button  type="submit" value="Delete All" name="deleteAllFilterMac" onClick="return deleteAllClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+					<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_macfilter"></p></div>
+					<div class="form-group_smart firewall"><label class="i18n" name="macaddress_macfilter"></label><input class="form_input" type="text" name="mac"  /></div>
+					<div class="form-group_smart firewall"><label class="i18n" name="mactips_macfilter">&nbsp;</label><input class="form_input" type="text" name="comment"  /></div>
+					<div class="form-group form-group-btn firewall">
+						<button class="i18n" type="submit" value="Save" name="addFilterMac" onClick="return addClick1()"></button><button class="i18n" type="submit" value="Save & Apply" name="save_apply" onClick="return addClick1()" ></button><button  class="i18n" type="reset" value="Reset" name="reset"></button>
 					</div>
-			    </div>
+				</form>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterDel">
+					<div>
+						<p class="current_table i18n" name="currect_table_macfilter"></p>
+						<div class="table-responsive"> 　　　　　　　　 			    		
+							<table class="table table-bordered">
+								<% macFilterList(); %>							  	
+							</table>						 
+				    	</div>
+				    	<div class="form-group form-group-btn firewall">
+							<button type="submit" value="Delete Selected" name="deleteSelFilterMac" onClick="return deleteClick()" class="i18n"></button><button  type="submit" value="Delete All" name="deleteAllFilterMac" onClick="return deleteAllClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+						</div>
+				    </div>
+			    </form>
 			</div>
-			</form>
+			
 			<hr class="ip_filter_hr"/>
 			<div class="IpFilter">
+				<form action="/boafrm/formFilter" method="POST" name="formFilterAdd">
 				<div class="form-group" style="margin-bottom: 10px;">
 					<div class="intell guest_mode i18n" name="macFliter_title_ipfilter">&nbsp;</div>
 					<div class="switch_check">
-						<input type="checkbox" class="checkbox_switch" data-size="mini" name="status" id="checkbox_switch2"/>
+						<input type="checkbox" class="checkbox_switch" data-size="mini" name="enabled2" id="checkbox_switch2"/>
 					</div>
+					<input type="hidden" name="lan_mask" value="<% getInfo("mask-rom"); %>">
+					<input type="hidden" name="enabled" value="ON" class="switch_check2"/>
 				</div>
 				<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_ipfilter"></p></div>
-				<div class="form-group_smart ip_filter"><label class="i18n" name="origin_address_ipfilter"></label><input class="form_input ipfilter_input" type="text"  />.<input class="form_input ipfilter_input" type="text"  />.<input class="form_input ipfilter_input" type="text"  />.<input class="form_input ipfilter_input" type="text"  /></div>
+				<div class="form-group_smart ip_filter"><label class="i18n" name="origin_address_ipfilter"></label><input class="form_input ipfilter_input" type="text"  id="ipfilter_input1"/>.<input class="form_input ipfilter_input" type="text"  id="ipfilter_input2"/>.<input class="form_input ipfilter_input" type="text" id="ipfilter_input3" />.<input class="form_input ipfilter_input" type="text" id="ipfilter_input4" /></div>
+				<input type="hidden" name="ip" id="ip_value_ipfilter" />
 				<div class="longTime form-group ip_filter">
 					<label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="potorl_ipfilter"></label>
-					<select name="">
+					<select name="protocol">
 						<option value="">TCP+UDP</option>
 						<option value="">TCP</option>
 						<option value="">UDP</option>
 					</select>
 					<span class="caret" style="position: relative;left: -30px;"></span>
 				</div>
-				<div class="form-group_smart firewall ip_filter"><label class="i18n" name="iptips_ipfilter">&nbsp;</label><input class="form_input" type="text"  /></div>
+				<div class="form-group_smart firewall ip_filter"><label class="i18n" name="iptips_ipfilter">&nbsp;</label><input class="form_input" type="text"  name="comment" id="comment2"/></div>
 				<div class="form-group form-group-btn firewall">
-					<button type="submit" value="Save" name="addFilterIp" onClick="return addClick()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" class="i18n"></button><button  type="reset" value="Reset" name="reset" class="i18n"></button>
+					<button type="submit" value="Save" name="addFilterIp" onClick="return addClick2()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick2()" class="i18n"></button><button  type="reset" value="Reset" name="reset" class="i18n"></button>
 				</div>
+				</form>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterDel">
 				<div>
 					<p class="current_table i18n" name="currect_table_ipfilter"></p>
 					<div class="table-responsive"> 　　　　　　　　 			    		
 						<table class="table table-bordered">
-						  	<thead>
-						    	<tr>
-						      		<th class="i18n" name="th_origin_address_ipfilter"></th>
-						      		<th class="i18n" name="th_pro_address_ipfilter"></th>
-						      		<th class="i18n" name="th_tips_address_ipfilter"></th>
-						      		<th class="i18n" name="th_select_address_ipfilter"></th>
-						    	</tr>
-						  	</thead>
-						  	<tbody>
-							    <tr>
-							      	<td>192.168.1.100</td>
-							      	<td>UDP</td>
-							      	<td>Bangalore</td>
-							      	<td></td>
-							    </tr>
-							    <tr>
-							      	<td>192.168.1.100</td>
-							      	<td>UDP</td>
-							      	<td>Bangalore</td>
-							      	<td></td>
-							    </tr>
-							    <tr>
-							      	<td>192.168.1.100</td>
-							      	<td>TCP</td>
-							      	<td>Bangalore</td>
-							      	<td></td>
-							    </tr>
-						  	</tbody>
+						  	<% ipFilterList(); %>
 						</table>						 
 			    	</div>
 			    	<div class="form-group form-group-btn firewall">
 						<button type="submit" value="Delete Selected" name="deleteSelFilterIp" onClick="return deleteClick()" class="i18n"></button><button type="submit" value="Delete All" name="deleteAllFilterIp" onClick="return deleteAllClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
 					</div>
+					<input type="hidden" value="1" name="addFilterIpFlag">
 			    </div>
+			   </form>
 			</div>
 			<hr class="ip_filter_hr"/>
 			<div>
 				<div class="form-group" style="margin-bottom: 10px;">
 					<div class="intell guest_mode i18n" name="url_filter_urlfilter">&nbsp;</div>
 					<div class="switch_check">
-						<input type="checkbox" class="checkbox_switch" data-size="mini" name="status" id="checkbox_switch3"/>
+						<input type="checkbox" class="checkbox_switch" data-size="mini" name="enabled3" id="checkbox_switch3"/>
 					</div>
+					<input type="hidden" name="urlFilterMode">
+					<%getIndex("usrSpecificUrlCommand_start");%>
+					<input type="hidden" name="urlFilterUserMode">
+					<%getIndex("usrSpecificUrlCommand_end");%>
 				</div>
 				<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_urlfilter"></p></div>
 				<div class="up_dowm">
-			        <input type="radio"><span class="i18n" name="black_name_urlfilter"></span>
+			        <input type="radio" value="blackList" name="urlFilterBlack" onClick="urlFilterModeBlack()"><span class="i18n" name="black_name_urlfilter"></span>
 				</div>
 				<div class="up_dowm">
-			        <input type="radio"><span class="i18n" name="white_name_urlfilter"></span>
+			        <input type="radio" value="whiteList" name="urlFilterWhite" onClick="urlFilterModeWhite()"><span class="i18n" name="white_name_urlfilter"></span>
 				</div>
-				<div class="form-group_smart firewall"><label class="i18n" name="url_address_urlfilter"></label><input class="form_input" type="text"  /></div>
+				<div class="form-group_smart firewall"><label class="i18n" name="url_address_urlfilter"></label><input class="form_input" type="text" name="url"/></div>
 				<div class="form-group form-group-btn firewall">
-					<button type="submit" value="Save" name="addFilterUrl" onClick="return addClick()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+					<button type="submit" value="Save" name="addFilterUrl" onClick="return addClick3()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick3()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
 				</div>
 				<div>
 					<p class="current_table i18n" name="currect_table_urlfilter"></p>
@@ -197,9 +163,11 @@
 						if (state == true) {
 							enableTextField(document.formFilterAdd.mac);
 							enableTextField(document.formFilterAdd.comment);
+							$(".switch_check1").val("ON");
 						} else {
 							disableTextField(document.formFilterAdd.mac);
 							disableTextField(document.formFilterAdd.comment);
+							$(".switch_check1").val("OFF");
 						}
 					}
 				});
@@ -211,9 +179,15 @@
 					size: "small",
 					onSwitchChange: function(event, state) {
 						if (state == true) {
-	//						alert('已打开');
+							enableTextField(document.formFilterAdd.ip);
+							enableTextField(document.formFilterAdd.protocol);
+							$("#comment2").attr("disabled",true);
+							$(".switch_check2").val("ON");
 						} else {
-	//						alert('已关闭');
+							disableTextField(document.formFilterAdd.ip);
+						  	disableTextField(document.formFilterAdd.protocol);
+							$("#comment2").attr("disabled",false);
+							$(".switch_check2").val("OFF");
 						}
 					}
 				});
@@ -232,9 +206,63 @@
 					}
 				});
 			});
-			function addClick()
+			var mac_filter_status='<% getIndex("macFilterEnabled"); %>';
+			var ip_filter_status='<% getIndex("ipFilterEnabled"); %>';
+			var url_filter_status='<% getIndex("urlFilterEnabled"); %>';
+			var radio_status='<% getIndex("urlFilterMode"); %>';
+			function Load_Setting(){
+				if ( mac_filter_status=='0' ){
+					document.formFilterAdd.enabled1.checked = false;
+				}else{
+					document.formFilterAdd.enabled1.checked = true;
+				}
+				if ( ip_filter_status=='0' ){
+					document.formFilterAdd.enabled2.checked = false;
+				}else{
+					document.formFilterAdd.enabled2.checked = true;
+				}
+				if ( url_filter_status=='0' ){
+					document.formFilterAdd.enabled3.checked = false;
+				}else{
+					document.formFilterAdd.enabled3.checked = true;
+				}
+					
+				if ( radio_status=='0' ){
+					document.formFilterAdd.urlFilterWhite.checked = true;
+				}else{
+					document.formFilterAdd.urlFilterBlack.checked = true;
+				}
+					
+							
+				updateState();
+			}
+			function updateState()
 			{
-			  if (!document.formFilterAdd.enabled.checked)
+				//macfilter
+			  if (document.formFilterAdd.enabled1.checked) {
+			 	enableTextField(document.formFilterAdd.mac);
+				enableTextField(document.formFilterAdd.comment);
+			  }
+			  else {
+			 	disableTextField(document.formFilterAdd.mac);
+				disableTextField(document.formFilterAdd.comment);
+			  }
+			  //ipfilter
+			   if (document.formFilterAdd.enabled2.checked) {
+			 	enableTextField(document.formFilterAdd.ip);
+				enableTextField(document.formFilterAdd.protocol);
+				$("#comment2").attr("disabled",true);
+			  }
+			  else {
+			 	disableTextField(document.formFilterAdd.ip);
+			  	disableTextField(document.formFilterAdd.protocol);
+				$("#comment2").attr("disabled",false);
+			  }
+			}
+			//macfilter
+			function addClick1()
+			{
+			  if (!document.formFilterAdd.enabled1.checked)
 			  	return true;
 			
 			  if (document.formFilterAdd.mac.value=="" && document.formFilterAdd.comment.value=="" )
@@ -242,12 +270,10 @@
 			
 			  var str = document.formFilterAdd.mac.value;
 			  if ( str.length < 12) {
-				alert(macfilter_macaddr_nocomplete);
+				alert("请输入正确的mac地址");
 				document.formFilterAdd.mac.focus();
 				return false;
 			  }
-			
-			  // add for "All MAC Address field can't reject 00:00:00:00:00:00/ff:ff:ff:ff:ff:ff MAC Address" issue
 			  with(document.formFilterAdd)
 			  {
 				if(!checkMacAddr(mac,macfilter_macaddr_invalid))
@@ -255,6 +281,74 @@
 			  }
 			  return true;
 			}
+			//ipfilter
+			function addClick2(){
+				if (!document.formFilterAdd.enabled2.checked)
+			  	return true;
+			
+			  if (document.formFilterAdd.ip.value=="" && $("#comment2").val()=="" )
+				return true;
+			
+			  if( checkHostIPValid(document.formFilterAdd.ip,document.formFilterAdd.lan_mask, ipfilter_ipaddr_invalid) == false)
+			  	return false;
+			  	var ipfilter_input_value=$("#ipfilter_input1").val()+$("#ipfilter_input2").val()+$("#ipfilter_input3").val()+$("#ipfilter_input4").val()
+			  	$("#ip_value_ipfilter").val(ipfilter_input_value);
+			  return true
+			}
+			//urlfilter
+			function addClick3()
+			{
+			  if (!document.formFilterAdd.enabled3.checked)
+			  	return true;
+			  var str = document.formFilterAdd.url.value;
+			  	if(document.formFilterAdd.urlFilterWhite.checked == true)
+					document.formFilterAdd.urlFilterMode.value = 1;
+				else
+					document.formFilterAdd.urlFilterMode.value = 0;
+				for (var i=0; i<str.length; i++) {
+			     		if ( str.charAt(i) == ';')
+			     		{
+			     			alert(urlfilter_apply_error);
+						return false;
+			     		}
+				}
+						
+			  if (document.formFilterAdd.url.value=="")
+				return true;
+			
+			  return true;
+			}
+			function deleteClick()
+			{
+			  if ( !confirm("确定删除所选的入口?") ) {
+				return false;
+			  }
+			  else
+				return true;
+			}
+			
+			function deleteAllClick()
+			{
+			   if ( !confirm("确定删除所有的入口?") ) {
+				return false;
+			  }
+			  else
+				return true;
+			}
+			function urlFilterModeBlack()
+			{
+			  document.formFilterAdd.urlFilterMode.value=0;
+			  document.formFilterAdd.urlFilterWhite.checked = false;
+			  document.formFilterAdd.urlFilterBlack.checked = true;
+			}
+			
+			function urlFilterModeWhite()
+			{
+			  document.formFilterAdd.urlFilterMode.value=1;
+			  document.formFilterAdd.urlFilterWhite.checked = true;
+			  document.formFilterAdd.urlFilterBlack.checked = false;
+			}
+			
 		</script>
 	</body>
 </html>

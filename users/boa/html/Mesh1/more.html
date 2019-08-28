@@ -13,6 +13,7 @@
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
+
 	</head>
 	<body>
 		 		<div class="main_content">
@@ -22,12 +23,19 @@
 		 					<li><a href_val="parentControl.html"><span class="i18n" name="parentControl_more"></span></a></li>
 		 					<li><a href_val="smartQos.html"><span class="i18n" name="smart_more"></span></a></li>
 		 					<li><a href_val="addnode.html"><span class="i18n" name="addNode_more"></span></a></li>
-		 					<li><a href_val="firewall.html"><span class="i18n" name="firewall_more"></span></a></li>
+		 					<li class="firewall_more"><a onclick="slide_f()"><span class="i18n" name="firewall_more"></span></a>
+		 						<ul id="toggle_firewall">
+		 							<li><a href_val="macfilter.html"><span class="i18n" name="mac_filter"></span></a></li>
+		 							<li><a href_val="ipfilter.html"><span class="i18n" name="ip_filter"></span></a></li>
+		 							<li><a href_val="urlfilter.html"><span class="i18n" name="url_filter"></span></a></li>
+		 						</ul>
+		 					</li>
 		 					<li><a href_val="dhcpserver.html"><span class="i18n" name="dhcpServer_more"></span></a></li>
 		 					<li><a href_val="softwareup.html"><span class="i18n" name="software_more"></span></a></li>
 		 					<li><a href_val="environment.html"><span class="i18n" name="environment_more"></span></a></li>
 		 					<li><a href_val="systemmanage.html"><span class="i18n" name="system_more"></span></a></li>
 		 					<li><a href_val="password.html"><span class="i18n" name="password_more"></span></a></li>
+		 					<li><a href_val="version.html"><span class="i18n" name="help_more"></span></a></li>
 		 				</ul>
 		 			</div>
 		 			<div class="right_content">
@@ -41,7 +49,17 @@
 	    <!-- 加载语言包文件 -->
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
+	    
 		<script>
+			function slide_f(){
+				if($("#toggle_firewall").css("display")=="none"){
+					$("#toggle_firewall").slideDown();
+					$("#toggle_firewall").css("display","block");
+				}else{
+					$("#toggle_firewall").slideUp();
+				}
+			}
+			
 			var topHeight=parent.top_height;
 			var bottomHeight=parent.bottom_height;
 			$(".main_content").height(window.innerHeight);//设置页面内容content高度
@@ -50,23 +68,27 @@
 			var top_height=$(".header").height();
 			var bottom_height=$("footer-wrap_home").height();
 			var content_height=window.innerHeight-top_height-bottom_height;	
-//			var content_width=$(".main_content").width();
-//			var side_width=$(".side_nav").width();
 			$(".iframe_holder").height(content_height);
-//			$(".iframe_holder").width(content_width-side_width-15);
 			//单击导航栏时设置iframe对应页面
 			var iframe_href;
-			$(".side_nav li").click(function() {
-				iframe_href = $(this).find("a").attr("href_val");
-				$(".iframe_holder").attr("src",iframe_href);
+			$(".side_nav >ul >li").click(function() {
+				if(!$(this).hasClass("firewall_more")){
+					if($("#toggle_firewall").css("display")=="block"){
+						$("#toggle_firewall").slideUp();
+					}
+					$("#toggle_firewall li").removeClass("active_more");
+				}				
+				iframe_href = $(this).children().attr("href_val");
+				$(".iframe_holder").attr("src",iframe_href);				
 				$(this).addClass("active_more");
-				$(this).find("a").children().css("font-size","16px");
-				$(this).find("a").children().addClass("active_font");
 				$(this).siblings().removeClass("active_more");
-				$(this).siblings().find("a").children().css("font-size","14px");
-				$(this).siblings().find("a").children().removeClass("active_font");
 			});
-				
+			$("#toggle_firewall li").click(function(){
+				iframe_href = $(this).children().attr("href_val");
+				$(".iframe_holder").attr("src",iframe_href);				
+				$(this).addClass("active_more");
+				$(this).siblings().removeClass("active_more");
+			})
 		</script>
 	</body>
 </html>

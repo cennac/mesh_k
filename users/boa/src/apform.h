@@ -60,8 +60,8 @@
 #define _DHCPD_PROG_NAME	"udhcpd"
 #define _DHCPD_PID_PATH		"/var/run"
 
-#define WEB_PAGE_LOGIN	"/Mesh1/Login.html"
-#define WEB_PAGE_HOME   "/Mesh1/home2.htm"
+#define WEB_PAGE_LOGIN	"/Login.html"
+#define WEB_PAGE_HOME   "/home2.htm"
 
 
 #define FORM_FW_UPLOAD	"formUpload"
@@ -330,27 +330,29 @@ static __inline__ void update_form_hander_name(request *wp)
 #if defined(APPLY_CHANGE_DIRECT_SUPPORT)
 #define OK_MSG(url) { \
 	extern void log_boaform(char *form, request *); \
+	char *submit_url = "/wizard.htm";\
 	needReboot = 1; \
-	if(strlen(url) == 0) \
-		strcpy(url,"/wizard.htm"); \
+	if(strlen(url) != 0) \
+		submit_url = url;\
 	req_format_write(wp, "<html><head>"); \
 	if(req_get_cstream_var(wp, "save_apply", "")[0]==0){ \
-       req_format_write(wp, "<meta http-equiv=\"refresh\" content=\"0;url=%s\"></head></html>", url); \
+       req_format_write(wp, "<meta http-equiv=\"refresh\" content=\"0;url=%s\"></head></html>", submit_url); \
     }else{\
        req_format_write(wp, "<script>function rebootform(){document.getElementById('rebootForm').submit();}</script></head><body onload='rebootform()'><form id='rebootForm' action=/boafrm/formRebootCheck method=POST name='rebootForm'>"); \
-	   req_format_write(wp, "<input type='hidden' value='%s' name='submit-url'>",url); \	   
+	   req_format_write(wp, "<input type='hidden' value='%s' name='submit-url'>",submit_url); \	   
 	   req_format_write(wp, "</form></body></html>");\
 	   log_boaform("formRebootCheck",wp);\
 	}\
 }
 #define REBOOT_NOWAIT(url) { \
 	extern void log_boaform(char *form, request *);\	
-	if(strlen(url) == 0) \
-		strcpy(url,"/wizard.htm"); \
+	char *submit_url = "/wizard.htm";\
+	if(strlen(url) != 0) \
+		submit_url = url;\
 	req_format_write(wp, "<html><head>"); \
     needReboot = 1; \	
     req_format_write(wp, "<script>function rebootform(){document.getElementById('rebootForm').submit();}</script></head><body onload='rebootform()'><form id='rebootForm' action=/boafrm/formRebootCheck method=POST name='rebootForm'>"); \
-	req_format_write(wp, "<input type='hidden' value='%s' name='submit-url'>",url); \	   
+	req_format_write(wp, "<input type='hidden' value='%s' name='submit-url'>",submit_url); \	   
 	req_format_write(wp, "</form></body></html>");\
 	log_boaform("formRebootCheck",wp);\
 }
@@ -901,6 +903,7 @@ extern int portFilterList(request *wp, int argc, char **argv);
 extern int ipFilterList(request *wp, int argc, char **argv);
 extern int macFilterList(request *wp, int argc, char **argv);
 extern int parentContrlList(request *wp, int argc, char **argv);
+extern int parentContrlTerminalList(request *wp, int argc, char **argv);
 extern int urlFilterList(request *wp, int argc, char **argv);
 extern void formDMZ(request *wp, char *path, char *query);
 #if defined(CONFIG_RTK_VLAN_WAN_TAG_SUPPORT)
@@ -1025,6 +1028,12 @@ extern void formMultiAP(request *wp, char *path, char *query);
 void formBTRepeaterSetup(request *wp, char *path, char *query);
 #endif
 void formGuestWlanSetup(request *wp, char *path, char *query);
+
+void formReboot(request *wp, char *path, char *query);
+void formLEDControl(request *wp, char *path, char *query);
+void formAddMeshNode(request *wp, char *path, char *query);
+void fromTimerReboot(request *wp, char *path, char *query);
+
 /* variables exported in main.c */
 extern char *WAN_IF;
 extern char *BRIDGE_IF;

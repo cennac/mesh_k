@@ -18,6 +18,14 @@
 #ifdef CONFIG_RTK_VOIP
 #include "voip_manager.h"
 #endif
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <linux/wireless.h>
+
+#include "./../src/utility.h"
+int g_parentControlFlag=0;
+extern int getWlStaInfo( char *interface,  WLAN_STA_INFO_Tp pInfo );
+
 //#define CONFIG_REFINE_BR_FW_RULE 1	//for smartbit performance
 int setFirewallIptablesRules(int argc, char** argv);
 char mark[]="mark";
@@ -412,7 +420,7 @@ void 	print_info()
 }
 #endif
 extern int apmib_initialized;
-extern int getInAddr( char *interface, int type, void *pAddr );
+//extern int getInAddr( char *interface, int type, void *pAddr );
 extern int isFileExist(char *file_name);
 
 #ifdef CONFIG_APP_TR069
@@ -2182,6 +2190,707 @@ int setMACFilter(void)
 
 	return 0;
 
+}
+/////////////////////////////////////
+#ifdef GET_LAN_DEV_INFO_SUPPORT
+static inline int
+iw_get_ext(int                  skfd,           /* Socket to the kernel */
+           char *               ifname,         /* Device name */
+           int                  request,        /* WE ID */
+           struct iwreq *       pwrq)           /* Fixed part of the request */
+{
+  /* Set device name */
+  strncpy(pwrq->ifr_name, ifname, IFNAMSIZ);
+  /* Do the request */
+  return(ioctl(skfd, request, pwrq));
+}
+
+int getWlStaInfo( char *interface,  WLAN_STA_INFO_Tp pInfo )
+{
+#ifndef NO_ACTION
+    int skfd=0;
+    struct iwreq wrq;
+
+    skfd = socket(AF_INET, SOCK_DGRAM, 0);
+	if(skfd==-1)
+		return -1;
+    /* Get wireless name */
+    if ( iw_get_ext(skfd, interface, SIOCGIWNAME, &wrq) < 0){
+      /* If no wireless name : no wireless extensions */
+      close( skfd );
+        return -1;
+	}
+    wrq.u.data.pointer = (caddr_t)pInfo;
+    wrq.u.data.length = sizeof(WLAN_STA_INFO_T) * (MAX_STA_NUM+1);
+    memset(pInfo, 0, sizeof(WLAN_STA_INFO_T) * (MAX_STA_NUM+1));
+
+    if (iw_get_ext(skfd, interface, SIOCGIWRTLSTAINFO, &wrq) < 0){
+    	close( skfd );
+		return -1;
+	}
+    close( skfd );
+#else
+    return -1;
+#endif
+    return 0;
+}
+
+int getPid(char *filename)
+{
+	struct stat status;
+	char buff[100];
+	FILE *fp;
+
+	if ( stat(filename, &status) < 0)
+		return -1;
+	fp = fopen(filename, "r");
+	if (!fp) {
+        	fprintf(stderr, "Read pid file error!\n");
+		return -1;
+   	}
+	fgets(buff, 100, fp);
+	fclose(fp);
+
+	return (atoi(buff));
+}
+
+static int __inline__ string_to_hex(char *string, unsigned char *key, int len)
+{
+	char tmpBuf[4];
+	int idx, ii=0;
+	for (idx=0; idx<len; idx+=2) {
+		tmpBuf[0] = string[idx];
+		tmpBuf[1] = string[idx+1];
+		tmpBuf[2] = 0;
+		if ( !_is_hex(tmpBuf[0]) || !_is_hex(tmpBuf[1]))
+			return 0;
+
+		key[ii++] = (unsigned char) strtol(tmpBuf, (char**)NULL, 16);
+	}
+	return 1;
+}
+
+/*
+  *@name rtk_get_device_brand
+  *@ input 
+     mac , the pointer of lan device mac address 
+     mac_file , contains the prefix mac and brand list, such as "/etc/device_mac_brand.txt"
+  *@output
+     brand ,  hold the brand of device, such as Apple, Samsung, Xiaomi, Nokia, Huawei, etc.
+  *@ return value
+  	RTK_SUCCESS
+  	RTK_FAILED
+  *
+  */
+int rtk_get_device_brand(unsigned char *mac, char *mac_file, char *brand)
+{		
+	FILE *fp;
+	int index;
+	unsigned char prefix_mac[16], mac_brand[64];
+	char *pchar;
+	int found=0;
+	if(mac==NULL || mac_file==NULL || brand==NULL)
+		return -1;
+	if((fp= fopen(mac_file, "r"))==NULL)
+		return -1;
+
+	sprintf(prefix_mac, "%02X-%02X-%02X", mac[0], mac[1], mac[2]);
+
+	for(index = 0 ; index < 8; ++index)
+	{
+		if((prefix_mac[index]  >= 'a')  && (prefix_mac[index]<='f'))
+			prefix_mac[index] -= 32;
+	}
+
+	//printf("%s.%d. str(%s)\n",__FUNCTION__,__LINE__,prefix_mac);
+
+	while(fgets(mac_brand, sizeof(mac_brand), fp))
+	{			
+		mac_brand[strlen(mac_brand)-1]='\0';		
+		if((pchar=strstr(mac_brand, prefix_mac))!=NULL)
+		{
+			pchar+=9;
+			strcpy(brand, pchar);
+			found=1;
+			break;
+		}
+	}
+	fclose(fp);
+	
+	if(found==1)
+		return 0;
+	
+	return -1;
+}
+
+int get_info_from_l2_tab(char *filename, rtk_l2Info l2list[])
+{
+	FILE *fp;
+	char line_buffer[512];	
+	char mac_str[13];
+	unsigned char mac_addr[6];
+	int idx=0, i, j;	
+	char *pchar, *pstart;
+	
+	unsigned char br0_mac[6];
+	unsigned char br0_mac_str[32];
+	
+	if(filename==NULL)
+		return -1; 
+	if((fp= fopen(filename, "r"))==NULL)
+		return -1;
+	
+	memset(br0_mac,0,6);
+	apmib_get(MIB_ELAN_MAC_ADDR,  (void *)br0_mac);
+	if(!memcmp(br0_mac, "\x00\x00\x00\x00\x00\x00", 6))
+		apmib_get(MIB_HW_NIC0_ADDR,  (void *)br0_mac);
+	
+	sprintf(br0_mac_str, "%02x:%02x:%02x:%02x:%02x:%02x", br0_mac[0], br0_mac[1], br0_mac[2], br0_mac[3], br0_mac[4], br0_mac[5]);
+	br0_mac_str[strlen("ff:ff:ff:ff:ff:ff")]='\0';
+	
+	while(fgets(line_buffer, sizeof(line_buffer), fp))
+	{			
+		line_buffer[strlen(line_buffer)-1]='\0';
+
+		if(strstr(line_buffer, "ff:ff:ff:ff:ff:ff") || strstr(line_buffer, "CPU") || strstr(line_buffer, "FID:1") || strstr(line_buffer, br0_mac_str))
+			continue;	
+		
+		pchar=strchr(line_buffer, ':');
+		pstart=pchar-2;
+		for(i=0, j=0; i<17 && j<12; i++)
+		{
+			if(pstart[i]!=':')
+			{
+				mac_str[j++]=pstart[i];
+			}
+		}
+		mac_str[j]=0;
+		if (strlen(mac_str)==12 && string_to_hex(mac_str, mac_addr, 12)) 
+		{
+			memcpy(l2list[idx].mac, mac_addr, 6);
+			
+			pchar=strstr(line_buffer,"mbr");
+			sscanf(pchar,"mbr(%d",&(l2list[idx].portNum));
+			
+			idx++;
+		}		
+	}
+	fclose(fp);
+	return idx;		
+}
+
+
+int get_arp_table_list(char *filename, RTK_ARP_ENTRY_Tp parplist)
+{
+	FILE *fp;
+	char line_buffer[512];	
+	char mac_str[13], tmp_mac_str[18];
+	char ip_str[16], if_name[16];
+	unsigned char mac_addr[6];
+	int idx=0, i, j;	
+	char *pchar, *pstart, *pend;
+	struct in_addr ip_addr;
+
+	if(filename==NULL || parplist==NULL)
+		return -1; 
+	if((fp= fopen(filename, "r"))==NULL)
+		return -1;
+	
+	while(fgets(line_buffer, sizeof(line_buffer), fp))
+	{			
+		line_buffer[strlen(line_buffer)-1]='\0';		
+
+		sscanf(line_buffer,"%s %*s %*s %s %*s %s",ip_str,tmp_mac_str,if_name);
+		if(strcmp(if_name, "br0")!=0)
+			continue;
+
+		inet_aton(ip_str, &ip_addr);
+		parplist[idx].ip=ip_addr.s_addr;
+		
+		for(i=0, j=0; i<17 && j<12; i++)
+		{
+			if(tmp_mac_str[i]!=':')
+			{
+				mac_str[j++]=tmp_mac_str[i];
+			}
+		}
+		mac_str[12]=0;			
+			
+		if (strlen(mac_str)==12 && string_to_hex(mac_str, mac_addr, 12)) 
+		{
+			memcpy(parplist[idx].mac, mac_addr, 6);
+			idx++;
+		}		
+	}
+	fclose(fp);
+	return idx;		
+}
+
+static int getDhcpClient(char **ppStart, unsigned long *size, unsigned char *hname, unsigned int *ip, unsigned char *mac, unsigned int *lease)
+{
+	struct dhcpOfferedAddr 
+	{
+		unsigned char chaddr[16];
+		unsigned int yiaddr;       /* network order */
+		unsigned int expires;      /* host order */
+//#if defined(CONFIG_RTL8186_KB) || defined(CONFIG_RTL8186_TR) || defined(CONFIG_RTL865X_SC) || defined(CONFIG_RTL865X_AC) || defined(CONFIG_RTL865X_KLD)
+		char hostname[64]; /* Brad add for get hostname of client */
+		u_int32_t isUnAvailableCurr;	/* Brad add for WEB GUI check */
+//#endif
+	};
+
+	struct dhcpOfferedAddr entry;
+	unsigned char empty_haddr[16]; 
+
+	memset(empty_haddr, 0, 16); 
+	//printf("%s:%d size=%d\n",__FUNCTION__,__LINE__,*size);
+	if ( *size < sizeof(entry) )
+		return -1;
+
+	entry = *((struct dhcpOfferedAddr *)*ppStart);
+	*ppStart = *ppStart + sizeof(entry);
+	*size = *size - sizeof(entry);
+	//printf("%s:%d expires=%d\n",__FUNCTION__,__LINE__,entry.expires);
+
+	if (entry.expires == 0)
+		return 0;
+	//printf("%s:%d\n",__FUNCTION__,__LINE__);
+
+	if(!memcmp(entry.chaddr, empty_haddr, 16))
+		return 0;
+
+	//strcpy(ip, inet_ntoa(*((struct in_addr *)&entry.yiaddr)) );
+	*ip=entry.yiaddr;
+	memcpy(mac, entry.chaddr, 6);
+	
+	//snprintf(mac, 20, "%02x:%02x:%02x:%02x:%02x:%02x",entry.chaddr[0],
+	//	entry.chaddr[1],entry.chaddr[2],entry.chaddr[3],entry.chaddr[4], entry.chaddr[5]);
+	//if(entry.expires == 0xffffffff)
+	//	sprintf(liveTime,"%s", "Always");
+	//else
+	//	snprintf(liveTime, 10, "%lu", (unsigned long)ntohl(entry.expires));
+	*lease=entry.expires;
+	
+	if(entry.hostname[0])
+		strcpy(hname, entry.hostname);
+	
+	return 1;
+}
+
+/*
+  *@name rtk_get_dhcp_client_list
+  *@ input 
+     rtk_dhcp_client_info *, the pointer of lan dhcp client list which specific every client info, such as host name, ip, mac, lease time 
+  *@output
+     num , unsigned int *, which hold the num of dhcp client.
+  *@ return value
+  	RTK_SUCCESS
+  	RTK_FAILED
+  *
+  */
+int rtk_get_dhcp_client_list(unsigned int *num, struct rtk_dhcp_client_info *pclient)
+{	
+	FILE *fp;
+	int idx=0, ret;
+	char *buf=NULL, *ptr, tmpBuf[100];
+	unsigned int ip, lease;
+	unsigned char mac[6], hostname[64]={0};
+
+	struct stat status;
+	int pid;
+	unsigned long fileSize=0;
+	// siganl DHCP server to update lease file
+	pid = getPid(_PATH_DHCPS_PID);
+	snprintf(tmpBuf, 100, "kill -SIGUSR1 %d\n", pid);
+
+	if ( pid > 0)
+		system(tmpBuf);
+
+	usleep(1000);
+
+	if ( stat(_PATH_DHCPS_LEASES, &status) < 0 )
+		goto err;
+
+	fileSize=status.st_size;
+	buf = malloc(fileSize);
+	if ( buf == NULL )
+		goto err;
+	fp = fopen(_PATH_DHCPS_LEASES, "r");
+	if ( fp == NULL )
+		goto err;
+
+	fread(buf, 1, fileSize, fp);
+	fclose(fp);
+
+	ptr = buf;
+	while (1) 
+	{
+		ret = getDhcpClient(&ptr, &fileSize, hostname, &ip, mac, &lease);
+//		printf("%s:%d ret=%d\n",__FUNCTION__,__LINE__,ret);
+
+		if (ret < 0)
+			break;
+		if (ret == 0)
+			continue;
+
+		strcpy(pclient[idx].hostname, hostname);
+		pclient[idx].ip=ip;
+		memcpy(pclient[idx].mac, mac, 6);
+		pclient[idx].expires=lease;
+		
+//		printf("%s:%d pclient[%d].expires=%d\n",__FUNCTION__,__LINE__,idx,pclient[idx].expires);
+	//	if(strcmp(pclient[idx].hostname, "null")==0)
+		//	strcpy(pclient[idx].hostname, pclient[idx].brand);
+		
+		idx++;
+		if(idx>=MAX_STA_NUM)
+			return -1;
+	}
+	
+err:
+	*num=idx;
+	if (buf)
+		free(buf);
+	
+	return 0;
+}
+
+/********************************************************
+** get dst mac index, if not exist, add the mac to (the end of) arrary
+*********************************************************/
+int getDstMacIdx(RTK_LAN_DEVICE_INFO_Tp pdevinfo,unsigned char mac[6],int max_num)
+{
+	int i=0;
+	char mac_null[6]={0};
+	for(i=0;i<max_num;i++)
+	{
+		if(memcmp(pdevinfo[i].mac,mac,6)==0)
+		{
+			
+			//printf("%s:%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
+			return i;
+		}
+		if(memcmp(pdevinfo[i].mac,mac_null,6)==0)
+		{
+			//printf("%s:%d\n",__FUNCTION__,__LINE__);
+			memcpy(pdevinfo[i].mac,mac,6);
+			return i;
+		}
+	}
+	return max_num;
+}
+#endif
+/*
+        get port status info by proc/rtl865x/asicCounter
+*/
+void GetPortStatus(int port_number,rtk_asicConterInfo *info)
+{
+        /*fill cur_rx /cur_tx parememter */
+        FILE *fp=NULL;
+        int  line_cnt =0;
+        unsigned char buffer[128];
+        //system("cat /proc/rtl865x/asicCounter  > /var/tmpResult");    
+
+        //if((fp = fopen("/var/tmpResult","r+")) != NULL)
+        if((fp = fopen("/proc/rtl865x/asicCounter","r+")) != NULL)
+        {
+                while(fgets(buffer, 128, fp))
+                {
+                        line_cnt++;
+                        if(line_cnt == 12*port_number+3)        //update receive bytes
+                        {
+                                sscanf(buffer," Rcv %u ",&(info->rxBytes));
+                        }
+
+                        if(line_cnt == 12*port_number+10)       //update send bytes
+                        {
+                                sscanf(buffer," Snd %u ",&(info->txBytes));
+                                fclose(fp);
+                                return ;
+                        }
+                }
+        }
+        fclose(fp);
+}
+
+
+/*
+  *@name rtk_get_lan_device_info
+  *@ input 
+     pdevinfo , the pointer of lan device info
+     MAX_NUM, the max number of lan device, should be MAX_STA_NUM+1
+  *@output
+     num ,  hold the lan device number
+  *@ return value
+  	-1:fail
+  	0:ok
+  *
+  */
+static int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,int max_num)
+{	
+	int l2_tab_num=0,i=0,wifi_sta_num=0,arp_entry_num=0,dhcp_device_num=0,devInfoIdx=0;
+	rtk_l2Info l2list[MAX_STA_NUM+1]={0};
+	rtk_asicConterInfo asicConInfo={0};
+	WLAN_STA_INFO_T wlanStaList[MAX_STA_NUM]={0};
+	RTK_ARP_ENTRY_T arp_tab[ARP_TABLE_MAX_NUM]={0};
+	struct in_addr lan_addr;
+    struct sockaddr hwaddr;
+	unsigned char lan_mac[6];
+	struct rtk_dhcp_client_info dhcp_client_info[MAX_STA_NUM+1]={0};
+	char mac_null[6]={0};
+	int devNum=0,ret=0;
+	
+	if(num==NULL || pdevinfo==NULL || max_num<MAX_STA_NUM)
+		return -1;
+	bzero(pdevinfo,sizeof(RTK_LAN_DEVICE_INFO_T)*max_num);
+	
+	getInAddr("br0", IP_ADDR_T, (void *)&lan_addr);
+    getInAddr("br0", HW_ADDR_T, (void *)&hwaddr);
+    memcpy(lan_mac, hwaddr.sa_data, 6);
+
+//l2 table
+	l2_tab_num=get_info_from_l2_tab("/proc/rtl865x/l2", l2list);
+	for(i=0;i<l2_tab_num;i++)
+	{//assign all mac in pdevinfo, get mac index. if mac not exist, add it to pdevinfo arrary
+		devInfoIdx=getDstMacIdx(pdevinfo,l2list[i].mac,MAX_STA_NUM);	
+		//printf("%s:%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,maclist[i][0],maclist[i][1],maclist[i][2],maclist[i][3],maclist[i][4],maclist[i][5]);
+		if(devInfoIdx < MAX_STA_NUM)
+		{
+    		pdevinfo[devInfoIdx].conType=RTK_ETHERNET;
+
+    		GetPortStatus(l2list[i].portNum,&asicConInfo);
+    		pdevinfo[devInfoIdx].tx_bytes=asicConInfo.rxBytes;
+    		pdevinfo[devInfoIdx].rx_bytes=asicConInfo.txBytes;	
+            pdevinfo[devInfoIdx].rssi = 100;
+            pdevinfo[devInfoIdx].rx_speed = 0;
+            pdevinfo[devInfoIdx].tx_speed = 0;
+		}
+	}
+//	printf("%s:%d \n",__FUNCTION__,__LINE__);
+	
+//wlan0
+	//printf("sizeof maclist=%d\n",sizeof(maclist));
+	bzero(wlanStaList,sizeof(wlanStaList));
+	getWlStaInfo("wlan0", wlanStaList);
+	for(i=0;i<MAX_STA_NUM;i++)
+	{
+		if(wlanStaList[i].aid && (wlanStaList[i].flag & STA_INFO_FLAG_ASOC))
+		{
+			devInfoIdx=getDstMacIdx(pdevinfo,wlanStaList[i].addr,MAX_STA_NUM);	
+            if(devInfoIdx < MAX_STA_NUM)
+		    {
+#if defined(CONFIG_RTL_92D_SUPPORT)
+			    pdevinfo[devInfoIdx].conType=RTK_WIRELESS_5G;
+#else
+			    pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
+#endif
+			    pdevinfo[devInfoIdx].on_link=1;
+			    pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
+			    pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+                pdevinfo[devInfoIdx].rssi = wlanStaList[i].rssi;
+                pdevinfo[devInfoIdx].rx_speed = wlanStaList[i].RxOperaRate;
+                pdevinfo[devInfoIdx].tx_speed = wlanStaList[i].txOperaRates;
+            }
+		}
+	}
+
+    bzero(wlanStaList,sizeof(wlanStaList));
+	getWlStaInfo("wlan0-va1", wlanStaList);
+	for(i=0;i<MAX_STA_NUM;i++)
+	{
+		if(wlanStaList[i].aid && (wlanStaList[i].flag & STA_INFO_FLAG_ASOC))
+		{
+			devInfoIdx=getDstMacIdx(pdevinfo,wlanStaList[i].addr,MAX_STA_NUM);	
+            if(devInfoIdx < MAX_STA_NUM)
+		    {
+#if defined(CONFIG_RTL_92D_SUPPORT)
+			    pdevinfo[devInfoIdx].conType=RTK_WIRELESS_5G;
+#else
+			    pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
+#endif
+			    pdevinfo[devInfoIdx].on_link=1;
+			    pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
+			    pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+                pdevinfo[devInfoIdx].rssi = wlanStaList[i].rssi;
+                pdevinfo[devInfoIdx].rx_speed = wlanStaList[i].RxOperaRate;
+                pdevinfo[devInfoIdx].tx_speed = wlanStaList[i].txOperaRates;
+            }
+		}
+	}
+	
+#if defined(CONFIG_RTL_92D_SUPPORT)
+//wlan1
+	bzero(wlanStaList,sizeof(wlanStaList));
+	getWlStaInfo("wlan1", wlanStaList);
+	for(i=0;i<MAX_STA_NUM;i++)
+	{
+		if(wlanStaList[i].aid && (wlanStaList[i].flag & STA_INFO_FLAG_ASOC))
+		{
+			devInfoIdx=getDstMacIdx(pdevinfo,wlanStaList[i].addr,MAX_STA_NUM);
+            if(devInfoIdx < MAX_STA_NUM)
+		    {
+    			pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
+    			pdevinfo[devInfoIdx].on_link=1;
+    			pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
+    			pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+                pdevinfo[devInfoIdx].rssi = wlanStaList[i].rssi;
+                pdevinfo[devInfoIdx].rx_speed = wlanStaList[i].RxOperaRate;
+                pdevinfo[devInfoIdx].tx_speed = wlanStaList[i].txOperaRates;
+            }
+		}
+	}
+
+    bzero(wlanStaList,sizeof(wlanStaList));
+	getWlStaInfo("wlan1-va1", wlanStaList);
+	for(i=0;i<MAX_STA_NUM;i++)
+	{
+		if(wlanStaList[i].aid && (wlanStaList[i].flag & STA_INFO_FLAG_ASOC))
+		{
+			devInfoIdx=getDstMacIdx(pdevinfo,wlanStaList[i].addr,MAX_STA_NUM);
+            if(devInfoIdx < MAX_STA_NUM)
+		    {
+    			pdevinfo[devInfoIdx].conType=RTK_WIRELESS_2G;
+    			pdevinfo[devInfoIdx].on_link=1;
+    			pdevinfo[devInfoIdx].tx_bytes=wlanStaList[i].rx_bytes;
+    			pdevinfo[devInfoIdx].rx_bytes=wlanStaList[i].tx_bytes;
+                pdevinfo[devInfoIdx].rssi = wlanStaList[i].rssi;
+                pdevinfo[devInfoIdx].rx_speed = wlanStaList[i].RxOperaRate;
+                pdevinfo[devInfoIdx].tx_speed = wlanStaList[i].txOperaRates;
+            }
+		}
+	}
+#endif
+
+//arp table
+	arp_entry_num=get_arp_table_list("/proc/net/arp", arp_tab);
+	//printf("%s:%d \n",__FUNCTION__,__LINE__);
+
+	for(i=0;i<arp_entry_num;i++)
+	{
+		devInfoIdx=getDstMacIdx(pdevinfo,arp_tab[i].mac,MAX_STA_NUM);
+		//printf("%s:%d devInfoIdx=%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,devInfoIdx,
+		//arp_tab[i].mac[0],arp_tab[i].mac[1],arp_tab[i].mac[2],arp_tab[i].mac[3],arp_tab[i].mac[4],arp_tab[i].mac[5]);
+		if(devInfoIdx < MAX_STA_NUM)
+		{
+    		pdevinfo[devInfoIdx].ip=arp_tab[i].ip;
+    		//printf("%s:%d ip=0x%x\n",__FUNCTION__,__LINE__,pdevinfo[devInfoIdx].ip);
+    		if(pdevinfo[devInfoIdx].conType==RTK_ETHERNET)
+    		//if(sendArpToCheckDevIsAlive(pdevinfo[devInfoIdx].ip,lan_addr.s_addr, lan_mac)==0)
+    			pdevinfo[devInfoIdx].on_link=1;
+    		//printf("%s:%d \n",__FUNCTION__,__LINE__);
+		}
+	}
+
+//dhcp list
+	rtk_get_dhcp_client_list(&dhcp_device_num, &dhcp_client_info);
+	//printf("%s:%d dhcp_device_num=%d\n",__FUNCTION__,__LINE__,dhcp_device_num);
+
+	for(i=0;i<dhcp_device_num;i++)
+	{
+		devInfoIdx=getDstMacIdx(pdevinfo,dhcp_client_info[i].mac,MAX_STA_NUM);
+        if(devInfoIdx < MAX_STA_NUM)
+		{
+    		strcpy(pdevinfo[devInfoIdx].hostname,dhcp_client_info[i].hostname);
+    		pdevinfo[devInfoIdx].ip=dhcp_client_info[i].ip;
+    		pdevinfo[devInfoIdx].expires=dhcp_client_info[i].expires;
+        }
+	}
+	
+	
+	devNum=getDstMacIdx(pdevinfo,mac_null,MAX_STA_NUM);
+	for(i=0;i<devNum;i++)
+	{
+		if(!pdevinfo[i].hostname[0])
+			strcpy(pdevinfo[i].hostname,"---");
+		ret=rtk_get_device_brand(pdevinfo[i].mac, _PATH_DEVICE_MAC_BRAND, pdevinfo[i].brand);
+		if(ret<0)
+			strcpy(pdevinfo[i].brand,"---");
+	}
+
+	*num=devNum;
+	return 0;
+	
+}
+
+///////////////////////////////
+ int parentControlSetting(const char* hostname)
+ {
+	 RTK_LAN_DEVICE_INFO_T devinfo[MAX_STA_NUM] = {0};
+	 char cmdBuffer[80];
+	 char macEntry[30];
+	 int nBytesSent=0;
+	 int num = 0;
+	 int i=0;	 
+	 memset(macEntry,0,sizeof(macEntry));
+	 rtk_get_lan_device_info(&num, devinfo, MAX_STA_NUM);
+	  
+	 for (i=1; i<=num; i++) 
+	 {
+	   sprintf(macEntry,"%02X:%02X:%02X:%02X:%02X:%02X", devinfo[i-1].mac[0], devinfo[i-1].mac[1], devinfo[i-1].mac[2], devinfo[i-1].mac[3],devinfo[i-1].mac[4],devinfo[i-1].mac[5]);
+	   if((strcmp(hostname,devinfo[i-1].hostname)==0)||(strncmp(hostname,macEntry,17)==0))
+	   {
+	  // printf("------>function_%s_line[%d]: mac=%02X:%02X:%02X:%02X:%02X:%02X\n",__FUNCTION__,__LINE__,devinfo[i-1].mac[0], devinfo[i-1].mac[1], devinfo[i-1].mac[2], devinfo[i-1].mac[3],devinfo[i-1].mac[4],devinfo[i-1].mac[5]);
+	    //sprintf(macEntry,"%02X:%02X:%02X:%02X:%02X:%02X", devinfo[i-1].mac[0], devinfo[i-1].mac[1], devinfo[i-1].mac[2], devinfo[i-1].mac[3],devinfo[i-1].mac[4],devinfo[i-1].mac[5]);
+#if defined(CONFIG_RTL_FAST_FILTER)
+		memset(cmdBuffer, 0, sizeof(cmdBuffer));
+	    sprintf(cmdBuffer, "rtk_cmd filter add --mac-src %s", macEntry);
+	    system(cmdBuffer);
+#else
+#if defined(CONFIG_APP_EBTABLES)&&defined(CONFIG_EBTABLES_KERNEL_SUPPORT)
+		RunSystemCmd(NULL_FILE, Ebtables, ADD, INPUT,_src, macEntry, jump, DROP,NULL_STR);  
+		RunSystemCmd(NULL_FILE, Ebtables, ADD, OUTPUT,_dest, macEntry, jump, DROP,NULL_STR);    
+#else
+		RunSystemCmd(NULL_FILE, Iptables, ADD, FORWARD, match, "mac" ,mac_src, macEntry, jump, DROP, NULL_STR);
+		RunSystemCmd(NULL_FILE, Iptables, ADD, INPUT, match, "mac" ,mac_src, macEntry, jump, DROP, NULL_STR);
+#endif		
+#endif
+		memset(cmdBuffer, 0, sizeof(cmdBuffer));
+		sprintf(cmdBuffer, "rtk_cmd igmp_delete %02X:%02X:%02X:%02X:%02X:%02X", devinfo[i-1].mac[0], devinfo[i-1].mac[1],devinfo[i-1].mac[2], devinfo[i-1].mac[3], devinfo[i-1].mac[4], devinfo[i-1].mac[5]);
+		system(cmdBuffer);
+	   }  
+
+	 }
+	 return nBytesSent;
+ }
+
+ int parseTerminalMac(const char* hostname)
+ {
+	 char *p;
+	 char *buff;
+	 int i=0;
+	 buff=hostname;
+	
+
+	 p = strsep(&buff, ";");
+	while(p)
+	{
+	 //printf("------>function_%s_line[%d]:hostname[%s] \n",__FUNCTION__,__LINE__,p);
+	 parentControlSetting(p);
+	 p = strsep(&buff, ";");
+	 i++;
+	}
+//	printf("i--->%d",i);
+	return 0;
+}
+
+
+int setParentContrl(void)
+{
+	char macEntry[30];
+	int entryNum=0, index;
+	PARENT_CONTRL_T entry;
+	char cmdBuffer[80];
+
+	apmib_get(MIB_PARENT_CONTRL_TBL_NUM, (void *)&entryNum);
+
+	for (index=1; index<=entryNum; index++) {
+		memset(&entry, '\0', sizeof(entry));
+		*((char *)&entry) = (char)index;
+		apmib_get(MIB_PARENT_CONTRL_TBL, (void *)&entry);
+		// printf("------>function_%s_line[%d]:parentContrlTerminal[%s] \n",__FUNCTION__,__LINE__,entry.parentContrlTerminal);
+        parseTerminalMac(entry.parentContrlTerminal);				
+	}
+	return 0;
 }
 
 
@@ -6776,6 +7485,12 @@ defined(CONFIG_RTL_HW_NAPT)
 		br_rule_refine = 0;
 		#endif
 	}
+	if(1==g_parentControlFlag)
+	{
+
+	 printf("set parent control...\n");
+	 setParentContrl();
+	}
 
 	intVal=0;
 	apmib_get(MIB_PORTFILTER_ENABLED,  (void *)&intVal);
@@ -6975,6 +7690,14 @@ int setFirewallIptablesRules(int argc, char** argv)
 #endif
 
 
+    if(argc >=3 && argv[2])
+    { 
+     if(strcmp(argv[2], "parentControl")==0)
+	 	g_parentControlFlag=1;
+	 else
+	 	g_parentControlFlag=0;
+    }
+
 	printf("Init Firewall Rules....\n");
 #ifdef MULTI_PPPOE	
 
@@ -7060,7 +7783,7 @@ int setFirewallIptablesRules(int argc, char** argv)
 			strcpy(ipaddr_str, inet_ntoa(ipaddr));
 	}
 #endif
-
+;
 	//flush fast natp table
 	//RunSystemCmd("/proc/net/flush_conntrack", "echo", "1", NULL_STR);
 #ifdef MULTI_PPPOE

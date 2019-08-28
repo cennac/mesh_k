@@ -1708,7 +1708,12 @@ function updateChan_channebound(form, wlan_id)
 	var band_value= form.elements["band"+wlan_id].options[idx_value].value;
 	var bound = form.elements["channelbound"+wlan_id].selectedIndex;
 	var adjust_chan;
-	var Band2G5GSupport=form.elements["Band2G5GSupport"].value;
+	var Band2G5GSupport;
+	if(wlan_id==0){
+		Band2G5GSupport=2;
+	}else{
+		Band2G5GSupport=1;
+	}
 	var wlBandMode=form.elements["wlBandMode"].value;
 	
 	
@@ -1797,7 +1802,12 @@ function updateChan(form, wlan_id)
 {
 	var idx_value= form.elements["band"+wlan_id].selectedIndex;
 	var band_value= form.elements["band"+wlan_id].options[idx_value].value;
-	var Band2G5GSupport=form.elements["Band2G5GSupport"].value;
+	var Band2G5GSupport;
+	if(wlan_id==0){
+		Band2G5GSupport=2;
+	}else{
+		Band2G5GSupport=1;
+	}
 	var currentBand;
 	if(form.name == "wizard")
 	{
@@ -1947,7 +1957,12 @@ function showBandAP(form, wlan_id)
 {
   var idx=0;
   var band_value=bandIdx[wlan_id];
-	var Band2G5GSupport=form.elements["Band2G5GSupport"].value;
+	var Band2G5GSupport;
+	if(wlan_id==0){
+		Band2G5GSupport=2;
+	}else{
+		Band2G5GSupport=1;
+	}
 	var wlBandMode=form.elements["wlBandMode"].value;
 	var i;
 	var wlan_support_8812e;
@@ -2045,7 +2060,12 @@ function showBandClient(form, wlan_id)
 {
   var idx=0;
    var band_value=bandIdx[wlan_id];
-var Band2G5GSupport=form.elements["Band2G5GSupport"].value;
+	var Band2G5GSupport;
+		if(wlan_id==0){
+			Band2G5GSupport=2;
+		}else{
+			Band2G5GSupport=1;
+		}
 	var wlBandMode=form.elements["wlBandMode"].value;
 	var i;
 	var wlan_support_8812e;

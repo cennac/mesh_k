@@ -37,6 +37,15 @@
 //#define P2P_DEBUG(fmt, args...) printf("[%s %d]"fmt,__FUNCTION__,__LINE__,## args)
 #define P2P_DEBUG(fmt, args...) {}
 
+//#define DEBUG_FMWLAN
+
+#ifdef DEBUG_FMWLAN
+#define DTRACE(fmt, ...)    printf("[%s:%d] " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#else
+#define DTRACE(fmt, ...)
+#endif
+
+
 #if defined(CONFIG_DOMAIN_NAME_QUERY_SUPPORT)
 extern void Stop_Domain_Query_Process(void);
 extern void Reset_Domain_Query_Setting(void);
@@ -3636,7 +3645,8 @@ void formWlanSetupAll(request *wp, char *path, char *query)
     int flg;
     int mode = -1;
     char tmpBuf[MAX_MSG_BUFFER_SIZE] = {0};
-    int old_idx;
+    int old_wlan_idx;
+    int old_vwlan_idx;
     
 
     str_val = req_get_cstream_var(wp, "autoWlanEnabled", "");
@@ -3644,37 +3654,51 @@ void formWlanSetupAll(request *wp, char *path, char *query)
 		flg = 1;
 	else
 		flg = 0;
+    DTRACE("start set autoWlanEnabled.\n");
 	if (apmib_set(MIB_AUTO_WLAN_ENABLED, (void *)&flg) == 0) 
     {
   		strcpy(tmpBuf, ("<script>dw(wlbasic_invalid_mode)</script>"));
 		goto setErr_wlan;
 	}
-
-    old_idx = wlan_idx;
+    DTRACE("set autoWlanEnabled.\n");
+    old_wlan_idx = wlan_idx;
+    old_vwlan_idx = vwlan_idx;
     
     wlan_idx = 0;
+    vwlan_idx = 0;
     if(wlanHandler(wp, tmpBuf, &mode, wlan_idx) < 0)
 		goto setErr_wlan ;
-
+    DTRACE("wlan_idx = 0 wlanHandler set.\n");
+    
     if(wpaHandler(wp, tmpBuf, wlan_idx) < 0)
         goto setErr_wlan ;
-
+    DTRACE("wlan_idx = 0 wpaHandler set.\n");
+    
     wlan_idx = 1;
+    vwlan_idx = 0;
     if(wlanHandler(wp, tmpBuf, &mode, wlan_idx) < 0)
 		goto setErr_wlan ;
+    DTRACE("wlan_idx = 1 wlanHandler set.\n");
 
     if(wpaHandler(wp, tmpBuf, wlan_idx) < 0)
         goto setErr_wlan ;
+    DTRACE("wlan_idx = 1 wpaHandler set.\n");
     
     apmib_update_web(CURRENT_SETTING);
 
-    submit_url = req_get_cstream_var(wp, ("submit-url"), "");   // hidden page	
+    DTRACE("apmib_update_web ok.\n");
+
+//    run_init_script("bridge");
+    submit_url = req_get_cstream_var(wp, ("wlan-url"), ""); // hidden page	
 	OK_MSG(submit_url);
-    wlan_idx = old_idx;
+    wlan_idx = old_wlan_idx;
+    vwlan_idx = old_vwlan_idx;
+    DTRACE("return ok.\n");
 	return;
 
 setErr_wlan:
-    wlan_idx = old_idx;
+    wlan_idx = old_wlan_idx;
+    vwlan_idx = old_vwlan_idx;
 	ERR_MSG(tmpBuf);
 }
 
@@ -4076,6 +4100,8 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 		goto setErr_encrypt;
 	}
 
+    DTRACE("wpaHandler run ok.\n");
+
 #ifdef WIFI_SIMPLE_CONFIG
 #ifdef MBSSID
 	if (vwlan_idx == 0)
@@ -4094,7 +4120,9 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
   		strcpy(tmpBuf, ("<script>dw(wl_Set_MIB_WLAN_ENCRYPT_mib)</script>"));
 		goto setErr_encrypt;
 	}
-
+    
+    DTRACE("wpaHandler run ok.\n");
+    
 	if (encrypt == ENCRYPT_DISABLED || encrypt == ENCRYPT_WEP) {
 		sprintf(varName, "use1x%d", wlan_id);
 		strVal = req_get_cstream_var(wp, varName, "");
@@ -4138,6 +4166,9 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 			goto setErr_encrypt;
 		}
 
+        
+        DTRACE("wpaHandler run ok.\n");
+    
 		if (encrypt == ENCRYPT_WEP) {
 	 		WEP_T wep;
 			if ( !apmib_get( MIB_WLAN_WEP,  (void *)&wep) ) {
@@ -4178,6 +4209,8 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;							
 		}
 #endif
+
+        DTRACE("wpaHandler run ok.\n");
 		
 	}
 #ifdef CONFIG_RTL_WAPI_SUPPORT	
@@ -4285,6 +4318,9 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;
 			}
 		}
+
+        DTRACE("wpaHandler run ok.\n");
+        
 	wapi_end:
 		/*save AS IP*/
 		if(1==enableAS)
@@ -4332,7 +4368,8 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 #endif
 	else {
 		// support nonWPA client
-
+        DTRACE("wpaHandler run ok.\n");
+        
 		sprintf(varName, "nonWpaSupp%d", wlan_id);
  		strVal = req_get_cstream_var(wp, varName, "");
 		apmib_get( MIB_WLAN_ENABLE_SUPP_NONWPA, (void *)&intVal);
@@ -4366,7 +4403,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;
 			}
 		}
-
+        DTRACE("wpaHandler run ok.\n");
 		// WPA authentication
 		sprintf(varName, "wpaAuth%d", wlan_id);
 		strVal = req_get_cstream_var(wp, varName, "");
@@ -4407,7 +4444,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;
 			}
 		}
-
+        DTRACE("wpaHandler run ok.\n");
 		// cipher suite		
 		// sc_yang write the ciphersuite according to  encrypt for wpa
 		// wpa mixed mode is not implemented yet.
@@ -4465,6 +4502,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;							
 			}				
 		}	
+        DTRACE("wpaHandler run ok.\n");
 #ifdef CONFIG_IEEE80211W
 		{
 			apmib_get(MIB_WLAN_MODE, (void *)&val);
@@ -4527,6 +4565,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 			}
 		}
 #endif	
+        DTRACE("wpaHandler run ok.\n");
 		//if ((encrypt == ENCRYPT_WPA2) || (encrypt == ENCRYPT_WPA2_MIXED)) 
 		{
 			sprintf(varName, "wpa2ciphersuite%d", wlan_id);
@@ -4560,6 +4599,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;							
 			}
 		}
+        DTRACE("wpaHandler run ok.\n");
 //-------------------------------------------------- david, 2005-8-03	
 	
 		if( ((encrypt ==  ENCRYPT_WPA2) || (encrypt == ENCRYPT_WPA2_MIXED)) &&
@@ -4629,6 +4669,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;
 			}
 		}
+        DTRACE("wpaHandler run ok.\n");
 rekey_time:
 		// group key rekey time
 		reKeyTime = 0;
@@ -4677,6 +4718,7 @@ rekey_time:
 		}
 	}
 
+    DTRACE("wpaHandler run ok.\n");
 	apmib_set( MIB_WLAN_ENABLE_1X, (void *)&enableRS);			
 	if (enableRS == 1) { // if 1x enabled, get RADIUS server info
 #ifdef CONFIG_RTL_802_1X_CLIENT_SUPPORT
@@ -5103,7 +5145,7 @@ rekey_time:
 				goto setErr_encrypt;
 			}
 		}
-
+        DTRACE("wpaHandler run ok.\n");
 get_wepkey:
 		// get 802.1x WEP key length
 		sprintf(varName, "wepKeyLen%d", wlan_id);
@@ -5137,13 +5179,14 @@ get_wepkey:
 #endif
 	}
 
+    DTRACE("wpaHandler run ok.\n");
 #ifdef WIFI_SIMPLE_CONFIG
 #ifdef MBSSID
 	if (vwlan_idx == 0)
 #endif
 	{
 		sprintf(varName, "wps_clear_configure_by_reg%d", wlan_id);
-		strVal = req_get_cstream_var(wp, varName, NULL);
+		strVal = req_get_cstream_var(wp, varName, "");
 		val = 0;
 		if (strVal[0])
 			val = atoi(strVal);
@@ -5151,6 +5194,7 @@ get_wepkey:
 	}
 #endif
 
+    DTRACE("wpaHandler run ok.\n");
 #if defined(UNIVERSAL_REPEATER) && defined(CONFIG_REPEATER_WPS_SUPPORT)
 	if (vwlan_idx == NUM_VWLAN_INTERFACE)
 	{
@@ -5163,8 +5207,10 @@ get_wepkey:
 	}
 #endif
 
+    DTRACE("wpaHandler run ok.\n");
 	return 0 ;
 setErr_encrypt:
+    DTRACE("wpaHandler run ok.\n");
 	return -1 ;		
 }	
 
@@ -8362,12 +8408,12 @@ int wlSiteSurveyTbl(request *wp, int argc, char **argv)
 			apmib_get(MIB_REPEATER_ENABLED2, (void *)&rptEnabled);
 		
 		nBytesSent += req_format_write(wp, ("<tr class=\"tbl_head\">"
-		"<td align=center width=\"30%%\" ><font size=\"2\"><b><script>dw(wlsurvey_tbl_ssid)</script></b></font></td>\n"
-		"<td align=center width=\"20%%\" ><font size=\"2\"><b><script>dw(wlsurvey_tbl_bssid)</script></b></font></td>\n"
-		"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(wlsurvey_tbl_chan)</script></b></font></td>\n"
-			"<td align=center width=\"20%%\" ><font size=\"2\"><b><script>dw(wlsurvey_tbl_type)</script></b></font></td>\n"
-			"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(wlsurvey_tbl_ency)</script></b></font></td>\n"
-		"<td align=center width=\"10%%\" ><font size=\"2\"><b><script>dw(wlsurvey_tbl_signal)</script></b></font></td>\n"));
+		"<td align=center width=\"30%%\" ><font size=\"2\"><b class=\"i18n\" name=\"wlsurvey_tbl_ssid\"></b></font></td>\n"
+		"<td align=center width=\"20%%\" ><font size=\"2\"><b class=\"i18n\" name=\"wlsurvey_tbl_bssid\"></b></font></td>\n"
+		"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"wlsurvey_tbl_chan\"></b></font></td>\n"
+			"<td align=center width=\"20%%\" ><font size=\"2\"><b class=\"i18n\" name=\"wlsurvey_tbl_type\"></b></font></td>\n"
+			"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"wlsurvey_tbl_ency\"></b></font></td>\n"
+		"<td align=center width=\"10%%\" ><font size=\"2\"><b class=\"i18n\" name=\"wlsurvey_tbl_signal\"></b></font></td>\n"));
 
 	if( (mode == CLIENT_MODE )
 #if defined(CONFIG_RTL_ULINKER)

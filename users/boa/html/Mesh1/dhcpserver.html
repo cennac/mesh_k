@@ -16,23 +16,23 @@
 		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 		<script src="js/util_gw.js"></script>
 	</head>
-	<body>
+	<body onload="mode()">
 		<div class="guest_net dhcp">
 			<form action="/boafrm/formTcpipSetup" method="POST" name="tcpip">
 				<div class="dhcp_wrap">
 					<div class="form_group_dhcp">
 						<label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="dhcp_dhcp"></label>
 						<select name="dhcp" onChange="dhcpChange(document.tcpip.dhcp.selectedIndex)">
-							<!-- <%  getDHCPModeCombobox(); %> -->
-								<option value="0" class="i18n" name="Disable_dhcp"></option>
+							 <%  getDHCPModeCombobox(); %> 
+								<!--<option value="0" class="i18n" name="Disable_dhcp"></option>
 								<option value="1" class="i18n" name="Client_dhcp"></option>
-								<option value="2" class="i18n" name="Server_dhcp"></option>
+								<option value="2" class="i18n" name="Server_dhcp"></option>-->
 							</select>
 						<span class="caret" style="position: relative;left: -40px;"></span>
 					</div>
 					<div class="form_group_dhcp"><label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="clientRange_dhcp"></label><input style="margin-left: 16px;margin-right: 10px;" class="form_input_dhcp" type="text" name="dhcpRangeStart"  value="<% getInfo("dhcpRangeStart"); %>" />-<input class="form_input_dhcp" type="text" name="dhcpRangeEnd" style="margin-right: 16px;margin-left: 10px;" value="<% getInfo("dhcpRangeEnd"); %>" /></div>
 					<div class="dhcp_server_btn">
-						<button type="button" value="Show Client" name="dhcpClientTbl" onClick="dhcpTblClick('/dhcptbl.htm')" class="i18n"></button>
+						<button type="button" value="Show Client" name="dhcpClientTbl" onClick="dhcpTblClick('dhcptbl.html')" class="i18n"></button>
 					</div>
 					<div class="form_group_dhcp"><label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="leaseTime_dhcp"></label><input class="form_input" type="text" name="dhcpLeaseTime" value="<% getInfo("dhcpLeaseTime"); %>"/><span class="i18n" name="time_dhcp"></span></div>
 					<div class="dhcp_server_btn">
@@ -56,6 +56,13 @@
 		<script>
 			var wlan_num =<% getIndex("show_wlan_num"); %> ;
 			var initialDhcp;
+			function mode()
+			{
+				var opmode=<% getIndex("wlanMode"); %> ;
+			
+				if( opmode > 3 )
+					disableTextField(document.tcpip.stp);
+			}
 			//dhcp模式
 			function dhcpChange(index)
 			{

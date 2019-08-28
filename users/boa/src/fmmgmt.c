@@ -57,6 +57,8 @@
 
 extern int Decode(unsigned char *ucInput, unsigned int inLen, unsigned char *ucOutput);
 
+extern void log_boaform(char *form, request *req);
+
 #if defined(CONFIG_DOMAIN_NAME_QUERY_SUPPORT)
 extern void Stop_Domain_Query_Process(void);
 extern unsigned char WaitCountTime;
@@ -4409,6 +4411,10 @@ void formLogout(request *wp, char *path, char *query)
         OK_MSG(return_url);
 #endif
 
+#ifdef CSRF_SECURITY_PATCH
+        log_boaform("formLogout", wp);  //To set formLogout valid at security_tbl
+#endif
+
 	return;
 }
 #define _PATH_SYSCMD_LOG "/tmp/syscmd.log"
@@ -6038,6 +6044,9 @@ void formLogin(request *wp, char *path, char *query)
 	}
 
 	send_redirect_perm(wp, (WEB_PAGE_HOME));
+#ifdef CSRF_SECURITY_PATCH
+    log_boaform("formLogin", wp);  //To set formLogin valid at security_tbl
+#endif
 	return;
 
 login_err:
@@ -8147,5 +8156,134 @@ int getTotalOnlineClientNum(request *wp, int argc, char **argv)
     cJSON_Delete(root);	
      
     int ret = req_format_write(wp, "%d", online_num);
+    return ret;
+}
+
+void formReboot(request *wp, char *path, char *query)
+{
+    char tmp_buf[200];
+
+    sprintf(tmp_buf, "Rebooting !!~~~~Please wait for 40~50secs!");
+    ERR_MSG(tmp_buf);
+	REBOOT_WAIT_COMMAND(2);		
+}
+
+void formLEDControl(request *wp, char *path, char *query)
+{
+    char *str_val = NULL;
+    int val;
+    char tmp_buf[200];
+    char *led_enable_path = "/proc/gpio";
+    
+    str_val = req_get_cstream_var(wp, "led_enabled", "");
+    if (!strcmp(str_val, "0"))
+    {
+        val = 0;
+        if (apmib_set( MIB_LED_ENABLE, (void *)&val) == 0) 
+        {
+  		    printf("set MIB_LED_ENABLE err.\n");
+	    }
+		sprintf(tmp_buf, "echo 0 > %s", led_enable_path);
+        system(tmp_buf);
+    }
+	else
+	{
+        val = 1;
+        if (apmib_set( MIB_LED_ENABLE, (void *)&val) == 0) 
+        {
+  		    printf("set MIB_LED_ENABLE err.\n");
+	    }
+		sprintf(tmp_buf, "echo 1 > %s", led_enable_path);
+        system(tmp_buf);    
+	}
+
+    str_val = req_get_cstream_var(wp, ("submit-url"), "");
+    if(str_val[0])
+    {
+	    send_redirect_perm(wp, str_val);	
+    }
+
+#ifdef CSRF_SECURITY_PATCH
+    log_boaform("fromLEDControl", wp);  //To set fromLEDControl valid at security_tbl
+#endif
+
+}
+
+void formAddMeshNode(request *wp, char *path, char *query)
+{
+    char *str_val = NULL;
+    char tmp_buf[200];
+
+    str_val = req_get_cstream_var(wp, "sn", "");
+    if(str_val[0])
+    {
+        if(strlen(str_val) != 21)
+        {
+            sprintf(tmp_buf, "sn len err!");
+            goto setErr;
+        }
+    }
+    else
+    {
+        sprintf(tmp_buf, "no sn find!");
+        goto setErr;
+    }
+
+    str_val = req_get_cstream_var(wp, ("submit-url"), "");
+    if(str_val[0])
+    {
+	    send_redirect_perm(wp, str_val);	
+    }
+#ifdef CSRF_SECURITY_PATCH
+    log_boaform("formAddMeshNode", wp);  //To set formAddMeshNode valid at security_tbl
+#endif
+    return;
+    
+setErr:
+	ERR_MSG(tmp_buf);
+}
+
+void fromTimerReboot(request *wp, char *path, char *query)
+{
+    char *str_val = NULL;
+    int val;
+    char tmp_buf[200];    
+
+    str_val = req_get_cstream_var(wp, "timer_reboot_enabled", "");
+    if (!strcmp(str_val, "1"))
+    {
+        sprintf(tmp_buf, "on");
+        if (apmib_set( MIB_DEV_RESTART_ENABLE, (void *)tmp_buf) == 0) 
+        {
+  		    printf("set MIB_DEV_RESTART_ENABLE err.\n");
+	    } 
+    }
+	else
+	{
+        sprintf(tmp_buf, "off");
+        if (apmib_set( MIB_DEV_RESTART_ENABLE, (void *)tmp_buf) == 0) 
+        {
+  		    printf("set MIB_DEV_RESTART_ENABLE err.\n");
+	    } 
+	}
+    str_val = req_get_cstream_var(wp, "timer_reboot_time", "");
+    if(str_val[0])
+    {
+        if (apmib_set( MIB_DEV_RESTART_TIME, (void *)str_val) == 0) 
+        {
+  		    printf("set MIB_DEV_RESTART_TIME err.\n");
+	    } 
+    }
+    
+    str_val = req_get_cstream_var(wp, ("submit-url"), "");
+    if(str_val[0])
+    {
+	    send_redirect_perm(wp, str_val);	
+    }
+
+#ifdef CSRF_SECURITY_PATCH
+    log_boaform("fromTimerReboot", wp);  //To set fromTimerReboot valid at security_tbl
+#endif
+
 }
 

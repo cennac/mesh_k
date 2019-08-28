@@ -27,7 +27,7 @@ typedef struct wapi_AsServer_conf {
 		char network_inf[128]; /*wlan0,wlan0-va0,.....*/
 	} WAPI_ASSERVER_CONF_T, *WAPI_ASSERVER_CONF_Tp;
 int setInAddr( char *interface, char *Ipaddr, char *Netmask, char *HwMac, int type);
-int getInAddr( char *interface, int type, void *pAddr );
+//int getInAddr( char *interface, int type, void *pAddr );
 int DoCmd(char *const argv[], char *file);
 int RunSystemCmd(char *filepath, ...);
 int isFileExist(char *file_name);

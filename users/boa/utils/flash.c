@@ -10231,7 +10231,7 @@ static void setMIB(char *name, int id, TYPE_T type, int len, int valNum, char **
 				return;
 			}
 
-			if ( valNum > 9)
+			if ( valNum > 10)
 			{
 			 parentContrl.parentContrlWeekMon=atoi(val[1]);
 			 parentContrl.parentContrlWeekTues=atoi(val[2]);
@@ -10242,6 +10242,7 @@ static void setMIB(char *name, int id, TYPE_T type, int len, int valNum, char **
 			 parentContrl.parentContrlWeekSun=atoi(val[7]);
 			 parentContrl.parentContrlStartTime=atoi(val[8]);
 			 parentContrl.parentContrlEndTime=atoi(val[9]);
+			 strcpy(parentContrl.parentContrlTerminal,&val[10]);
 			}
 		}
 		else if ( !strcmp(val[0], "del")) {

@@ -467,3 +467,5 @@ ifdef CONFIG_RTL_WEBPAGES_IN_ROOTFS
 	$(ROMFSINST) -s /var/sys_diagnostic.txt /web/sys_diagnostic.txt
 endif
 endif
+	$(ROMFSINST) enable_rtk_html.sh /bin/enable_rtk_html.sh
+	$(ROMFSINST) boa_rtk.conf /etc/boa/boa_rtk.conf
