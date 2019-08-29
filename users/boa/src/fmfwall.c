@@ -1650,6 +1650,7 @@ cJSON *getParentControlListJSON()
     cJSON *root;
 	cJSON *parameters;
 	char tmpString[5]={0};
+	char tmpBuf[7]={0};
     RTK_LAN_DEVICE_INFO_T devinfo[MAX_STA_NUM] = {0};
     int i;
 

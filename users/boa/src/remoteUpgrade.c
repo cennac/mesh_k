@@ -24,16 +24,16 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
- 
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "remoteUpgrade.h"
 #include "cJSON.h"
- 
+#include "md5.h"
 
 
-
-
-
-static unsigned long autoupgradeDns(const char* host_name)
+static unsigned long parseDns(const char* host_name)
 {
 	struct hostent* host;
 	struct in_addr addr;
@@ -288,11 +288,110 @@ int getFileRequestUrl(char url[])
   unsigned long hostIpAddr;
   char tmpBuf[16]={0};
   unsigned int ip=0;
-  hostIpAddr=autoupgradeDns(UPGRADE_GILE_SERVER_HOST_NAME);
+  hostIpAddr=parseDns(UPGRADE_GILE_SERVER_HOST_NAME);
   ip=ntohl(hostIpAddr);
   sprintf(tmpBuf,IP_DOT_FORMATE,IP_SEGMENT(ip));
   sprintf(url,UPGRADE_FILE_SERVER_PATH,tmpBuf);
   return 0;
+}
+
+/*
+#parameters:
+ * filePath:file path need generate md5
+ * md5:md5 value from remote server
+#function:
+ *compare md5,equal means file is ok,otherwise file is invalid,exit upgrade 
+#return value:
+ *0:file is ok     1:file invalid
+*/
+int checkFileMd5(const char *filePath, char md5[64])
+{
+	int ret=1;
+	char md5Value[MD5_STR_LEN + 1];
+	ret = computeUpgradeFileMd5(filePath, md5Value);
+	if (0 == ret)
+	{
+		printf("[file - %s] md5 value:\n", filePath);
+		printf("%s\n", md5Value);
+		ret=strncmp(md5Value,md5,MD5_STR_LEN);
+	}
+	return ret;
+} 
+
+int computeUpgradeFileMd5(const char *filePath, char *md5Value)
+{
+	int i;
+	int fd;
+	int ret;
+	unsigned char data[READ_DATA_SIZE];
+	unsigned char md5_value[MD5_SIZE];
+	MD5_CTX md5;
+
+	fd = open(filePath, O_RDONLY);
+	if (-1 == fd)
+	{
+		perror("open");
+		return -1;
+	}
+
+	MD5Init(&md5);
+	while (1)
+	{
+		ret = read(fd, data, READ_DATA_SIZE);
+		if (-1 == ret)
+		{
+			perror("read");
+			return -1;
+		}
+		MD5Update(&md5, data, ret); 
+		if (0 == ret || ret < READ_DATA_SIZE)
+		{
+			break;
+		}
+	} 
+	close(fd);
+	MD5Final(&md5, md5_value); 
+	for(i = 0; i < MD5_SIZE; i++)
+	{
+		snprintf(md5Value + i*2, 2+1, "%02x", md5_value[i]);
+	}
+	md5Value[MD5_STR_LEN] = '\0'; // add end
+	return 0;
+}
+
+int getUpgradeFile(const char *url,const char *md5) {
+    FILE *fp = NULL;
+	char *ptr = NULL;
+    char buf[128];
+	char cmdBuf[128];
+	int ret =1;
+	memset(cmdBuf, 0, sizeof(cmdBuf));
+	sprintf(cmdBuf,"cd /tmp ; wget -O fw.bin %s",url);
+    if ((fp = popen(cmdBuf, "r")) != NULL) 
+	{
+        memset(buf, 0, sizeof(buf));
+        while(fgets(buf, sizeof(buf)-1, fp)) 
+
+		{         
+            ptr = strstr(buf, "Network is unreachable");
+            if (ptr) 
+			{
+                printf("Network is unreachable");
+				ret =1;
+                break;
+            }
+
+            memset(buf, 0, sizeof(buf));
+        }
+
+        pclose(fp);
+    }
+    if(access(LOCATION_FILE_PATH,R_OK)==0)
+    {
+      ret=checkFileMd5(LOCATION_FILE_PATH, md5);
+    }      
+
+    return ret;
 }
 
 void remoteUpgrade()
@@ -312,7 +411,8 @@ void remoteUpgrade()
    printf("=====>receiveData:\n%s\n",recvDataPtr);
    remoteUpgradeInfo=getUpgradeFileInfo(remoteUpgradeInfo,recvDataPtr);
    printf("++++>downurl=%s md5=%s\n",remoteUpgradeInfo.downloadUrl,remoteUpgradeInfo.md5);
-   httpGet(remoteUpgradeInfo.downloadUrl);
+   //httpGet(remoteUpgradeInfo.downloadUrl);
+   getUpgradeFile(remoteUpgradeInfo.downloadUrl,remoteUpgradeInfo.md5);
  }
  
 }
