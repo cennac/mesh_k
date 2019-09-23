@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+	<meta id="i18n_pagename" content="index-common">
+	<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
+<% getIndex("no-cache"); %>
+<title>活跃的DHCP客户端列表</title>
+<script type="text/javascript" src="util_gw.js"> </script>
+</head>
+
+<body>
+	<blockquote>
+		<h2 class="i18n" name="dhcp_header"></h2>
+		<hr size=1 noshade align=top>
+
+		<form action="/boafrm/formReflashClientTbl" method="POST" name="formClientTbl">
+			<table border='1' width="80%">
+				<tr class="tbl_head">
+					<td width="30%">
+						<b class="i18n" name="dhcp_ip"></b></td>
+					<td width="40%">
+						<b class="i18n" name="dhcp_mac"></b></td>
+					<td width="30%">
+						<b class="i18n" name="dhcp_time"></b></td>
+				</tr>
+				<% dhcpClientList(); %>
+			</table>
+	
+			<input type="hidden" value="/dhcptbl.html" name="submit-url">
+			<p>
+				<input type="submit" value="Refresh" name="refresh" selectname="refresh" class="i18n-input">&nbsp;&nbsp;
+				<input type="button" value=" Close " name="close" selectname="close" onClick="javascript: window.close();" class="i18n-input">
+			</p>
+		</form>
+	</blockquote>
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+</body>
+
+</html>

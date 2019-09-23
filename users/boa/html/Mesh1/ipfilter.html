@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
+		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
+		<script src="js/util_gw.js"></script>
+	</head>
+	<body onload="Load_Setting();">
+		<div class="guest_net_parent">
+			<div class="IpFilter">
+				<form action="/boafrm/formFilter" method="POST" name="formFilterAdd">
+				<div class="form-group" style="margin-bottom: 10px;">
+					<div class="intell guest_mode i18n" name="macFliter_title_ipfilter">&nbsp;</div>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch" data-size="mini" name="enabled" id="checkbox_switch1" value="ON"/>
+					</div>
+				</div>
+				<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_ipfilter"></p></div>
+				<div class="form-group_smart ip_filter"><label class="i18n" name="origin_address_ipfilter"></label><input class="form_input ipfilter_input" type="text"  id="ipfilter_input1"/>.<input class="form_input ipfilter_input" type="text"  id="ipfilter_input2"/>.<input class="form_input ipfilter_input" type="text" id="ipfilter_input3" />.<input class="form_input ipfilter_input" type="text" id="ipfilter_input4" /></div>
+				<input type="hidden" name="ip" id="ip_value_ipfilter" />
+				<input type="hidden" name="lan_mask" value="<% getInfo("mask-rom"); %>">
+				<div class="longTime form-group ip_filter">
+					<label style="font-size: 16px;color: #4d4d4d;" class="i18n" name="potorl_ipfilter"></label>
+					<select name="protocol">
+						<option value="0">TCP+UDP</option>
+						<option value="1">TCP</option>
+						<option value="2">UDP</option>
+					</select>
+					<span class="caret" style="position: relative;left: -30px;"></span>
+				</div>
+				<div class="form-group_smart firewall ip_filter"><label class="i18n" name="iptips_ipfilter">&nbsp;</label><input class="form_input" type="text"  name="comment"/></div>
+				<div class="form-group form-group-btn firewall">
+					<button type="submit" value="Save" name="addFilterIp" onClick="return addClick()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" class="i18n"></button><button  type="reset" value="Reset" name="reset" class="i18n"></button>
+				</div>
+				<input type="hidden" value="1" name="addFilterIpFlag">
+				<input type="hidden" value="/ipfilter.html" name="submit-url">
+				</form>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterDel">
+				<div>
+					<p class="current_table i18n" name="currect_table_ipfilter"></p>
+					<div class="table-responsive"> 　　　　　　　　 			    		
+						<table class="table table-bordered">
+						  	<% ipFilterList(); %>
+						</table>						 
+			    	</div>
+			    	<div class="form-group form-group-btn firewall">
+						<button type="submit" value="Delete Selected" name="deleteSelFilterIp" onClick="return deleteClick()" class="i18n"></button><button type="submit" value="Delete All" name="deleteAllFilterIp" onClick="return deleteAllClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+					</div>
+					<input type="hidden" value="/ipfilter.html" name="submit-url">
+			    </div>
+			   </form>
+			</div>
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+	    <script type="text/javascript">
+	    	 var i18nLanguage=getCookie('userLanguage');
+	    	$(document).ready(function(){
+	    		$('#checkbox_switch1').bootstrapSwitch({
+					onText: "",
+					offText: "",
+					onColor: "success",
+					offColor: "info",
+					size: "small",
+					onSwitchChange: function(event, state) {
+						if (state == true) {
+							enableTextField(document.formFilterAdd.ip);
+							enableTextField(document.formFilterAdd.protocol);
+							$(".checkbox_switch1").val("ON");
+						} else {
+							disableTextField(document.formFilterAdd.ip);
+						  	disableTextField(document.formFilterAdd.protocol);
+							$(".checkbox_switch1").val("OFF");
+						}
+					}
+				});
+	    	});
+	    	function addClick()
+			{
+				var ipfilter_input_value=$("#ipfilter_input1").val()+"."+$("#ipfilter_input2").val()+"."+$("#ipfilter_input3").val()+"."+$("#ipfilter_input4").val()
+			  	$("#ip_value_ipfilter").val(ipfilter_input_value);
+//			  	alert(ipfilter_input_value);
+			  if (!document.formFilterAdd.enabled.checked)
+			  	return true;
+			
+			  if (document.formFilterAdd.ip.value=="" && document.formFilterAdd.comment.value=="" )
+				return true;
+			
+			  if( checkHostIPValid(document.formFilterAdd.ip,document.formFilterAdd.lan_mask, ipfilter_ipaddr_invalid) == false)
+			  	return false;
+			  
+			  return true;
+			}
+			
+			
+			function deleteClick()
+			{
+				if(i18nLanguage=='en'){
+					if ( !confirm("Make sure to delete the selected entry?") ) {
+						return false;
+					  }
+					  else
+						return true;
+				}else{
+					if ( !confirm("确定删除所选的入口?") ) {
+						return false;
+					  }
+					  else
+						return true;
+				}
+			} 
+			
+			function deleteAllClick()
+			{
+				if(i18nLanguage=='en'){
+					if ( !confirm("Make sure to delete the selected entry?") ) {
+						return false;
+					}
+					else
+						return true;
+				}else{
+					if ( !confirm("确定删除所有的入口?") ) {
+						return false;
+					}
+					else
+						return true;
+				}
+			  
+			}
+			
+			
+			function disableDelButton()
+			{
+				disableButton(document.formFilterDel.deleteSelFilterIp);
+				disableButton(document.formFilterDel.deleteAllFilterIp);
+			}
+			
+			function updateState()
+			{
+			  if (document.formFilterAdd.enabled.checked) {
+			 	enableTextField(document.formFilterAdd.ip);
+				enableTextField(document.formFilterAdd.protocol);
+				enableTextField(document.formFilterAdd.comment);
+			  }
+			  else {
+			 	disableTextField(document.formFilterAdd.ip);
+			  	disableTextField(document.formFilterAdd.protocol);
+				disableTextField(document.formFilterAdd.comment);
+			  }
+			}
+			var ip_filter_status='<% getIndex("ipFilterEnabled"); %>';
+			function Load_Setting()
+			{
+				if ( ip_filter_status=='0' ){
+					$('[name="enabled"]').bootstrapSwitch('state', false);
+				}else{
+					$('[name="enabled"]').bootstrapSwitch('state', true);
+				}
+				updateState();
+			}
+	    </script>
+	</body>
+</html>

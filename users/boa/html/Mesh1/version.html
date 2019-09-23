@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<% getIndex("no-cache"); %>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/main.css"/>
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
+</head>
+<body style="background: rgb(238,238,238);">
+	<div class="version_wrap">
+	<div class="version_main">
+		<div class="version_system">
+			<div class="versionTitle i18n" name="version_title_v"></div>
+			<div class="versionContent">
+				<table class="table" >
+				      <tr>
+				         <td class="i18n" name="version_th_v"></td>
+				         <td><% getInfo("fwVersion"); %></td>
+				      </tr>
+				      <tr>
+				         <td class="i18n" name="time_th_v"></td>
+				         <td><% getInfo("uptime"); %></td>
+				      </tr>
+				</table>
+			</div>
+		</div>
+		<!--<div class="version_wire">
+			<div class="versionTitle">无线配置</div>
+			<div class="versionContent">
+				<table class="table" >
+				      <tr>
+				         <td>模式</td>
+				         <td></td>
+				      </tr>
+				      <tr>
+				         <td>WiFi名称</td>
+				         <td>Mumbai</td>
+				      </tr>
+				      <tr>
+				         <td>信道</td>
+				         <td>Mumbai</td>
+				      </tr>
+				      <tr>
+				         <td>加密方式</td>
+				         <td>Mumbai</td>
+				      </tr>
+				      <tr>
+				         <td>Mac地址</td>
+				         <td>Mumbai</td>
+				      </tr>
+				</table>
+			</div>
+		</div>-->
+		<div class="version_tcpIp">
+			<div class="versionTitle i18n" name="tcpipconfig_title_v"></div>
+			<div class="versionContent">
+				<table class="table" >
+				      <tr>
+				         <td class="i18n" name="ipaddress_th_v"></td>
+				         <td><% getInfo("ip"); %></td>
+				      </tr>
+				      <tr>
+				         <td class="i18n" name="subnet_th_v"></td>
+				         <td><% getInfo("mask"); %></td>
+				      </tr>
+				      <tr>
+				         <td class="i18n" name="dask_th_v"></td>
+				         <td><% getInfo("gateway"); %></td>
+				      </tr>
+				      <tr>
+				         <td class="i18n" name="macaddress_th_v"></td>
+				         <td><% getInfo("hwaddr"); %></td>
+				      </tr>
+				      <script>
+						if(isAP == 0)
+							showWan();
+					</script>
+				</table>
+			</div>
+		</div>
+		<!--<div class="version_wan">
+			<div class="versionTitle">WAN配置</div>
+			<div class="versionContent">
+				<table class="table" >
+				      <tr>
+				         <td>IP地址</td>
+				         <td></td>
+				      </tr>
+				      <tr>
+				         <td>子网掩码</td>
+				         <td>Mumbai</td>
+				      </tr>
+				      <tr>
+				         <td>默认网关</td>
+				         <td>Mumbai</td>
+				      </tr>
+				      <tr>
+				         <td>Mac地址</td>
+				         <td>Mumbai</td>
+				      </tr>
+				</table>
+			</div>
+		</div>-->
+	</div>
+	</div>
+	<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+</body>
+</html>

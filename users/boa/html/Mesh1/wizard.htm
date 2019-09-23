@@ -1,0 +1,312 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+	
+		<title></title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+	<meta id="i18n_pagename" content="index-common">
+	
+	<link rel="stylesheet" href="css/base.css" />
+	<link href="css/bootstrap.min.css" rel="stylesheet" />
+	<style>body{padding-top: 60px;}</style>
+	<!--<link href="./bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" />-->
+	<link href="css/bootstrap/bwizard.min.css" rel="stylesheet" />
+	<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
+	<script src="js/timezone.js"></script>
+	<script src="js/jquery.js"></script>
+	<script>if(window.top !== window.self){ window.top.location = window.location;}</script>
+	<style type="text/css">
+		.w_label{
+			display: inline-block;
+			height: 30px;			
+			width: 135px;			
+			text-align: right;			
+			color: #000;			
+			padding: 5px;			
+			font-size: 16px;			
+			margin: 8px;						
+			font-weight: normal;			
+			color: #4d4d4d
+		}
+		body{
+			margin: 0;
+			/*padding: 0;*/
+			background: url(img/login_bg.png) center no-repeat fixed;
+			background-size: cover;
+		}
+		.container2{			
+			width: 50%;
+			margin: 0 auto;
+			margin-top: 50px;
+			min-width: 390px;
+		}
+		.w_password input,.timeSelect3{
+			margin-bottom: 0;
+		}
+		.w_confirm,.form-group-btn{
+			text-indent: 21%;
+			margin: 18px 0;
+		}
+		.w_confirm button,.internet_submit{
+			width: 100px;
+			height: 35px;
+			background: #89CEED;
+			border-radius: 4px;
+			border: none;
+			color: #fff;
+			font-size: 14px;
+			margin: 0 auto;
+		}
+		#language{
+			float: right;
+			border-color: rgba(255,255,255,0.2);
+			outline: none;
+			width: 80px;
+			height: 30px;
+			background: none;
+			/*appearance: none;
+			-webkit-appearance: none;
+			-moz-appearance: none;*/
+			margin-top: 15px;
+		}
+		a { text-decoration:none;color: #000;outline: none;}
+	</style>
+</head>
+<body onload="Load_Setting()">
+    <div class="navbar navbar-inverse navbar-fixed-top" >
+      <div class="navbar-inner" style="background-image: none;background: rgba(255,255,255,0.1);border-color: rgba(255,255,255,0.1);height: 60px;">
+        <div class="container" style="line-height: 40px;">
+          <a class="brand" href="#" style="font-size: 28px;color: #FFFFFF;">KINGSIGNAL</a>
+          <select id="language">
+			 	<option value="zh-CN">中文</option>
+			 	<option value="en">English</option>
+			</select>
+        </div>
+      </div>
+    </div>
+	<form action="/boafrm/formNewWizard" method="post" name="wizard_w">
+		<div class="container2">
+			<h3 class="i18n" name="setup_w"></h3>
+			<div id="wizard">
+				<ol>
+					<script language="javascript">
+						var i18nLanguage1=getCookie('userLanguage');
+						var html1='<li>密码管理</li><li>时区选择</li><li>上网方式</li>';
+						var html2='<li>Password Management</li><li>Select Time Zone</li><li>Connection Settings</li>';
+						if(i18nLanguage1=='en'){
+							$("#wizard ol").append(html2);	
+						}else{
+							$("#wizard ol").append(html1);	
+						}
+					</script>
+					<!--<li class="i18n" name="pass_m_ww"></li>
+					<li class="i18n" name="time_s_ww"></li>
+					<li class="i18n" name="way_ww"></li>-->
+				</ol>
+				<div>
+					<h4  class="i18n" name="create_p_w"></h4>
+					<hr />
+					<div class="w_password"><label class="w_label i18n" name="set_p_w"></label><input type="text" id="password1" name="newPass" onkeyup="login_lengthInfo()"/></div>
+					<div class="w_password"><label class="w_label i18n" name="confirm_p_w"></label><input type="text" id="password2" /></div>
+					<div class="w_confirm"></div>
+					<!--<div class="w_confirm"><button type="button" id="w_confirm" name="confirm" value="确定" onclick="login_lengthInfo1()">确定</button></div>-->
+				</div>
+				<div>
+					<h4 class="i18n" name="timezone_select_w"></h4>
+					<hr />
+					<!--<div class="lang_content">
+						<label class="w_label">选择语言</label>
+						<select id="language_ww">
+			 				<option value="zh-CN">中文</option>
+			 				<option value="en">English</option>
+			 			</select>
+			 			<input type="hidden" name="language" id="w_language"/>
+					</div>-->
+					<div class="timezone">
+						<label class="w_label i18n" name="timezong_s_w"></label>
+						<select name="timeZone"  class="timeSelect3">
+			            	<script language="javascript">
+					            	var i;
+					            	for(i=0;i<ntp_zone_array.length;i++){
+								if (i == ntp_zone_index)
+									document.write('<option value="',ntp_zone_array[i].value,'" selected>',ntp_zone_array[i].name,'</option>');
+								else
+									document.write('<option value="',ntp_zone_array[i].value,'">',ntp_zone_array[i].name,'</option>');
+					            	}
+							</script>
+	            		</select>
+	            		<div class="w_confirm"></div>
+					</div>					
+				</div>
+				<div>
+					<h4 class="i18n" name="select_way_n_ww"></h4>
+					<hr />
+					<input type="hidden" id="getPppAuthStatus" value="Not Start" name="getPppAuthStatus">
+			 		<input type="hidden" name="lan_ip_address" value="<% getInfo("ip-rom"); %>">
+					<input type="hidden" name="lan_subnet_mask" value="<% getInfo("mask-rom"); %>">
+									
+					<input type="hidden" name="dhcpMtuSize" value="1500">
+					<input type="hidden" name="pptpMtuSize" value="1500">
+					<input type="hidden" name="12tpMtuSize" value="1500">
+					<div style="display: none;">
+						<input type="radio" value="dnsAuto" name="dnsMode">
+						<input type="radio" value="dnsManual" name="dnsMode">
+					</div>
+			 		<div class="form-group">
+			 			<label class="w_label i18n" name="wanjoinTyep_internet"></label>
+			 			<select class="type_select" id="wanType_id" size="1" name="wanType">
+			 				<option value="fixedIp" class="i18n" name="staticIp_internet"></option>
+			 				<option value="autoIp" class="i18n" name="staticIp_dhcp"></option>
+			 				<option value="ppp" class="i18n" name="staticIp_pppoe"></option>
+			 			</select>	
+			 		</div>
+			 		<div class="form-group static_ip"><label class="i18n" name="ipAddr_internet"></label><input class="form_input" type="text" name="wan_ip" value="<% getInfo("wan-ip-rom"); %>"/></div>
+			 		<div class="form-group static_ip"><label class="i18n" name="subnet_internet"></label><input class="form_input" type="text" name="wan_mask" value="<% getInfo("wan-mask-rom"); %>" /></div>
+			 		<div class="form-group static_ip"><label class="i18n" name="default_internet"></label><input class="form_input" type="text" name="wan_gateway" value="<% getInfo("wan-gateway-rom"); %>"/></div>
+			 		<span id="dnsMode_div" style="display: none;">
+						<table border="0">
+							<tr><td width="100%" colspan="2"><b><input type="radio" value="dnsAuto" name="dnsMode"></b></td></tr>
+							<tr><td width="100%" colspan="2"><b><input type="radio" value="dnsManual" name="dnsMode"></b></td></tr>
+						</table>
+					</span>
+					<div class="form-group static_ip"><label class="i18n" name="size_fixedIpMtuSize"></label><input type="text" name="fixedIpMtuSize" value="<% getInfo("fixedIpMtuSize"); %>"></div>
+			 		<div class="form-group static_ip"><label class="i18n" name="DNS1_internet"></label><input class="form_input" type="text" name="dns1" value="<% getInfo("wan-dns1"); %>" /></div>
+			 		<div class="form-group static_ip"><label class="i18n" name="DNS2_internet"></label><input class="form_input" type="text" name="dns2" value="<% getInfo("wan-dns2"); %>" /></div>
+			 		<input class="form_input" type="hidden" name="dns3" value="<% getInfo("wan-dns3"); %>" />
+			 		<div class="form-group pppoe"><label class="i18n" name="name_internet"></label><input class="form_input" type="text" name="pppUserName" value="<% getInfo("pppUserName"); %>" /></div>
+			 		<div class="form-group pppoe"><label class="i18n" name="password_internet"></label><input class="form_input" type="password" name="pppPassword" value="<% getInfo("pppPassword"); %>" /></div>
+			 		<div class="form-group pppoe"><label class="i18n" name="size_pppMtuSize"></label><input type="text" name="pppMtuSize" size="10" maxlength="10" value="<% getInfo("pppMtuSize"); %>"></div>
+			 		<div class="form-group form-group-btn">
+			 			<button type="submit" value="Save & Apply" class="i18n internet_submit" name="save_apply" ></button>
+			 		</div>
+				</div>
+			</div>
+		</div>
+	</form>
+	
+	<script src="js/bootstrap.js"></script>
+	<script src="js/bwizard.min.js" type="text/javascript"></script>
+	<script src="js/jquery.cookie.js"></script>
+	<!-- 加载语言包文件 -->
+	<script src="js/jquery.i18n.properties.js"></script>
+	<script src="js/language.js"></script>
+	<script type="text/javascript">
+	   $("#wizard").bwizard();
+	   var initialDnsMode, pppConnectStatus=0;
+			var MultiPppoeEnable= <% getIndex("multiPppoe"); %>;
+			var wan_connection_type=0;
+			var dynamicWanIP=1;
+			var initialDnsMode, pppConnectStatus=0;
+			var MultiPppoeEnable= <% getIndex("multiPppoe"); %>;
+			var wan_connection_type=0;
+			var dynamicWanIP=1;			
+			var wan_access_port_en = <%getIndex("wanAccessPortEnable");%>;
+			var wan_access_port_en = <%getIndex("wanAccessPortEnable");%>;
+			var i18nLanguage=getCookie('userLanguage');
+			$(document).ready(function(){
+				$(".type_down").click(function(){
+					 $("select").trigger("click");
+				})
+				$(".type_select").change(function(){
+					var changevalue=$(this).val();
+					if(changevalue=="fixedIp"){
+						$(".static_ip").css("display","block");
+						$(".pppoe").css("display","none");
+						$(".DHCP").css("display","none");
+						document.wizard_w.dnsMode[1].checked = true ;
+					}
+					if(changevalue=="autoIp"){
+						$(".static_ip").css("display","none");
+						$(".pppoe").css("display","none");
+						$(".DHCP").css("display","block");
+						document.wizard_w.dnsMode[0].checked = true ;
+					}
+					if(changevalue=="ppp"){
+						$(".static_ip").css("display","none");
+						$(".pppoe").css("display","block");
+						$(".DHCP").css("display","none");
+						document.wizard_w.dnsMode[0].checked = true ;
+					}
+				});
+				var value=$("#language_ww option:selected").val();
+					$("#w_language").val(value);
+				$("#language_ww").change(function(){
+					var value=$("#language_ww option:selected").val();
+					$("#w_language").val(value);
+				})
+			})	
+			function getValue(id) { 
+			 	return document.getElementById(id).value; 		        
+		   }
+			function Load_Setting()
+			{
+				var wanDhcp_ = '<% getIndex("wanDhcp"); %>';
+				if(wanDhcp_==0){
+					$(".static_ip").css("display","block");
+					$(".pppoe").css("display","none");
+					$(".DHCP").css("display","none");
+					$("#wanType_id option:nth-child(1)").prop("selected", 'selected');
+					document.wizard_w.elements["dnsMode"][1].checked = true;
+				}
+				if(wanDhcp_==3){
+					$(".static_ip").css("display","none");
+					$(".pppoe").css("display","block");
+					$(".DHCP").css("display","none");
+					$("#wanType_id option:nth-child(3)").prop("selected", 'selected');
+					document.wizard_w.elements["dnsMode"][0].checked = true;
+				}
+				if(wanDhcp_==1){
+					$(".static_ip").css("display","none");
+					$(".pppoe").css("display","none");
+					$(".DHCP").css("display","block");
+					$("#wanType_id option:nth-child(2)").prop("selected", 'selected');
+					document.wizard_w.elements["dnsMode"][0].checked = true;
+				}
+			}
+			function login_lengthInfo() {
+		   		//var pwdblank = /\/g;
+			    if(getValue("password1").length>30){
+			    	if(i18nLanguage=='en'){
+			    		alert('The password is longer than 30');
+			    	}else{
+			    		alert("密码长度超过30");
+			    	}			    	
+			    	return false;
+			    }
+			    
+			    if(getValue("password1").match(/^ +| +$/g)){
+			    	if(i18nLanguage=='en'){
+			    		alert('Cannot contain Spaces');
+			    	}else{
+			    		alert("不能包含空格！");
+			    	}			    	
+			    	return false;
+			    }			    
+			}
+			function login_lengthInfo1() {
+				if(getValue("password1").length<6){
+					if(i18nLanguage=='en'){
+			    		alert('Password length is less than 6');
+			    	}else{
+			    		alert("密码长度小于6");
+			    	}			    	
+			    	return false;
+			    }
+				if(getValue("password1")!=getValue("password2")){
+					if(i18nLanguage=='en'){
+			    		alert('Password inconsistency');
+			    	}else{
+			    		alert("密码不一致");
+			    	}
+			    	
+			    	return false;
+			    }
+			}
+			function getValue(id) {
+			 	return document.getElementById(id).value; 		        
+		   }	
+	</script>
+</body>
+</html>

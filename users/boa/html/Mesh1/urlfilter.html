@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
+		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
+		<script src="js/util_gw.js"></script>
+	</head>
+	<body onload="Load_Setting();">
+		<div class="guest_net_parent">
+			<div>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterAdd">
+				<div class="form-group" style="margin-bottom: 10px;">
+					<div class="intell guest_mode i18n" name="url_filter_urlfilter">&nbsp;</div>
+					<div class="switch_check">
+						<input type="checkbox" class="checkbox_switch" data-size="mini" name="enabled" id="checkbox_switch1" value="ON"/>
+					</div>
+					<input type="hidden" name="urlFilterMode">
+					<%getIndex("usrSpecificUrlCommand_start");%>
+					<input type="hidden" name="urlFilterUserMode">
+					<%getIndex("usrSpecificUrlCommand_end");%>
+				</div>
+				<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_urlfilter"></p></div>
+				<div class="up_dowm">
+			        <input type="radio" value="blackList" name="urlFilterBlack" onClick="urlFilterModeBlack()"><span class="i18n" name="black_name_urlfilter"></span>
+				</div>
+				<div class="up_dowm">
+			        <input type="radio" value="whiteList" name="urlFilterWhite" onClick="urlFilterModeWhite()"><span class="i18n" name="white_name_urlfilter"></span>
+				</div>
+				<div class="form-group_smart firewall"><label class="i18n" name="url_address_urlfilter"></label><input class="form_input" type="text" name="url"/></div>
+				<div class="form-group form-group-btn firewall">
+					<button type="submit" value="Save" name="addFilterUrl" onClick="return addClick()" class="i18n"></button><button type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+				</div>
+				<div style="display: none;">
+						<input type="radio" checked="true" value="usrIP" name="userModeIp" onClick="urlFilterUserModeIP()" disabled="true">
+						<input type="text"  disabled="true" name="ip" size="20" maxlength="20">
+					 	<input type="radio" value="usrMac" name="userModeMac" onClick="urlFilterUserModeMac()" disabled="true">
+					 	<input type="text" disabled="true" name="mac" size="20" maxlength="20">
+					 	<input type="radio" value="usrAll" name="userModeAll" onClick="urlFilterUserModeAll()" disabled="true">	 
+				</div>
+				<input type="hidden" value="1" name="addFilterUrlFlag">  	   
+        		<input type="hidden" value="/urlfilter.htmL" name="submit-url">
+				</form>
+				<form action="/boafrm/formFilter" method="POST" name="formFilterDel">
+				<div>
+					<p class="current_table i18n" name="currect_table_urlfilter"></p>
+					<div class="table-responsive"> 　　　　　　　　 			    		
+						<table class="table table-bordered">
+							<% urlFilterList(); %>
+						  	<!--<thead>
+						    	<tr>
+						      		<th class="i18n" name="th_urladdress_urlfilter"></th>
+						      		<th class="i18n" name="th_select_urlfilter"></th>
+						    	</tr>
+						  	</thead>
+						  	<tbody>
+							    <tr>
+							      	<td>http://www.baidu.com</td>
+							      	<td></td>
+							    </tr>
+							    <tr>
+							      	<td>http://www.baidu.com</td>
+							      	<td></td>
+							    </tr>
+							    <tr>
+							      	<td>http://www.baidu.com</td>
+							      	<td></td>
+							    </tr>
+						  	</tbody>-->
+						</table>						 
+			    	</div>
+			    	<div class="form-group form-group-btn firewall" style="margin-bottom: 50px;">
+						<button type="submit" value="Delete Selected" name="deleteSelFilterUrl" onClick="return deleteClick()" class="i18n"></button><button type="submit" value="Delete All" name="deleteAllFilterUrl" onClick="return deleteAllClick()" class="i18n"></button><button type="reset" value="Reset" name="reset" class="i18n"></button>
+					</div>
+			    </div>
+			    <input type="hidden" value="/urlfilter.html" name="submit-url">
+			   </form>
+			</div>
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+	    <script type="text/javascript">
+	    	var i18nLanguage=getCookie('userLanguage');
+	    	$(document).ready(function(){
+	    		$('#checkbox_switch1').bootstrapSwitch({
+					onText: "",
+					offText: "",
+					onColor: "success",
+					offColor: "info",
+					size: "small",
+					onSwitchChange: function(event, state) {
+						if (state == true) {
+							enableTextField(document.formFilterAdd.url);  
+							enableTextField(document.formFilterAdd.urlFilterWhite); 
+							enableTextField(document.formFilterAdd.urlFilterBlack);
+							$("#checkbox_switch1").val("ON");
+						} else {
+							disableTextField(document.formFilterAdd.url); 
+							disableTextField(document.formFilterAdd.urlFilterWhite); 
+							disableTextField(document.formFilterAdd.urlFilterBlack);
+							$("#checkbox_switch1").val("OFF");
+						}
+					}
+				});
+	    	});
+	    	function addClick()
+			{
+			  if (!document.formFilterAdd.enabled.checked)
+			  	return true;
+			  var str = document.formFilterAdd.url.value;
+			  	if(document.formFilterAdd.urlFilterWhite.checked == true)
+					document.formFilterAdd.urlFilterMode.value = 1;
+				else
+					document.formFilterAdd.urlFilterMode.value = 0;
+				for (var i=0; i<str.length; i++) {
+			     		if ( str.charAt(i) == ';')
+			     		{  
+			     			if(i18nLanguage=='en'){
+			     				alert("error symbol: \";\"");
+			     			}else{
+			     				alert("错误符号: \";\"");
+			     			}			     			
+						return false;
+			     		}
+				}
+						
+			  if (document.formFilterAdd.url.value=="")
+				return true;
+			
+			  return true;
+			}
+			
+			function deleteClick()
+			{
+			  if(i18nLanguage=='en'){
+					if ( !confirm("Make sure to delete the selected entry?") ) {
+						return false;
+					  }
+					  else
+						return true;
+				}else{
+					if ( !confirm("确定删除所选的入口?") ) {
+						return false;
+					  }
+					  else
+						return true;
+				}
+			}
+			
+			function deleteAllClick()
+			{
+			   if(i18nLanguage=='en'){
+					if ( !confirm("Make sure to delete the selected entry?") ) {
+						return false;
+					  }
+					  else
+						return true;
+				}else{
+					if ( !confirm("确定删除所选的入口?") ) {
+						return false;
+					  }
+					  else
+						return true;
+				}
+			}
+			
+			function disableDelButton()
+			{
+				disableButton(document.formFilterDel.deleteSelFilterUrl);
+				disableButton(document.formFilterDel.deleteAllFilterUrl);
+			}
+			
+			function urlFilterModeBlack()
+			{
+			  document.formFilterAdd.urlFilterMode.value=0;
+			  document.formFilterAdd.urlFilterWhite.checked = false;
+			  document.formFilterAdd.urlFilterBlack.checked = true;
+			}
+			
+			function urlFilterModeWhite()
+			{
+			  document.formFilterAdd.urlFilterMode.value=1;
+			  document.formFilterAdd.urlFilterWhite.checked = true;
+			  document.formFilterAdd.urlFilterBlack.checked = false;
+			}
+			
+			
+			function updateState()
+			{
+			  if (document.formFilterAdd.enabled.checked){
+			 	enableTextField(document.formFilterAdd.url);  
+				enableTextField(document.formFilterAdd.urlFilterWhite); 
+				enableTextField(document.formFilterAdd.urlFilterBlack); 
+			  }
+			  else{
+			 	disableTextField(document.formFilterAdd.url); 
+				disableTextField(document.formFilterAdd.urlFilterWhite); 
+				disableTextField(document.formFilterAdd.urlFilterBlack); 
+			  }
+			}
+			var url_filter_status='<% getIndex("urlFilterEnabled"); %>';
+			var radio_status='<% getIndex("urlFilterMode"); %>';
+			function Load_Setting()
+			{
+				if ( url_filter_status=='0' ){
+					$('[name="enabled"]').bootstrapSwitch('state', false);
+				}else{
+					$('[name="enabled"]').bootstrapSwitch('state', true);
+				}
+				if ( <% getIndex("urlFilterMode"); %> ){
+					document.formFilterAdd.urlFilterWhite.checked = true;
+				}else{
+					document.formFilterAdd.urlFilterBlack.checked = true;
+				}
+				updateState();
+			}
+	    </script>
+	</body>
+</html>

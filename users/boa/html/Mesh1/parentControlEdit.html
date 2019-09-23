@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
+		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
+		<link rel="stylesheet" href="css/bootstrap-table.css" />
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
+		<script type="text/javascript" src="util_gw.js"> </script>
+	</head>
+<script>
+
+function htmlHourOptions()
+{
+    var html = "";
+    
+    for (var i = 0; i < 24; i ++)
+    {
+        html += '<option value="' + i +'">' + ((i < 10) ? ('0' + i) : i) + '</option>';
+    }
+    
+    return html;
+}
+
+function htmlMinuteOptions()
+{
+    var html = "";
+    
+    for (var i = 0; i < 60; i ++)
+    {
+        html += '<option value="' + i +'">' + ((i < 10) ? ('0' + i) : i) + '</option>';
+    }
+    
+    return html;
+}
+
+function week()
+{
+  
+}
+
+function Load_Setting()
+{
+
+}
+function click()
+{
+ return true;
+}
+function disableDelButton()
+{
+	disableButton(document.formParentContrlDel.deleteSelParentContrl);
+}
+
+function deleteClick()
+{
+  if ( !confirm(parent_contrl_delete_confirm) ) {
+	return false;
+  }
+  else
+	return true;
+}
+</script>
+
+<body onload="Load_Setting();">
+<blockquote>
+
+<form action=/boafrm/formParentContrl method=POST name="formParentContrlAdd">
+<table border="0" width=600>
+	<tr>
+		<td>
+			<font size=2> <b> 星期</b> </font>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2"><input type="checkbox" name="Mon" value="1" ONCLICK=week()>星期一</td>
+		<td colspan="2"><input type="checkbox" name="Tues" value="1" ONCLICK=week()>星期二</td>
+		<td colspan="2"><input type="checkbox" name="Wed" value="1" ONCLICK=week()>星期三</td>
+		<td colspan="2"><input type="checkbox" name="Thur" value="1" ONCLICK=week()>星期四</td>
+		<td colspan="2"><input type="checkbox" name="Fri" value="1" ONCLICK=week()>星期五</td>
+		<td colspan="2"><input type="checkbox" name="Sat" value="1" ONCLICK=week()>星期六</td>
+		<td colspan="2"><input type="checkbox" name="Sun" value="1" ONCLICK=week()>星期天</td>
+	</tr>
+</table>
+<b>
+&nbsp;
+</b>
+<table border="0" width=300>
+  <tr>
+	 <td >
+	 <font size=2> <b> 时间:</b> </font>
+	 </td>
+  </tr>
+  <tr>
+  	 <td >
+	 <font size=2> <b> 开始时间:</b> </font>
+	 </td>
+	 <td >
+	 <input type="text" name="parent_start_time" size="6">
+	 </td>
+   </tr>
+   <tr>
+     <td >
+	 <font size=2> <b> 结束时间:</b> </font>
+	 </td>
+	 <td >
+	 <input type="text" name="parent_end_time" size="6">
+	 </td>
+   </tr>
+</table>
+<input type="text" class="form-control" id='stime' name='stime' autocomplete="off" placeholder="请输入开始时间" style="display:inline-block;width:150px;">
+ <table border="0" width=500>
+  <tr><font size=2><b><script>dw(macfilter_current_table)</script></b></font></tr>
+  <% parentContrlTerminalList(); %>
+ </table>
+
+<div class="form-group form-group-btn">
+	<button type="submit" value="Save" name="addParentContrl" onclick="return click()" class="i18n"></button>
+	<script>document.formParentContrl.addParentContrl.value = parent_contrl_save;</script>&nbsp;&nbsp;
+</div>
+</form>
+
+<br>
+<form action="/boafrm/formParentContrl" method=POST name="formParentContrlDel">
+  <table border="0" width=500>
+  <tr><font size=2><b><script>dw(macfilter_current_table)</script></b></font></tr>
+  <% parentContrlList(); %>
+  </table>
+  <br>
+
+  <input type="submit" value="Delete Selected" name="deleteSelParentContrl" onClick="return deleteClick()"  class="i18n">
+  <script>document.formParentContrlDel.deleteSelParentContrl.value = parent_contrl_delete;</script>&nbsp;&nbsp;
+ <!-- <input type="hidden" value="/parentControl.htm" name="submit-url"> -->
+ <script>
+	if ( <% getIndex("parentContrlNum"); %> == 0 )
+		disableDelButton();
+ </script>
+</form>
+</blockquote>
+</body>
+
+</html>
+<div>
+				<form action="/boafrm/formParentContrl" method="POST" name="formParentContrlDel">
+			  <table border="0" width="500">
+			  <tr><font size=2><b>2222</b></font></tr>
+			  <% parentContrlList(); %>
+			  </table>
+			  <br>
+			
+			  <input type="submit" value="Delete Selected" name="deleteSelParentContrl" onClick="return deleteClick()"  class="i18n">
+			  
+			  
+			 <!--<script>
+				if ( <% getIndex("parentContrlNum"); %> == 0 )
+					disableDelButton();
+			 </script>-->
+			 <input type="hidden" value="/parentControl.htm" name="submit-url"> 
+			</form>
+			</div>
