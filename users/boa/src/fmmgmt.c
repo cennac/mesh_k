@@ -55,6 +55,8 @@
 #define WAPI_AREA_BASE (MTD1_SIZE-WAPI_SIZE)
 #endif
 
+#define MAX_L2_LIST_NUM    256
+
 extern int Decode(unsigned char *ucInput, unsigned int inLen, unsigned char *ucOutput);
 
 extern void log_boaform(char *form, request *req);
@@ -864,12 +866,16 @@ void formSaveConfig(request *wp, char *path, char *query)
 	}
 
 	strRequest = req_get_cstream_var(wp, ("save-cs"), "");
-	if (strRequest[0])
+	if (strRequest[0]){
 		type |= CURRENT_SETTING;
+        save_cs_to_Mesh1();
+	}
 
 	strRequest = req_get_cstream_var(wp, ("save"), "");
-	if (strRequest[0])
+	if (strRequest[0]){
 		type |= CURRENT_SETTING;
+        save_cs_to_Mesh1();
+	}
 
 	strRequest = req_get_cstream_var(wp, ("save-hs"), "");
 	if (strRequest[0])
@@ -3449,6 +3455,33 @@ ret_upload:
 	ERR_MSG(tmpBuf);
 }
 
+void formRemoteUp(request *wp, char * path, char * query)
+{
+    char tmpBuf[200]={0};
+	sprintf(tmpBuf, "Upload successfully (size = %d bytes)!<br><br>Firmware update in progress.<br> Do not turn off or reboot the AP during this time.", wp->upload_len);
+#if 0
+	Reboot_Wait = (wp->upload_len/69633)+57+5;
+
+	if (update_cfg==1 && update_fw==0) {
+		strcpy(tmpBuf, "<b>Update successfully!");
+		Reboot_Wait = (wp->upload_len/69633)+45+5;
+		isCFG_ONLY= 1;
+	}
+
+
+	sprintf(lastUrl,"%s","/status.htm");
+	sprintf(okMsg,"%s",tmpBuf);
+	countDownTime = Reboot_Wait;
+	send_redirect_perm(wp, COUNTDOWN_PAGE);
+
+	return;
+
+ret_upload:
+	Reboot_Wait=0;
+#endif
+	ERR_MSG(tmpBuf);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 void formPasswordSetup(request *wp, char *path, char *query)
 {
@@ -4397,6 +4430,11 @@ void formLogout(request *wp, char *path, char *query)
 		logout = 1 ;
 	}
 
+        
+#ifdef CSRF_SECURITY_PATCH
+        log_boaform("formLogout", wp);  //To set formLogout valid at security_tbl
+#endif
+
 #ifdef LOGIN_URL
 		delete_user(wp);
 	    send_redirect_perm(wp, WEB_PAGE_LOGIN);
@@ -4409,10 +4447,6 @@ void formLogout(request *wp, char *path, char *query)
 	send_redirect_perm(wp, return_url);	
 #else
         OK_MSG(return_url);
-#endif
-
-#ifdef CSRF_SECURITY_PATCH
-        log_boaform("formLogout", wp);  //To set formLogout valid at security_tbl
 #endif
 
 	return;
@@ -7075,7 +7109,7 @@ int get_info_from_l2_tab(char *filename, rtk_l2Info l2list[])
 
 		if(strstr(line_buffer, "ff:ff:ff:ff:ff:ff") || strstr(line_buffer, "CPU") || strstr(line_buffer, "FID:1") || strstr(line_buffer, br0_mac_str))
 			continue;	
-		
+        
 		pchar=strchr(line_buffer, ':');
 		pstart=pchar-2;
 		for(i=0, j=0; i<17 && j<12; i++)
@@ -7094,6 +7128,8 @@ int get_info_from_l2_tab(char *filename, rtk_l2Info l2list[])
 			sscanf(pchar,"mbr(%d",&(l2list[idx].portNum));
 			
 			idx++;
+            if(idx >= MAX_L2_LIST_NUM)
+                break;
 		}		
 	}
 	fclose(fp);
@@ -7437,7 +7473,7 @@ void GetPortStatus(int port_number,rtk_asicConterInfo *info)
 int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,int max_num)
 {	
 	int l2_tab_num=0,i=0,wifi_sta_num=0,arp_entry_num=0,dhcp_device_num=0,devInfoIdx=0;
-	rtk_l2Info l2list[MAX_STA_NUM+1]={0};
+	rtk_l2Info l2list[MAX_L2_LIST_NUM]={0};
 	rtk_asicConterInfo asicConInfo={0};
 	WLAN_STA_INFO_T wlanStaList[MAX_STA_NUM]={0};
 	RTK_ARP_ENTRY_T arp_tab[ARP_TABLE_MAX_NUM]={0};
@@ -7457,25 +7493,34 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
     memcpy(lan_mac, hwaddr.sa_data, 6);
 
 //l2 table
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
+
+    bzero(l2list, sizeof(l2list));
 	l2_tab_num=get_info_from_l2_tab("/proc/rtl865x/l2", l2list);
+    
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok, l2_tab_num = %d.\n", l2_tab_num);
 	for(i=0;i<l2_tab_num;i++)
 	{//assign all mac in pdevinfo, get mac index. if mac not exist, add it to pdevinfo arrary
-		devInfoIdx=getDstMacIdx(pdevinfo,l2list[i].mac,MAX_STA_NUM);	
-		//printf("%s:%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,maclist[i][0],maclist[i][1],maclist[i][2],maclist[i][3],maclist[i][4],maclist[i][5]);
-		if(devInfoIdx < MAX_STA_NUM)
-		{
-    		pdevinfo[devInfoIdx].conType=RTK_ETHERNET;
+	     if(l2list[i].portNum == 2 || l2list[i].portNum == 3)
+	     {
+    		devInfoIdx=getDstMacIdx(pdevinfo,l2list[i].mac,MAX_STA_NUM);	
+    		//printf("%s:%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,maclist[i][0],maclist[i][1],maclist[i][2],maclist[i][3],maclist[i][4],maclist[i][5]);
+    		if(devInfoIdx < MAX_STA_NUM)
+    		{
+        		pdevinfo[devInfoIdx].conType=RTK_ETHERNET;
 
-    		GetPortStatus(l2list[i].portNum,&asicConInfo);
-    		pdevinfo[devInfoIdx].tx_bytes=asicConInfo.rxBytes;
-    		pdevinfo[devInfoIdx].rx_bytes=asicConInfo.txBytes;	
-            pdevinfo[devInfoIdx].rssi = 100;
-            pdevinfo[devInfoIdx].rx_speed = 0;
-            pdevinfo[devInfoIdx].tx_speed = 0;
-		}
+        		GetPortStatus(l2list[i].portNum,&asicConInfo);
+        		pdevinfo[devInfoIdx].tx_bytes=asicConInfo.rxBytes;
+        		pdevinfo[devInfoIdx].rx_bytes=asicConInfo.txBytes;	
+                pdevinfo[devInfoIdx].rssi = 100;
+                pdevinfo[devInfoIdx].rx_speed = 0;
+                pdevinfo[devInfoIdx].tx_speed = 0;
+    		}
+	     }
 	}
 //	printf("%s:%d \n",__FUNCTION__,__LINE__);
 	
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
 //wlan0
 	//printf("sizeof maclist=%d\n",sizeof(maclist));
 	bzero(wlanStaList,sizeof(wlanStaList));
@@ -7501,7 +7546,7 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
             }
 		}
 	}
-
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
     bzero(wlanStaList,sizeof(wlanStaList));
 	getWlStaInfo("wlan0-va1", wlanStaList);
 	for(i=0;i<MAX_STA_NUM;i++)
@@ -7525,7 +7570,7 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
             }
 		}
 	}
-	
+	DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
 #if defined(CONFIG_RTL_92D_SUPPORT)
 //wlan1
 	bzero(wlanStaList,sizeof(wlanStaList));
@@ -7547,7 +7592,7 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
             }
 		}
 	}
-
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
     bzero(wlanStaList,sizeof(wlanStaList));
 	getWlStaInfo("wlan1-va1", wlanStaList);
 	for(i=0;i<MAX_STA_NUM;i++)
@@ -7568,11 +7613,11 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
 		}
 	}
 #endif
-
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
 //arp table
 	arp_entry_num=get_arp_table_list("/proc/net/arp", arp_tab);
 	//printf("%s:%d \n",__FUNCTION__,__LINE__);
-
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
 	for(i=0;i<arp_entry_num;i++)
 	{
 		devInfoIdx=getDstMacIdx(pdevinfo,arp_tab[i].mac,MAX_STA_NUM);
@@ -7588,11 +7633,11 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
     		//printf("%s:%d \n",__FUNCTION__,__LINE__);
 		}
 	}
-
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
 //dhcp list
 	rtk_get_dhcp_client_list(&dhcp_device_num, &dhcp_client_info);
 	//printf("%s:%d dhcp_device_num=%d\n",__FUNCTION__,__LINE__,dhcp_device_num);
-
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
 	for(i=0;i<dhcp_device_num;i++)
 	{
 		devInfoIdx=getDstMacIdx(pdevinfo,dhcp_client_info[i].mac,MAX_STA_NUM);
@@ -7604,7 +7649,7 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
         }
 	}
 	
-	
+	DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
 	devNum=getDstMacIdx(pdevinfo,mac_null,MAX_STA_NUM);
 	for(i=0;i<devNum;i++)
 	{
@@ -7614,7 +7659,7 @@ int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,i
 		if(ret<0)
 			strcpy(pdevinfo[i].brand,"---");
 	}
-
+    DTRACE(DTRACE_ASP_FMMGMT, "rtk_get_lan_device_info run ok.\n");
 	*num=devNum;
 	return 0;
 	
@@ -7852,6 +7897,9 @@ cJSON * creatJSONMeshStationOBJ(RTK_LAN_DEVICE_INFO_T *devinfo)
     
     obj = cJSON_CreateObject();
 
+    if(obj == NULL)
+        return NULL;
+
     sprintf(buf,"%02x%02x%02x%02x%02x%02x",devinfo->mac[0], devinfo->mac[1], devinfo->mac[2], devinfo->mac[3], devinfo->mac[4], devinfo->mac[5]);
     cJSON_AddStringToObject(obj, "station_mac", buf);
     sprintf(buf, "%d", devinfo->rssi);
@@ -8027,45 +8075,60 @@ cJSON *getMeshTopologyJSON()
     cJSON *obj_station;
     int i;
 
+    DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
     rtk_get_lan_device_info(&num, devinfo, MAX_STA_NUM);
-    
+    DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
     fp = fopen("/tmp/topology_json", "r");
+    DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
 	if (fp == NULL) 
     {
         struct in_addr	intaddr;
         struct sockaddr hwaddr;
         unsigned char *mac;
-        
-		root = cJSON_CreateObject();
 
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
+		root = cJSON_CreateObject();
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
+        if(root == NULL)
+        {
+            printf("[%s:%d] cJSON_CreateObject fail.", __FUNCTION__, __LINE__);
+            return -1;
+        }
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         if (!apmib_get( MIB_MAP_DEVICE_NAME, (void *)buf)) 
         {
 			sprintf(buf, "%s", "null" );
 		}
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         cJSON_AddStringToObject(root, "device_name", buf);
-
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         getInAddr("br0", IP_ADDR, (void *)&intaddr );
         sprintf(buf, "%s", inet_ntoa(intaddr) );
         cJSON_AddStringToObject(root, "ip_addr", buf);
-
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         mac = (unsigned char *)hwaddr.sa_data;
 		sprintf(buf,"%02x%02x%02x%02x%02x%02x",mac[0], mac[1],mac[2], mac[3], mac[4], mac[5]);
         cJSON_AddStringToObject(root, "mac_address", buf);
-        
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         cJSON_AddItemToObject(root, "neighbor_devices", cJSON_CreateArray());
-
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         cJSON *obj_array;
         cJSON_AddItemToObject(root, "station_info", obj_array = cJSON_CreateArray());
-        for(i = 0; i < num; i++)
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
+        if(obj_array != NULL)
         {
-            if(devinfo[i].on_link == 1)
+            for(i = 0; i < num; i++)
             {
-                obj_station = creatJSONMeshStationOBJ(&devinfo[i]);
-                cJSON_AddItemToArray(obj_array, obj_station);
+                if(devinfo[i].on_link == 1)
+                {
+                    obj_station = creatJSONMeshStationOBJ(&devinfo[i]);
+                    cJSON_AddItemToArray(obj_array, obj_station);
+                }
             }
         }
-        
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         cJSON_AddItemToObject(root, "child_devices", cJSON_CreateArray());
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
        
 	}
     else
@@ -8073,12 +8136,20 @@ cJSON *getMeshTopologyJSON()
 		ssize_t read;
 		size_t  len   = 0;
 		char*	line  = NULL;
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
 		read = getline(&line, &len, fp);
 		fclose(fp);
-
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
+        if(line == NULL)
+        {
+            printf("[%s:%d] getline fail.", __FUNCTION__, __LINE__);
+            return -1;
+        }
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         root = cJSON_Parse(line);
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         free(line);
-
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         if(root == NULL)
         {
             printf("[%s:%d] cJSON_Parse fail.", __FUNCTION__, __LINE__);
@@ -8086,8 +8157,10 @@ cJSON *getMeshTopologyJSON()
         }
 
         addExtStationInfoToTopology(root, devinfo);
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         cJSON *obj;
         obj = cJSON_GetObjectItem(root, "station_info");
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
         if(obj != NULL)
         {
             for(i = 0; i < num; i++)
@@ -8100,6 +8173,7 @@ cJSON *getMeshTopologyJSON()
                 }
             }
         }
+        DTRACE(DTRACE_ASP_FMMGMT, "getMeshTopologyJSON run ok.\n");
 
     }
 
@@ -8112,12 +8186,29 @@ int showMeshTopology(request *wp, int argc, char **argv)
     char *out;
     int ret;
 
+    DTRACE(DTRACE_ASP_FMMGMT, "showMeshTopology run ok.\n");
     root = getMeshTopologyJSON();
+    DTRACE(DTRACE_ASP_FMMGMT, "showMeshTopology run ok.\n");
+    if(root == NULL)
+    {
+        printf("[%s:%d] getMeshTopologyJSON fail.", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    DTRACE(DTRACE_ASP_FMMGMT, "showMeshTopology run ok.\n");
     out = cJSON_Print(root);
+    DTRACE(DTRACE_ASP_FMMGMT, "showMeshTopology run ok.\n");
 	cJSON_Delete(root);	
+    DTRACE(DTRACE_ASP_FMMGMT, "showMeshTopology run ok.\n");
+    if(out == NULL)
+    {
+        printf("[%s:%d] cJSON out fail.", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    DTRACE(DTRACE_ASP_FMMGMT, "showMeshTopology run ok.\n");
     ret = req_format_write(wp, "%s", out);
+    DTRACE(DTRACE_ASP_FMMGMT, "showMeshTopology run ok.\n");
     free(out);
-
+    DTRACE(DTRACE_ASP_FMMGMT, "showMeshTopology run ok.\n");
     return ret;
 }
 
@@ -8128,7 +8219,14 @@ void CalcOnlineClientNum(cJSON *obj, int *num)
     cJSON *pos;
 
     station_array = cJSON_GetObjectItem(obj, "station_info");
-    *num += cJSON_GetArraySize(station_array);
+    if(station_array != NULL)
+    {
+        *num += cJSON_GetArraySize(station_array);
+    }
+    else
+    {
+        printf("[%s:%d] can't find station_info.", __FUNCTION__, __LINE__);
+    }
 
     head = cJSON_GetObjectItem(obj, "child_devices");
 
@@ -8150,10 +8248,20 @@ int getTotalOnlineClientNum(request *wp, int argc, char **argv)
 {
     int online_num = 0;
     cJSON *root;
- 
+
+    DTRACE(DTRACE_ASP_FMMGMT, "getTotalOnlineClientNum run ok.\n");
     root = getMeshTopologyJSON();
+    DTRACE(DTRACE_ASP_FMMGMT, "getTotalOnlineClientNum run ok.\n");
+    if(root == NULL)
+    {
+        printf("[%s:%d] getMeshTopologyJSON fail.", __FUNCTION__, __LINE__);
+        return -1;
+    }
+    DTRACE(DTRACE_ASP_FMMGMT, "getTotalOnlineClientNum run ok.\n");
     CalcOnlineClientNum(root, &online_num);
+    DTRACE(DTRACE_ASP_FMMGMT, "getTotalOnlineClientNum run ok.\n");
     cJSON_Delete(root);	
+    DTRACE(DTRACE_ASP_FMMGMT, "getTotalOnlineClientNum run ok.\n");
      
     int ret = req_format_write(wp, "%d", online_num);
     return ret;
@@ -8173,8 +8281,7 @@ void formLEDControl(request *wp, char *path, char *query)
     char *str_val = NULL;
     int val;
     char tmp_buf[200];
-    char *led_enable_path = "/proc/gpio";
-    
+
     str_val = req_get_cstream_var(wp, "led_enabled", "");
     if (!strcmp(str_val, "0"))
     {
@@ -8183,8 +8290,6 @@ void formLEDControl(request *wp, char *path, char *query)
         {
   		    printf("set MIB_LED_ENABLE err.\n");
 	    }
-		sprintf(tmp_buf, "echo 0 > %s", led_enable_path);
-        system(tmp_buf);
     }
 	else
 	{
@@ -8192,9 +8297,7 @@ void formLEDControl(request *wp, char *path, char *query)
         if (apmib_set( MIB_LED_ENABLE, (void *)&val) == 0) 
         {
   		    printf("set MIB_LED_ENABLE err.\n");
-	    }
-		sprintf(tmp_buf, "echo 1 > %s", led_enable_path);
-        system(tmp_buf);    
+	    } 
 	}
 
     str_val = req_get_cstream_var(wp, ("submit-url"), "");
@@ -8286,4 +8389,276 @@ void fromTimerReboot(request *wp, char *path, char *query)
 #endif
 
 }
+
+int SetToController()
+{
+    int old_wlan_idx;
+    int old_vwlan_idx;
+    int i,j;
+    int mib_val;
+    char key[MAX_PSK_LEN];
+//    char buf[100];
+    
+    old_wlan_idx = wlan_idx;
+    old_vwlan_idx = vwlan_idx;
+
+    mib_val = 1;
+    for (i = 0; i < 2; i++)
+	{
+		wlan_idx = i;
+
+		for (j = 0; j < 6; j++)
+		{
+			vwlan_idx = j;
+			apmib_set(MIB_WLAN_DOT11K_ENABLE, (void *) &mib_val);
+			apmib_set(MIB_WLAN_DOT11V_ENABLE, (void *) &mib_val);
+		}
+	}
+
+    mib_val = DHCP_SERVER;
+	apmib_set(MIB_DHCP, (void *)&mib_val);
+
+	mib_val = 480;
+	apmib_set(MIB_DHCP_LEASE_TIME, (void *)&mib_val);
+    // Set to controller
+	mib_val = 1;
+	apmib_set(MIB_MAP_CONTROLLER, (void *)&mib_val);
+	apmib_get(MIB_OP_MODE, (void *)&mib_val);
+	if(WISP_MODE != mib_val) {
+		// Disable repeater
+		mib_val = 0;
+		apmib_set(MIB_REPEATER_ENABLED1, (void *)&mib_val);
+		apmib_set(MIB_REPEATER_ENABLED2, (void *)&mib_val);
+		// Disable vxd
+		mib_val    = 1;
+		wlan_idx  = 0;
+		vwlan_idx = 5;
+		apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mib_val);
+		wlan_idx  = 1;
+		vwlan_idx = 5;
+		apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mib_val);
+	}
+
+	// if different from prev role, reset this mib to 0
+	mib_val = 0;
+	apmib_set(MIB_MAP_CONFIGURED_BAND, (void *)&mib_val);
+
+
+	// enable va0 on both wlan0 and wlan1
+	mib_val    = 0;
+	wlan_idx  = 0;
+	vwlan_idx = 1;
+	apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mib_val);
+	mib_val = ENCRYPT_WPA2;
+	apmib_set(MIB_WLAN_ENCRYPT, (void *)&mib_val);
+	mib_val = WPA_AUTH_PSK;
+	apmib_set(MIB_WLAN_WPA_AUTH, (void *)&mib_val);
+
+	mib_val    = 0;
+	wlan_idx  = 1;
+	vwlan_idx = 1;
+	apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mib_val);
+	mib_val = ENCRYPT_WPA2;
+	apmib_set(MIB_WLAN_ENCRYPT, (void *)&mib_val);
+	mib_val = WPA_AUTH_PSK;
+	apmib_set(MIB_WLAN_WPA_AUTH, (void *)&mib_val);
+
+	mib_val = 0x20; // fronthaul value
+	int val;
+	for (i = 0; i < 2; i++) 
+   {
+		for (j = 0; j < 5; j++) 
+        {
+			wlan_idx  = i;
+			vwlan_idx = j;
+			if (!apmib_get(MIB_WLAN_WLAN_DISABLED, (void *)&val))
+				goto SET_ERR;
+			if (val == 0) // only set to fronthaul if this interface is enabled
+				apmib_set(MIB_WLAN_MAP_BSS_TYPE, (void *)&mib_val);
+		}
+	}
+
+	wlan_idx  = 0;
+	vwlan_idx = 0;
+	mib_val = 1;
+	apmib_set(MIB_WLAN_STACTRL_ENABLE, (void *)&mib_val);
+	apmib_set(MIB_WLAN_STACTRL_PREFER, (void *)&mib_val);
+
+	wlan_idx  = 1;
+	vwlan_idx = 0;
+	mib_val = 1;
+	apmib_set(MIB_WLAN_STACTRL_ENABLE, (void *)&mib_val);
+	mib_val = 0;
+	apmib_set(MIB_WLAN_STACTRL_PREFER, (void *)&mib_val);
+
+    vwlan_idx = 1;
+    for(wlan_idx = 0; wlan_idx < 2; wlan_idx++)
+    {
+        if(!apmib_get(MIB_WLAN_WPA_PSK, (void *) key))
+        {
+            DPrintf("[Error] : Failed to get AP mib MIB_WLAN_WPA_PSK\n");
+			goto SET_ERR;
+        }
+		if (!apmib_set(MIB_WLAN_WSC_PSK, (void *) key))
+		{
+			DPrintf("[Error] : Failed to set AP mib MIB_WLAN_WPA_PSK\n");
+			goto SET_ERR;
+		}
+		
+		
+		mib_val = WSC_AUTH_WPA2PSK;
+		apmib_set(MIB_WLAN_WSC_AUTH, (void *) &mib_val);
+		mib_val = WSC_ENCRYPT_AES;
+		apmib_set(MIB_WLAN_WSC_ENC, (void *) &mib_val);
+		mib_val = 1;
+		apmib_set(MIB_WLAN_WSC_CONFIGURED, (void *) &mib_val);
+		mib_val = WPA_CIPHER_AES;
+		apmib_set(MIB_WLAN_WPA2_CIPHER_SUITE, (void *) &mib_val);
+		
+		mib_val = 1;	
+		if (!apmib_set(MIB_WLAN_HIDDEN_SSID, (void *) &mib_val))
+		{
+			DPrintf("[Error] : Failed to set AP mib MIB_WLAN_HIDDEN_SSID\n");
+			goto SET_ERR;
+		}
+		
+        mib_val = 0x40; // backhaul value
+        apmib_set(MIB_WLAN_MAP_BSS_TYPE, (void *)&mib_val);
+    }
+
+//    vwlan_idx = 0;
+//    for(wlan_idx = 0; wlan_idx < 2; wlan_idx++)
+//    {
+//       mib_val    = 0;
+//       if (!apmib_set(MIB_WLAN_WLAN_DISABLED, (void *)&mib_val))
+//       {
+//           DPrintf("[Error] : Failed to set AP mib MIB_WLAN_WLAN_DISABLED\n");
+//           goto SET_ERR;
+//       }
+//      
+//       mib_val = ENCRYPT_WPA2;
+//       if (!apmib_set(MIB_WLAN_ENCRYPT, (void *)&mib_val))
+//       {
+//           DPrintf("[Error] : Failed to set AP mib MIB_WLAN_ENCRYPT\n");
+//           goto SET_ERR;
+//       }
+//       
+//       mib_val = WPA_AUTH_PSK;
+//       if (!apmib_set(MIB_WLAN_WPA_AUTH, (void *)&mib_val))
+//       {
+//           DPrintf("[Error] : Failed to set AP mib MIB_WLAN_WPA_AUTH\n");
+//           goto SET_ERR;
+//       }
+//       
+//       strcpy(buf, "kslink123");
+//       if (!apmib_set(MIB_WLAN_WPA_PSK, (void *)buf)) 
+//       {
+//           DPrintf("[Error] : Failed to set AP mib MIB_WLAN_WPA_PSK\n");
+//           goto SET_ERR;
+//       }
+//       
+//
+//       mib_val = WPA_CIPHER_AES;
+//       if (!apmib_set(MIB_WLAN_WPA2_CIPHER_SUITE, (void *)&mib_val))
+//       {
+//           DPrintf("[Error] : Failed to set AP mib MIB_WLAN_WPA2_CIPHER_SUITE\n");
+//           goto SET_ERR;
+//       }
+//        
+//    }
+    
+    wlan_idx = old_wlan_idx;
+    vwlan_idx = old_vwlan_idx;
+    return 1;
+
+SET_ERR:
+    wlan_idx = old_wlan_idx;
+    vwlan_idx = old_vwlan_idx;
+    return 0;
+
+}
+
+void formNewWizard(request *wp, char *path, char *query)
+{
+    int dns_changed=0;
+    char tmp_buf[100];
+    char *submit_url;
+    char *str_password;
+    int mib_val;
+    
+    if(ntpHandler(wp, tmp_buf, 1) < 0)
+		goto SET_ERR;
+	set_timeZone();
+		
+
+	if(tcpipWanHandler(wp, tmp_buf, &dns_changed) < 0)
+    {
+		submit_url = req_get_cstream_var(wp, ("submit-url-wan"), "");   // hidden page
+		goto SET_ERR;	
+	}
+
+    str_password = req_get_cstream_var(wp, "newPass", "");
+
+	
+	if (!str_password[0] ) 
+    {
+		strcpy(tmp_buf, ("ERROR: Password cannot be empty."));
+		goto SET_ERR;
+	}
+
+    if(strlen(str_password) >= MAX_NAME_LEN)
+    {
+        strcpy(tmp_buf, ("ERROR: Password over 30 characters."));
+		goto SET_ERR;
+    }
+    
+	if ( !apmib_set(MIB_USER_PASSWORD, (void *)str_password) ) 
+    {
+		strcpy(tmp_buf, ("ERROR: Set user password to MIB database failed."));
+		goto SET_ERR;
+	}
+
+    mib_val = 1;
+    if (!apmib_set(MIB_FIRST_LOGIN, (void *)&mib_val))
+	{
+		DPrintf("set MIB_FIRST_LOGIN err.\n");
+        goto SET_ERR;
+	}
+
+    if(!SetToController())
+    {
+        DPrintf("SetToController err.\n");
+        goto SET_ERR;
+    }
+    
+    apmib_update_web(CURRENT_SETTING);
+    
+    add_user(wp);
+    
+#ifdef REBOOT_CHECK
+        run_init_script_flag = 1;
+#endif
+#ifndef NO_ACTION
+        run_init_script("all");
+#endif
+//        submit_url = req_get_cstream_var(wp, ("next_url"), "");
+//#ifdef MULTI_WAN_SUPPORT
+//#ifdef APPLY_CHANGE_DIRECT_SUPPORT	
+//        REBOOT_NOWAIT(WEB_PAGE_HOME);
+//#else	
+//        OK_MSG(WEB_PAGE_HOME);
+//#endif
+//#else
+//        REBOOT_WAIT(WEB_PAGE_HOME);
+//#endif
+
+        send_redirect_perm(wp, WEB_PAGE_HOME);
+        return ;
+SET_ERR:
+        
+        OK_MSG1(tmp_buf,WEB_PAGE_WIZARD);
+        return ;
+}
+
+
 

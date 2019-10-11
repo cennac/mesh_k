@@ -13,7 +13,7 @@
 		<link rel="stylesheet" href="css/bootstrap-table.css" />
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
-		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
 		<script type="text/javascript" src="util_gw.js"> </script>
 
 	</head>
@@ -38,19 +38,23 @@
 	    <script src="js/language.js"></script>
 	    <script type="text/javascript">
 	    	//表格
+	    	setTimeout(function(){location.reload()},60000);
 //	    	var terminalList=<%showMeshTopology()%>;
 //	    	var data2=[];
 	    	var device_counter = 0;
 	    	var count = -1 || 0;
-//	    	var string_json = '{"device_name":"EasyMesh_Device","ip_addr":"192.168.1.10","mac_address":"00e04c8136c1","neighbor_devices":[{"neighbor_mac":"00e04c8199c1","neighbor_name":"EasyMesh_Device","neighbor_rssi":"15","neighbor_band":"5G"},{"neighbor_mac":"00e04c8196c1","neighbor_name":"EasyMesh_Device","neighbor_rssi":"20","neighbor_band":"ERR"}],"station_info":[{"station_mac":"2054fa2a55ab","station_rssi":"45","station_connected_band":"5G","station_downlink":"292","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Apple","station_link_time":"null"},{"station_mac":"d016b4f4083f","station_rssi":"38","station_connected_band":"5G","station_downlink":"234","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Huawei","station_link_time":"null"},{"station_mac":"a45046fdc3c5","station_rssi":"49","station_connected_band":"5G","station_downlink":"866","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Huawei","station_link_time":"null"},{"station_mac":"c0ccf8d4ba1f","station_rssi":"72","station_connected_band":"5G","station_downlink":"866","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Samsung","station_link_time":"null"},{"station_mac":"9c4fda6281fa","station_rssi":"54","station_connected_band":"2G","station_downlink":"65","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Samsung","station_link_time":"null"},{"station_mac":"4c49e30a1cee","station_rssi":"43","station_connected_band":"2G","station_downlink":"65","station_uplink":"1","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Samsung","station_link_time":"null"},{"station_mac":"04d13aef56e3","station_rssi":"52","station_connected_band":"2G","station_downlink":"72","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Xiaomi","station_link_time":"null"},{"station_mac":"c09ad0de69af","station_rssi":"40","station_connected_band":"2G","station_downlink":"26","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Xiaomi","station_link_time":"null"}],"child_devices":[{"device_name":"EasyMesh_Device","ip_addr":"192.168.1.100","mac_address":"00e04c8199c1","neighbor_devices":[],"station_info":[],"child_devices":[]},{"device_name":"EasyMesh_Device","ip_addr":"192.168.1.102","mac_address":"00e04c8196c1","neighbor_devices":[{"neighbor_mac":"00e04c7396c1","neighbor_name":"EasyMesh_Device","neighbor_rssi":"40","neighbor_band":"5G"}],"station_info":[{"station_mac":"04d13aef56e3","station_rssi":"52","station_connected_band":"2G","station_downlink":"72","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"LG","station_link_time":"null"},{"station_mac":"c09ad0de69af","station_rssi":"40","station_connected_band":"2G","station_downlink":"26","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"LG","station_link_time":"null"}],"child_devices":[{"device_name":"EasyMesh_Device","ip_addr":"192.168.1.101","mac_address":"00e04c7396c1","neighbor_devices":[],"station_info":[{"station_mac":"04d13aef56e3","station_rssi":"52","station_connected_band":"2G","station_downlink":"72","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Motorola","station_link_time":"null"},{"station_mac":"c09ad0de69af","station_rssi":"40","station_connected_band":"2G","station_downlink":"26","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Nokia","station_link_time":"null"}],"child_devices":[]}]}]}';
+	    	//var object_json = '{"device_name":"EasyMesh_Device","ip_addr":"192.168.1.10","mac_address":"00e04c8136c1","neighbor_devices":[{"neighbor_mac":"00e04c8199c1","neighbor_name":"EasyMesh_Device","neighbor_rssi":"15","neighbor_band":"5G"},{"neighbor_mac":"00e04c8196c1","neighbor_name":"EasyMesh_Device","neighbor_rssi":"20","neighbor_band":"ERR"}],"station_info":[{"station_mac":"2054fa2a55ab","station_rssi":"45","station_connected_band":"5G","station_downlink":"292","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Apple","station_link_time":"null"},{"station_mac":"d016b4f4083f","station_rssi":"38","station_connected_band":"5G","station_downlink":"234","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Huawei","station_link_time":"null"},{"station_mac":"a45046fdc3c5","station_rssi":"49","station_connected_band":"5G","station_downlink":"866","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Huawei","station_link_time":"null"},{"station_mac":"c0ccf8d4ba1f","station_rssi":"72","station_connected_band":"5G","station_downlink":"866","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Samsung","station_link_time":"null"},{"station_mac":"9c4fda6281fa","station_rssi":"54","station_connected_band":"2G","station_downlink":"65","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Samsung","station_link_time":"null"},{"station_mac":"4c49e30a1cee","station_rssi":"43","station_connected_band":"2G","station_downlink":"65","station_uplink":"1","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Samsung","station_link_time":"null"},{"station_mac":"04d13aef56e3","station_rssi":"52","station_connected_band":"2G","station_downlink":"72","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Xiaomi","station_link_time":"null"},{"station_mac":"c09ad0de69af","station_rssi":"40","station_connected_band":"2G","station_downlink":"26","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Xiaomi","station_link_time":"null"}],"child_devices":[{"device_name":"EasyMesh_Device","ip_addr":"192.168.1.100","mac_address":"00e04c8199c1","neighbor_devices":[],"station_info":[],"child_devices":[]},{"device_name":"EasyMesh_Device","ip_addr":"192.168.1.102","mac_address":"00e04c8196c1","neighbor_devices":[{"neighbor_mac":"00e04c7396c1","neighbor_name":"EasyMesh_Device","neighbor_rssi":"40","neighbor_band":"5G"}],"station_info":[{"station_mac":"04d13aef56e3","station_rssi":"52","station_connected_band":"2G","station_downlink":"72","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"LG","station_link_time":"null"},{"station_mac":"c09ad0de69af","station_rssi":"40","station_connected_band":"2G","station_downlink":"26","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"LG","station_link_time":"null"}],"child_devices":[{"device_name":"EasyMesh_Device","ip_addr":"192.168.1.101","mac_address":"00e04c7396c1","neighbor_devices":[],"station_info":[{"station_mac":"04d13aef56e3","station_rssi":"52","station_connected_band":"2G","station_downlink":"72","station_uplink":"6","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Motorola","station_link_time":"null"},{"station_mac":"c09ad0de69af","station_rssi":"40","station_connected_band":"2G","station_downlink":"26","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"chenligui","station_brand":"Nokia","station_link_time":"null"}],"child_devices":[]}]}]}';
 	    	var object_json=<%showMeshTopology()%>;
 //			var object_json={"device_name":"EasyMesh_Device","ip_addr":"192.168.1.211","mac_address":"cc2d2110f0dc","neighbor_devices":[],"station_info":[{"station_mac":"40331a573909","station_rssi":"40","station_connected_band":"5G","station_downlink":"108","station_uplink":"24","station_ip":"192.168.1.100","station_hostname":"iPhone13","station_brand":"Apple","station_link_time":"null"}, {"station_mac":"00e04b68ebf3","station_rssi":"100","station_connected_band":"ETHERNET","station_downlink":"0","station_uplink":"0","station_ip":"192.168.1.13","station_hostname":"---","station_brand":"---","station_link_time":"null"}],"child_devices":[]};
 			var dataList=[];
-			
+			var device_name_list=[];
+			var devide_length=[];
 			var device_counter = 0;
 //			var object_json = JSON.parse(string_json);
 	
     		var curr_device = get_device_json(object_json);
+    		var i18nLanguage=getCookie('userLanguage');
+    		
 			function get_device_json(object_json) {
 			    device_counter++;
 			    if (device_counter == count) {
@@ -58,10 +62,13 @@
 			    }
 			    if(0 != object_json["station_info"].length){
 			    	var childList=object_json["station_info"];
+			    	var name=object_json["device_name"];
 			    	dataList.push(childList);			    		
-			    	
+			    	device_name_list.push(name);
+			    	devide_length.push(object_json["station_info"].length);
 			    }
 				if (0 != object_json["child_devices"].length) {
+					
 					for (var child_device in object_json["child_devices"]) {
 			            var return_object = get_device_json(object_json["child_devices"][child_device]);
 			            if (0 == return_object) {
@@ -77,13 +84,13 @@
             for(var i=0;i<num;i++){
             	var html;
             	if(i==0){
-            		html='<div class="terminal_title"><span class="i18n" name="title_terminal1"></span></div>';
+            		html='<div class="terminal_title"><span class="i18n" name="title_terminal1"></span><span>&nbsp;&nbsp;('+device_name_list[i]+')</span>&nbsp;&nbsp;<span class="i18n" name="terminalNumber"></span><span>'+devide_length[i]+'</span></div>';
 		            html+='<div class="panel panel-default" style="border-radius: 0;">';
 		            html+='<div class="panel-body table-responsive"> ';
 		            html+='<table class="table table-striped table-bordered table-hover" id="tableL0'+i+'"> </table>';
 		            html+='</div></div>';
             	}else{
-            		html='<div class="terminal_title"><span class="i18n" name="title_terminal2">'+(i)+'</span></div>';
+            		html='<div class="terminal_title"><span class="i18n" name="title_terminal2"></span><span>'+i+'</span><span>&nbsp;&nbsp;('+device_name_list[i]+')</span>&nbsp;&nbsp;<span class="i18n" name="terminalNumber"></span><span>'+devide_length[i]+'</span></div>';
 		            html+='<div class="panel panel-default" style="border-radius: 0;">';
 		            html+='<div class="panel-body table-responsive"> ';
 		            html+='<table class="table table-striped table-bordered table-hover" id="tableL0'+i+'"> </table>';
@@ -93,7 +100,80 @@
 				$(".group_terminal").append(html);				　　　　　　　　 		    		 
         	
             	$('#tableL0'+(i)+'').bootstrapTable('destroy');   //动态加载表格之前，先销毁表格
+            	var title1,title2,title3,title4,title5,title6,title7,title8,title9;
+				if(i18nLanguage=='en'){
+					title1="Brand";title2="Equipment Name";title3="IP Address";title4="Mac Address";title5="Rssi";title6="Rssi";title7="Connect Channel";title8="Upstream Rate";title9="Downstream Rate";
+				}else{
+					title1="品牌";title2="设备名称";title3="Ip地址";title4="Mac地址";title5="Rssi";title6="信号强度";title7="连接频道";title8="上行速率";title9="下行速率";				
+				}
 
+
+			var tableColumns = [
+						{field: 'station_brand', title: title1, sortable: false,formatter: function (value, row, index) {
+                    	if(value=="Apple"){
+                    		return '<img src="brand/Apple.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Nokia"){
+                    		return '<img src="brand/Nokia.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Motorola"){
+                    		return '<img src="brand/Motorola.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="LG"){
+                    		return '<img src="brand/LG.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Xiaomi"){
+                    		return '<img src="brand/Xiaomi.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Huawei"){
+                    		return '<img src="brand/Huawei.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Samsung"){
+                    		return '<img src="brand/Samsung.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="meizu"){
+                    		return '<img src="brand/meizu.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Smartisan"){
+                    		return '<img src="brand/Smartisan.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="acer"){
+                    		return '<img src="brand/acer.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Dell"){
+                    		return '<img src="brand/Dell.png" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Lenovo"){
+                    		return '<img src="brand/Lenovo.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="TCL"){
+                    		return '<img src="brand/TCL.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Vivo"){
+                    		return '<img src="brand/Vivo.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="ZTE"){
+                    		return '<img src="brand/ZTE.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Sony"){
+                    		return '<img src="brand/Sony.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="OPPO"){
+                    		return '<img src="brand/OPPO.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="HTC"){
+                    		return '<img src="brand/HTC.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Sharp"){
+                    		return '<img src="brand/Sharp.png" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else if(value=="Philips"){
+                    		return '<img src="brand/Philips.jpg" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}else{
+                    		return '<img src="brand/terminal.png" style="width:36px;height:36px;border-radius: 18px;"/>';
+                    	}
+                	}},
+	                {field: 'station_hostname', title: title2, sortable: false,formatter: function (value, row, index) {
+	                	if(value=="---"){
+	                		if(i18nLanguage=='en'){
+	                			return "Anonymous Terminal";
+	                		}else{	                			
+	                			return "匿名终端";
+	                		}
+	                		
+	                	}else{
+	                		return value;
+	                	}
+	                }},
+	                {field: 'station_ip', title: title3, sortable: false},
+	                {field: 'station_mac', title: title4, sortable: false},
+	                {field: 'station_link_time', title: title5, sortable: false,visible: false},
+	                {field: 'station_rssi', title: title6, sortable: false},
+	                {field: 'station_connected_band', title: title7, sortable: false},
+	                {field: 'station_downlink', title: title8, sortable: false,visible: false},
+	                {field: 'station_uplink', title: title9, sortable: false,visible: false}
+			]
             $('#tableL0'+(i)+'').bootstrapTable({//表格初始化
                 data:dataList[i], //通过ajax返回的数据
                 width:350,
@@ -103,78 +183,24 @@
                 pageList: [],
                 cache: false,
                 search: false,
-                columns: [
-                	{field: 'station_brand', title: '品牌', sortable: false,formatter: function (value, row, index) {
-                    	if(value=="Apple"){
-                    		return '<img src="brand/Apple.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Nokia"){
-                    		return '<img src="brand/Nokia.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Motorola"){
-                    		return '<img src="brand/Motorola.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="LG"){
-                    		return '<img src="brand/LG.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Xiaomi"){
-                    		return '<img src="brand/Xiaomi.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Huawei"){
-                    		return '<img src="brand/Huawei.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Samsung"){
-                    		return '<img src="brand/Samsung.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="meizu"){
-                    		return '<img src="brand/meizu.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Smartisan"){
-                    		return '<img src="brand/Smartisan.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="acer"){
-                    		return '<img src="brand/acer.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Dell"){
-                    		return '<img src="brand/Dell.png" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Lenovo"){
-                    		return '<img src="brand/Lenovo.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="TCL"){
-                    		return '<img src="brand/TCL.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Vivo"){
-                    		return '<img src="brand/Vivo.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="ZTE"){
-                    		return '<img src="brand/ZTE.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Sony"){
-                    		return '<img src="brand/Sony.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="OPPO"){
-                    		return '<img src="brand/OPPO.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="HTC"){
-                    		return '<img src="brand/HTC.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Sharp"){
-                    		return '<img src="brand/Sharp.png" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else if(value=="Philips"){
-                    		return '<img src="brand/Philips.jpg" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}else{
-                    		return '<img src="brand/terminal.png" style="width:36px;height:36px;border: 1px solid #ccc;border-radius: 18px;"/>';
-                    	}
-//                  	function brand_val(value){
-//                  		var html='<img src="brand/'+value+'.jpg" style="width:35px;height:25px"/>';
-//                  		return html;
-//                  	}
-                	}},
-	                {field: 'station_hostname', title: '设备名称', sortable: false,formatter: function (value, row, index) {
-	                	if(value=="---"){
-	                		return "匿名终端";
-	                	}else{
-	                		return value;
-	                	}
-	                }},
-	                {field: 'station_ip', title: 'Ip地址', sortable: false},
-	                {field: 'station_mac', title: 'Mac地址', sortable: false},
-	                {field: 'station_link_time', title: '连接时长', sortable: false,visible: false},
-	                {field: 'station_rssi', title: 'rssi', sortable: false},
-	                {field: 'station_connected_band', title: '连接频道', sortable: false},
-	                {field: 'station_downlink', title: '上行速率', sortable: false},
-	                {field: 'station_uplink', title: '下行速率', sortable: false}
-                ] //表头
+                columns: tableColumns //表头
             });
 //          if($('#tableL0'+(i+1)+'').html()){
 //          	console.log($('#tableL0'+(i+1)+'').parent().parent().parent());
 //          }
             }
             
-            
+            function getCookie(name) {
+			  var cookies = document.cookie;
+			  var list = cookies.split("; ");          // 解析出名/值对列表
+			      
+			  for(var i = 0; i < list.length; i++) {
+			    var arr = list[i].split("=");          // 解析出名和值
+			    if(arr[0] == name)
+			      return decodeURIComponent(arr[1]);   // 对cookie值解码
+			  } 
+			  return "";
+			}
 
 	    </script>
 	</body>

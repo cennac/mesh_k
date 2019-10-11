@@ -41,12 +41,19 @@ var execI18n = function(){
     if ($.cookie("userLanguage")) {
         i18nLanguage = $.cookie("userLanguage");
         if(i18nLanguage=="en"){
-        	$(".logo_img").attr("src","img/ks_link.png");
-        	$(".login_logo img").attr("src","img/ks_link.png");
+        	$(".logo_img").attr("src","img/kingsignal.png");
+        	$(".login_logo img").attr("src","img/kingsignal.png");
         }else{
-        	$(".logo_img").attr("src","img/KSLINK.png");
-        	$(".login_logo img").attr("src","img/KSLINK.png");
+        	$(".logo_img").attr("src","img/kingsignal_ch.png");
+        	$(".login_logo img").attr("src","img/kingsignal_ch.png");
         }
+//      if(i18nLanguage=="en"){
+//      	$(".logo_img").attr("src","img/ks_link.png");
+//      	$(".login_logo img").attr("src","img/ks_link.png");
+//      }else{
+//      	$(".logo_img").attr("src","img/KSLINK.png");
+//      	$(".login_logo img").attr("src","img/KSLINK.png");
+//      }
     } else {
         // 获取浏览器语言
         var navLanguage = getNavLanguage();
@@ -56,11 +63,11 @@ var execI18n = function(){
             if (charSize > -1) {
                 i18nLanguage = navLanguage;
                 if(navLanguage=="en"){
-		        	$(".logo_img").attr("src","img/ks_link.png");
-		        	$(".login_logo img").attr("src","img/ks_link.png");
+		        	$(".logo_img").attr("src","img/kingsignal.png");
+		        	$(".login_logo img").attr("src","img/kingsignal.png");
 		        }else{
-		        	$(".logo_img").attr("src","img/KSLINK.png");
-		        	$(".login_logo img").attr("src","img/KSLINK.png");
+		        	$(".logo_img").attr("src","img/kingsignal_ch.png");
+		        	$(".login_logo img").attr("src","img/kingsignal_ch.png");
 		        }
 		        
 		        //execI18n();
@@ -151,27 +158,21 @@ $(function(){
     /* 选择语言 */
     $("#language").bind('change', function() {
         var language = $(this).children('option:selected').val();
-        if(language=="en"){
-        	$(".logo_img").attr("src","img/ks_link.png");
-        	$(".login_logo img").attr("src","img/ks_link.png");
-        }else{
-        	$(".logo_img").attr("src","img/KSLINK.png");
-        	$(".login_logo img").attr("src","img/KSLINK.png");
-        }
+        if(language == "en") {
+		 	$(".logo_img").attr("src", "img/kingsignal.png");
+		 	$(".login_logo img").attr("src", "img/kingsignal.png");
+		 } else {
+		 	$(".logo_img").attr("src", "img/kingsignal_ch.png");
+		 	$(".login_logo img").attr("src", "img/kingsignal_ch.png");
+		 }
         $.cookie("userLanguage",language,{
             expires:30
         });
         
-//      function addClass_name(){
-	        $(".nav li").each(function(){
-	        	var current_list=$(this).attr("class");
-	        	if(current_list.indexOf("active")!=-1){
-	        		var add_class_name=$(this).attr("class");	        		
-//	        		alert(1111);
-	        	}
-	        })
-//      }
-        //setInterval("addClass_name()",10);
         location.reload();
+	        
+        
     });
 });
+
+	

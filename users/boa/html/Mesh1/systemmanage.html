@@ -13,16 +13,81 @@
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
-		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
+		<script src="js/util_gw.js"></script>
+		<style type="text/css">
+			.time_hide{
+				display: none;
+			}
+			.form-group_smart input.time_t{
+				width: 50px;
+				margin: 0 5px;
+			}
+			.form-group_smart input.time1{
+				margin-left: 15px;
+			}
+			.systemmanage_button .button_submit{
+				width: 120px;
+				margin-left: 15px;
+			}
+			.timeSelect3{
+				margin-left: 15px;
+			}
+		</style>
 	</head>
 	<body onload="setting()">
-		<div class="guest_net">
-				<div class="form-group_smart systemmanage_button" style="margin-bottom: 10px;">
-					<label class="i18n" name="sleep_system"></label>
+		<div class="guest_net guest_net_system">
+			<form action="/boafrm/formLEDControl" method="post" name="manage3">
+				<div class="form-group_smart  systemmanage_button" style="margin-bottom: 10px;">
+					<label class="i18n" name="light_system"></label>
 					<div class="switch_check">
-						<input type="checkbox" class="checkbox_switch1" data-size="mini" name="status" />
+						<input type="checkbox" class="checkbox_switch2" data-size="mini" />
 					</div>
+					<input type="hidden" name="led_enabled" id="checkbox_switch2"/>
+					<button type="submit" name="save_apply" class="i18n" value="1"></button>
+				</div>				
+				<input type="hidden" value="/systemmanage.html" name="submit-url">
+			</form>
+			<form action="/boafrm/fromTimerReboot" method="post" name="manage">
+				<div class="form-group_smart" style="margin-bottom: 10px;padding-left: 10px;height: 42px;">
+					<label class="i18n systemmanage_button1" name="sleep_system"></label>
+					<div class="switch_check" style="height: 42px;line-height: 42px;">
+						<input type="checkbox" class="checkbox_switch1" data-size="mini" />
+					</div>
+					<input type="hidden" name="timer_reboot_enabled" id="checkbox_switch1"/>
+					<div class="time_hide" style="height: 35px;">
+					<input type="text" id="timer_reboot_time" class="" value="<%getIndex("timer_reboot_time");%>" disabled="disabled" style="width: 80px;"/>
+					<input type="hidden" name="timer_reboot_time" id="time_value_submit"/>
+					<button class="systemmanage_button2 i18n" type="button" name="timer_reboot_time2"  data-toggle="modal" data-target="#myModal"></button>					
+					</div>
+					<button class="systemmanage_button2 i18n" type="submit" name="save_apply" value="1" onclick="return submit_click()"></button>
+					<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				    <div class="modal-dialog" style="width: 300px;">
+				        <div class="modal-content">
+				            <div class="modal-header">
+				                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				                <h4 class="modal-title i18n" id="myModalLabel" name="time_setting"></h4>
+				            </div>
+				            <div class="modal-body">			            	
+				            	<div class="timeSelect">
+				            		<select name="" class="timeSelect2" id="hours">
+				            			
+				            		</select>
+				            		<select name="" class="timeSelect2" id="minutes">
+				            			
+				            		</select>
+				            	</div>
+				            </div>
+				            <div class="modal-footer">
+				                <button type="button" class="btn btn-default i18n" data-dismiss="modal" name="close"></button>
+				                <button type="button" class="btn btn-primary i18n"  name="add_value" onclick="return submitClick()"></button>
+				            </div>
+				        </div><!-- /.modal-content -->
+				    </div><!-- /.modal -->
 				</div>
+				</div>
+				<input type="hidden" value="/systemmanage.html" name="submit-url">
+			</form>	
 			<form action="/boafrm/formReboot" method="post" name="manage1">	
 				<div class="form-group_smart systemmanage_button">
 					<label class="i18n" name="now_system"></label>
@@ -33,20 +98,61 @@
 			<form action="/boafrm/formSaveConfig" method="post" name="manage2">
 				<div class="form-group_smart systemmanage_button">
 					<label class="i18n" name="ResetSettings_system"></label>					
-					<button type="reset" name="reset" class="i18n" value="1"></button>	
+					<button type="submit" name="reset" class="i18n" value="Reset" onclick="return OK()"></button>	
 				</div>
 				<input type="hidden" value="/systemmanage.html" name="submit-url">
 			</form>
-			<form action="/boafrm/formLEDControl" method="post" name="manage3">
-				<div class="form-group_smart  systemmanage_button" style="margin-bottom: 10px;">
-					<label class="i18n" name="light_system"></label>
-					<div class="switch_check">
-						<input type="checkbox" class="checkbox_switch2" data-size="mini" name="led_enabled" value="1"/>
-					</div>
-					<button type="submit" name="save" class="i18n" value="1"></button>
-				</div>				
+			
+			<form action="/boafrm/formSaveConfig" method="post" name="saveConfig">
+				<div class="form-group_smart systemmanage_button">
+					<label class="i18n" name="save_config"></label>					
+					<button type="submit" value="Save..." class="i18n" name="save" onclick="return saveClick('/config.dat')"></button>	
+				</div>
+			</form>
+			<form method="post" action="boafrm/formUploadConfig" enctype="multipart/form-data" name="uploadConfig">	
+				<div class="form-group_smart systemmanage_button">
+					<label class="i18n" name="now_systemconfig"></label>
+					<input type="file" name="binary" id="file" style="display:none">
+					<div class="input-append">  
+						<a class="btn btn-info i18n" onclick="$('input[id=file]').click();" name="fileupload_software" style="background-color: #89CEED;border-color: #89CEED;border-radius: 0;">
+						   	<i class="icon-folder-open-alt"></i> 
+						</a>
+						<span id="uploadurl" class="input-large" ></span>
+					</div><span class="i18n" name="Unselected_file" id="Unselected_file"></span>
+					<button type="submit" name="load" class="i18n" value="Upload" onclick="return fileCheck()"></button>
+				</div>
 				<input type="hidden" value="/systemmanage.html" name="submit-url">
 			</form>
+			<form action="/boafrm/formNtp" method="POST" name="time">
+				<div class="form-group_smart systemmanage_button">
+					<label class="i18n" name="now_time"></label>
+					<input type="text" name="year" value="<% getInfo("year"); %>" size="4" maxlength="4" class="time_t time1"><span class="i18n" name="year_s"></span>
+	                <input type="text" name="month" value="<% getInfo("month"); %>" size="2" maxlength="2" class="time_t"><span class="i18n" name="month_s"></span>
+	                <input type="text" name="day" value="<% getInfo("day"); %>" size="2" maxlength="2" class="time_t"><span class="i18n" name="day_s"></span>
+	                <input type="text" name="hour" value="<% getInfo("hour"); %>" size="2" maxlength="2" class="time_t"> <span class="i18n" name="hours_s"></span>
+	                <input type="text" name="minute" value="<% getInfo("minute"); %>" size="2" maxlength="2" class="time_t"><span class="i18n" name="minute_s"></span>
+	                <input type="text" name="second" value="<% getInfo("second"); %>" size="2" maxlength="2" class="time_t"> <span class="i18n" name="second_s"></span>
+	                <button type="button" class="button_submit i18n" id="copy_computer_time_button" value="Copy Computer Time" onclick="copy_computer_time();" name="copy"></button>
+				</div>
+				<div class="form-group_smart systemmanage_button">
+					<label class="i18n" name="now_system_time"></label>
+					<select name="timeZone"  class="timeSelect3">
+	            	<script language="javascript">
+			            	var i;
+			            	for(i=0;i<ntp_zone_array.length;i++){
+						if (i == ntp_zone_index)
+							document.write('<option value="',ntp_zone_array[i].value,'" selected>',ntp_zone_array[i].name,'</option>');
+						else
+							document.write('<option value="',ntp_zone_array[i].value,'">',ntp_zone_array[i].name,'</option>');
+			            	}
+					</script>
+            		</select>		
+            		<button type="submit" style="width: 100px;" class="i18n" value="Save & Apply" name="save_apply" onClick="return saveChanges(document.time)"></button>
+				</div>
+				<input type="hidden" name="enabled" value="ON">
+				<input type="hidden" value="/systemmanage.html" name="submit-url">
+			</form>
+			
 		</div>
 		<script src="js/jquery.js"></script>
 		<script src="js/bootstrap.js"></script>
@@ -56,6 +162,17 @@
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
 		<script>
+			var hours_value,minutes_value;
+			var i18nLanguage=getCookie('userLanguage');
+			var ntp_month_invalid,ntp_time_invalid;
+			if(i18nLanguage=='en'){
+				ntp_month_invalid = 'Invalid month Number. It should be in  number (1-9).';
+				ntp_time_invalid = 'Invalid Time value!';
+			}else{
+				ntp_month_invalid = '无效的月份,这些值必须由0-9的数字组成.';
+				ntp_time_invalid = '无效的时间!';
+			}
+			
 			$(document).ready(function(){
 				//开关按钮
 				$('.checkbox_switch1').bootstrapSwitch({
@@ -66,14 +183,16 @@
 					size: "small",
 					onSwitchChange: function(event, state) {
 						if (state == true) {
-//							$(".checkbox_switch2").val(1);
+							$("#checkbox_switch1").val(1);
+							$(".time_hide").css("display","inline-block");
 						} else {
-//							$(".checkbox_switch2").val(0);
+							$("#checkbox_switch1").val(0);
+							$(".time_hide").css("display","none");
 						}
 					}
 	
 				});
-				$('[name="led_enabled"]').bootstrapSwitch({
+				$('.checkbox_switch2').bootstrapSwitch({
 					onText: "",
 					offText: "",
 					onColor: "success",
@@ -81,21 +200,166 @@
 					size: "small",
 					onSwitchChange: function(event, state) {
 						if (state == true) {
-							$(".checkbox_switch2").val('1');
+							$("#checkbox_switch2").val(1);
 						} else {
-							$(".checkbox_switch2").val('0');
+							$("#checkbox_switch2").val(0);
 						}
 					}
 	
-				})
+				});
+				set_option();
+				$('input[id=file]').change(function() {
+					var path = $(this).val();			
+					path = path.split('\\');		
+					path = path[path.length-1];
+					$('#uploadurl').text(path);
+					if($('#uploadurl').text()){
+						$('#Unselected_file').text('');
+					}else{
+						if(i18nLanguage=='en'){
+							$('#Unselected_file').text('Unselected file');
+						}else{
+							$('#Unselected_file').text('未选择文件');
+						}
+						
+					}
+					
+				});
+				hours_value=$("#hours option:selected").val();
+				minutes_value=$("#minutes option:selected").val();
 			})
+			
+				
+				$("#hours").change(function(){
+					hours_value=$(this).val();
+				});
+				$("#minutes").change(function(){
+					minutes_value=$(this).val();
+				});
+			function submitClick(){
+				$("#timer_reboot_time").val(hours_value+':'+minutes_value);
+				$("#time_value_submit").val(hours_value+':'+minutes_value);
+				$("#myModal").modal('hide');
+				return true;
+			}
+			function submit_click(){
+				$("#timer_reboot_time").val(hours_value+':'+minutes_value);
+				$("#time_value_submit").val(hours_value+':'+minutes_value);
+				return true;
+			}
+			function set_option(){
+				var html1="",html2="";
+				for(var i=0;i<24;i++){
+					html1+='<option value="'+i+'">'+i+'</option>';
+				}
+				$("#hours").append(html1);
+				for(var i=0;i<60;i++){
+					if(i<10){
+						html2+='<option value="0'+i+'">0'+i+'</option>';
+					}else{
+						html2+='<option value="'+i+'">'+i+'</option>';
+					}
+					
+				}
+				$("#minutes").append(html2);
+			}
 			function setting(){
 				var status_led='<%getIndex("led_enabled");%>';
+				var status_curt='<%getIndex("timer_reboot_enabled");%>';
+				//var time='<%getIndex("timer_reboot_time");%>';
 				if(status_led=='0'){
-					$('[name="led_enabled"]').bootstrapSwitch('state', false);
+					$('.checkbox_switch2').bootstrapSwitch('state', false);
+					$("#checkbox_switch2").val(0);
+					
 				}else{
-					$('[name="led_enabled"]').bootstrapSwitch('state', true);
+					$('.checkbox_switch2').bootstrapSwitch('state', true);
+					$("#checkbox_switch2").val(1);
 				}
+				if(status_curt=='0'){
+					$('.checkbox_switch1').bootstrapSwitch('state', false);
+				}else{
+					$('.checkbox_switch1').bootstrapSwitch('state', true);
+				}
+				setTimeZone(document.time.timeZone, "<% getInfo("ntpTimeZone"); %>");
+			}
+			function OK(){
+				if(i18nLanguage=='en'){
+					if(confirm("Do you really want to restore factory setting？")){
+						return true;
+					}else{
+						return false;
+					}
+				}else{
+					if(confirm("确认恢复出厂设置吗？")){
+						return true;
+					}else{
+						return false;
+					}
+				}
+				
+			}
+			function fileCheck()
+			{
+				var oFile = document.getElementById('file'); 
+			    	if(oFile.value == ""){ 
+			    		if(i18nLanguage=='en'){
+			    			alert('Please select a file!');
+			    		}else{
+			    			alert('请选择一个文件!');
+			    		}
+					
+					return false;
+				} 
+				return true;
+			}
+			function saveClick(url)
+			{
+				var saveConfig= '<% getInfo("saveConfig"); %>';
+			  if (verifyBrowser() == "ie4" ) {
+				window.location.href = url;
+				return false;
+			  }
+			  else
+			  	return true;
+			}
+			function saveChanges(form){
+				var Month_num;
+				var Day_num;
+				var Hour_num;
+				var Min_num;
+				var Sec_num;
+				if((checkEmpty(form.year)& checkEmpty(form.month) & checkEmpty(form.hour)
+				 & checkEmpty(form.day) &checkEmpty(form.minute) & checkEmpty(form.second))== false)
+				 	return false;
+			
+				if((checkNumber(form.year)& checkNumber(form.month) & checkNumber(form.hour)
+				 & checkNumber(form.day) &checkNumber(form.minute) & checkNumber(form.second))== false)
+				 	return false;
+				if(form.month.value == '0'){
+					form.month.value = form.month.defaultValue;
+			        	alert(ntp_month_invalid);
+					return false;
+				}
+				Month_num =parseInt(form.month.value, 10);
+				Day_num =parseInt(form.day.value, 10);
+				Hour_num =parseInt(form.hour.value, 10);
+				Min_num =parseInt(form.minute.value, 10);
+				Sec_num =parseInt(form.second.value, 10);
+				if((Month_num<=0) || (Month_num > 12) || (Day_num <= 0) || (Day_num > 31) || (Hour_num < 0)  || (Hour_num > 23) || (Min_num < 0) || (Min_num > 59) || (Sec_num < 0) || (Sec_num > 59)){
+						alert(ntp_time_invalid);
+					return false;
+				}
+				return true;
+			}
+			function copy_computer_time()
+			{
+				var date = new Date();
+				document.time.year.value = date.getFullYear();
+				document.time.month.value = date.getMonth()+1;
+				document.time.day.value = date.getDate();
+				document.time.hour.value = date.getHours();
+				document.time.minute.value = date.getMinutes();
+				document.time.second.value = date.getSeconds();
 			}
 		</script>
 	</body>

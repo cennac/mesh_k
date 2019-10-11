@@ -23,6 +23,9 @@
 #include <linux/wireless.h>
 
 #include "./../src/utility.h"
+
+#define MAX_L2_LIST_NUM    256
+
 int g_parentControlFlag=0;
 extern int getWlStaInfo( char *interface,  WLAN_STA_INFO_Tp pInfo );
 
@@ -2373,6 +2376,8 @@ int get_info_from_l2_tab(char *filename, rtk_l2Info l2list[])
 			sscanf(pchar,"mbr(%d",&(l2list[idx].portNum));
 			
 			idx++;
+            if(idx >= MAX_L2_LIST_NUM)
+                break;
 		}		
 	}
 	fclose(fp);
@@ -2629,7 +2634,7 @@ void GetPortStatus(int port_number,rtk_asicConterInfo *info)
 static int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pdevinfo,int max_num)
 {	
 	int l2_tab_num=0,i=0,wifi_sta_num=0,arp_entry_num=0,dhcp_device_num=0,devInfoIdx=0;
-	rtk_l2Info l2list[MAX_STA_NUM+1]={0};
+	rtk_l2Info l2list[MAX_L2_LIST_NUM]={0};
 	rtk_asicConterInfo asicConInfo={0};
 	WLAN_STA_INFO_T wlanStaList[MAX_STA_NUM]={0};
 	RTK_ARP_ENTRY_T arp_tab[ARP_TABLE_MAX_NUM]={0};
@@ -2649,22 +2654,26 @@ static int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pde
     memcpy(lan_mac, hwaddr.sa_data, 6);
 
 //l2 table
+    bzero(l2list, sizeof(l2list));
 	l2_tab_num=get_info_from_l2_tab("/proc/rtl865x/l2", l2list);
 	for(i=0;i<l2_tab_num;i++)
 	{//assign all mac in pdevinfo, get mac index. if mac not exist, add it to pdevinfo arrary
-		devInfoIdx=getDstMacIdx(pdevinfo,l2list[i].mac,MAX_STA_NUM);	
-		//printf("%s:%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,maclist[i][0],maclist[i][1],maclist[i][2],maclist[i][3],maclist[i][4],maclist[i][5]);
-		if(devInfoIdx < MAX_STA_NUM)
-		{
-    		pdevinfo[devInfoIdx].conType=RTK_ETHERNET;
+	     if(l2list[i].portNum == 2 || l2list[i].portNum == 3)
+	     {
+    		devInfoIdx=getDstMacIdx(pdevinfo,l2list[i].mac,MAX_STA_NUM);	
+    		//printf("%s:%d mac=%02x:%02x:%02x:%02x:%02x:%02x\n",__FUNCTION__,__LINE__,maclist[i][0],maclist[i][1],maclist[i][2],maclist[i][3],maclist[i][4],maclist[i][5]);
+    		if(devInfoIdx < MAX_STA_NUM)
+    		{
+        		pdevinfo[devInfoIdx].conType=RTK_ETHERNET;
 
-    		GetPortStatus(l2list[i].portNum,&asicConInfo);
-    		pdevinfo[devInfoIdx].tx_bytes=asicConInfo.rxBytes;
-    		pdevinfo[devInfoIdx].rx_bytes=asicConInfo.txBytes;	
-            pdevinfo[devInfoIdx].rssi = 100;
-            pdevinfo[devInfoIdx].rx_speed = 0;
-            pdevinfo[devInfoIdx].tx_speed = 0;
-		}
+        		GetPortStatus(l2list[i].portNum,&asicConInfo);
+        		pdevinfo[devInfoIdx].tx_bytes=asicConInfo.rxBytes;
+        		pdevinfo[devInfoIdx].rx_bytes=asicConInfo.txBytes;	
+                pdevinfo[devInfoIdx].rssi = 100;
+                pdevinfo[devInfoIdx].rx_speed = 0;
+                pdevinfo[devInfoIdx].tx_speed = 0;
+    		}
+	     }
 	}
 //	printf("%s:%d \n",__FUNCTION__,__LINE__);
 	
@@ -2827,7 +2836,7 @@ static int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pde
 	 for (i=1; i<=num; i++) 
 	 {
 	   sprintf(macEntry,"%02X:%02X:%02X:%02X:%02X:%02X", devinfo[i-1].mac[0], devinfo[i-1].mac[1], devinfo[i-1].mac[2], devinfo[i-1].mac[3],devinfo[i-1].mac[4],devinfo[i-1].mac[5]);
-	   if((strcmp(hostname,devinfo[i-1].hostname)==0)||(strncmp(hostname,macEntry,17)==0))
+	   if((strcmp(hostname,devinfo[i-1].hostname)==0)||(strncasecmp(hostname,macEntry,17)==0))
 	   {
 	  // printf("------>function_%s_line[%d]: mac=%02X:%02X:%02X:%02X:%02X:%02X\n",__FUNCTION__,__LINE__,devinfo[i-1].mac[0], devinfo[i-1].mac[1], devinfo[i-1].mac[2], devinfo[i-1].mac[3],devinfo[i-1].mac[4],devinfo[i-1].mac[5]);
 	    //sprintf(macEntry,"%02X:%02X:%02X:%02X:%02X:%02X", devinfo[i-1].mac[0], devinfo[i-1].mac[1], devinfo[i-1].mac[2], devinfo[i-1].mac[3],devinfo[i-1].mac[4],devinfo[i-1].mac[5]);
@@ -2864,7 +2873,7 @@ static int rtk_get_lan_device_info(unsigned int *num, RTK_LAN_DEVICE_INFO_Tp pde
 	 p = strsep(&buff, ";");
 	while(p)
 	{
-	 //printf("------>function_%s_line[%d]:hostname[%s] \n",__FUNCTION__,__LINE__,p);
+	 printf("------>function_%s_line[%d]:hostname[%s] \n",__FUNCTION__,__LINE__,p);
 	 parentControlSetting(p);
 	 p = strsep(&buff, ";");
 	 i++;
@@ -2882,12 +2891,13 @@ int setParentContrl(void)
 	char cmdBuffer[80];
 
 	apmib_get(MIB_PARENT_CONTRL_TBL_NUM, (void *)&entryNum);
+	printf("------>function_%s_line[%d]:entryNum[%d] \n",__FUNCTION__,__LINE__,entryNum);
 
 	for (index=1; index<=entryNum; index++) {
 		memset(&entry, '\0', sizeof(entry));
 		*((char *)&entry) = (char)index;
 		apmib_get(MIB_PARENT_CONTRL_TBL, (void *)&entry);
-		// printf("------>function_%s_line[%d]:parentContrlTerminal[%s] \n",__FUNCTION__,__LINE__,entry.parentContrlTerminal);
+		 printf("------>function_%s_line[%d]:parentContrlTerminal[%s] \n",__FUNCTION__,__LINE__,entry.parentContrlTerminal);
         parseTerminalMac(entry.parentContrlTerminal);				
 	}
 	return 0;

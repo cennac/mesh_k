@@ -1,12 +1,190 @@
 <!DOCTYPE html>
-<html lang="zh">
-<head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta http-equiv="X-UA-Compatible" content="ie=edge" />
-	<title>Document</title>
-</head>
-<body>
-	
-</body>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<meta id="i18n_pagename" content="index-common">
+	    <meta name="keywords" content=""/>
+	    <meta name="description" content=""/>
+	    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
+		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="css/base.css"/>
+		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
+		<script src="js/util_gw.js"></script>
+		<style type="text/css">
+			#up_tips,#up_tips2{
+				height: 50px;
+				font-size: 16px;
+				display: none;
+			}
+			.connect_status2{
+				float: left;
+				top: -1px;
+				left: 0;
+				display: inline-block;
+			}
+			.form-group_smart label{
+				width: auto;
+			}
+			.form-group_smart button{
+				background: #89CEED;
+				color: #FFFFFF;
+				font-size: 14px;
+				border: none;
+				height: 35px;
+				line-height: 35px;
+			}
+			.fwversion{
+				font-size: 16px;
+				padding-left: 15px;
+			}
+			.fwversion_label{
+				font-weight: normal;
+				font-size: 16px;
+			}
+			.only_span{
+				width: 5px;
+				display: inline-block;
+		</style>
+	</head>
+	<body>
+		<div class="guest_net_parent">
+			<form method="post" action="boafrm/formRemoteUp" enctype="multipart/form-data" name="upload2">
+				<div id="up_tips"><div class="connect_status2"></div><span class="i18n" name="currect_ver"></span></div>
+				<div class="form-group_smart vm_version"><label class="i18n" name="version_softwareup"></label><span class="fwversion">VM1.0.3</span></div>
+				<div id="up_tips2"><div class="connect_status2"></div><span class="i18n" name="currect_ver2"></span></div>
+				<div class="form-group_smart softup_content_mes">
+					<label class="i18n fwversion_label" name="version_softwareup_n"></label><span class="ver_message fwversion"></span>
+				</div>
+				<div class="softup_content">
+					<div class="form-group_smart"><label class="i18n" name="version_softwareup"></label><span class="fwversion">VM1.0.3</span></div>
+					<div class="form-group_smart"><span class="only_span"></span><button class="i18n" type="submit" value="Upload" name="upload_submit"></button></div>
+				</div>
+				<input type="hidden" value="/softwareup.html" name="submit-url">
+			</form>
+			<hr>
+			<form method="post" action="boafrm/formUpload" enctype="multipart/form-data" name="upload">
+			<div class="softup_content2">
+				<div class="test"><span class="test_new i18n" name="test_new_zhu"></span></div>
+				<div class="tips"><p class="i18n" name="tips_for_softwareup"></p></div>
+				<div class="soft_up_selectversion">
+					<div class="form-group_smart"><label class="i18n" name="version_softwareup"></label><input type="text" class="current_version" value="<% getInfo("fwVersion"); %>"/></div>
+					<div class="form-group_smart"><label class="i18n" name="versionLocal_softwareup"></label>
+						<input type="file" name="binary" id="file" style="display:none">
+						<div class="input-append">  
+						   <a class="btn btn-info i18n" onclick="$('input[id=file]').click();" name="fileupload_software" style="background-color: #89CEED;border-color: #89CEED;border-radius: 0;">
+						   	<i class="icon-folder-open-alt"></i> 
+						   </a>
+						   <span id="uploadurl" class="input-large" ></span>
+						</div><span class="i18n" name="Unselected_file" id="Unselected_file"></span>
+			        </div>
+					<!--<div class="form-group_smart tips_for_up_before"><div class="tips_for_up i18n" name="tips_for_up"></div></div>-->
+					<div class="form-group_smart"><button class="fileupload_button i18n" onclick="sendClicked(this.form)" type="button" value="Upload" name="send"></button><button class="fileupload_button i18n" type="reset" value="Reset" name="reset"></button></div>
+				</div>
+			</div>
+			<input type="hidden" value="/softwareup.html" name="submit-url">
+			</form>
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
+		<script src="js/jquery.cookie.js"></script>
+	    <!-- 加载语言包文件 -->
+	    <script src="js/jquery.i18n.properties.js"></script>
+	    <script src="js/language.js"></script>
+	    <script type="text/javascript">
+	    	var i18nLanguage=getCookie('userLanguage');
+//	    	var versionMessage=<% getInfo("checkRemoteFwVersion"); %>;
+	    	var versionMessage={"remoteUprateInfo":[{"checkVersionStatus":"1","remoteVersionLog":"1.1111/2.2222/3.3333"}]};
+			var ver_status,ver_log;
+			for(var i in versionMessage){
+				ver_status=versionMessage[i][0].checkVersionStatus;
+				ver_log=versionMessage[i][0].remoteVersionLog;
+			}
+	    	if(ver_status==0){
+	    		$("#up_tips").css("display","block");
+				$(".softup_content,.softup_content_mes,#up_tips2,.vm_version").css("display","none");				
+	    	}else{
+	    		$("#up_tips,.vm_version").css("display","none");
+				$(".softup_content,.softup_content_mes,#up_tips2").css("display","block");
+				$(".ver_message").text(ver_log);
+	    	}
+			
+			
+			$(".current_version").attr("disabled",true);
+			$('input[id=file]').change(function() {
+				var path = $(this).val();			
+				path = path.split('\\');		
+				path = path[path.length-1];
+				$('#uploadurl').text(path);
+				if($('#uploadurl').text()){
+					$('#Unselected_file').text('');
+				}else{
+					if(i18nLanguage=='en'){
+						$('#Unselected_file').text('Unselected file');
+					}else{
+						$('#Unselected_file').text('未选择文件');
+					}
+				}
+				
+			});
+			
+			var MWJ_progBar = 0;
+			var time=0;
+			var delay_time=1000;
+			var loop_num=0;
+//			var usb_update_img_enabled=<%getIndex("usb_update_img_enabled");%>;
+//			var firmware_upgrade_acs_managed = <% getIndex("firmware_acs_managed"); %>;
+			
+			function getFileType(str)
+			{
+				if(str.value == "")
+					return;
+				var name = str.split(".");
+				var type = name[name.length-1];
+				return type;
+			}
+			function sendClicked(F)
+			{
+			  if(firmware_upgrade_acs_managed == 1)
+			  {
+			      document.upload.binary.focus();
+			      if(i18nLanguage=='en'){
+					alert('Firmware cannot be upgraded via web UI! ACS has been set up. Management server. Upgrade management is correct');
+				  }else{
+					alert('不能通过web UI升级固件！ ACS 已经设置.管理服务器.升级管理正确');
+				  }
+			      
+			      return false;
+			  }
+			  if(document.upload.binary.value == ""){
+			      	document.upload.binary.focus();
+			      	if(i18nLanguage=='en'){
+			      		alert('The filename cannot be empty');
+			      	}else{
+			      		alert('文件名不能为空');
+			      	}
+			  	
+			  	return false;
+			  }
+			  
+			  var fileType = getFileType(document.upload.binary.value);
+			  if(fileType != "bin"){      	
+			  	document.upload.binary.focus();
+			  	if(i18nLanguage=='en'){
+			      		alert('Invalid file format upload attempt');
+			      	}else{
+			      		alert('上传文件格式不正确');
+			      	}
+			  	
+			  	return false;
+			  }
+			  F.submit();  
+			}
+		</script>
+	</body>
 </html>

@@ -89,6 +89,23 @@
 					}
 				});
 	    	});
+			$(document).ready(function(){
+				$("#ipfilter_input1").keydown(function(){
+					if($("#ipfilter_input1").val().length==3){
+						$("#ipfilter_input2").focus();
+					}
+				})
+				$("#ipfilter_input2").keydown(function(){
+					if($("#ipfilter_input2").val().length==3){
+						$("#ipfilter_input3").focus();
+					}
+				})
+				$("#ipfilter_input3").keydown(function(){
+					if($("#ipfilter_input3").val().length==3){
+						$("#ipfilter_input4").focus();
+					}
+				})
+			})
 	    	function addClick()
 			{
 				var ipfilter_input_value=$("#ipfilter_input1").val()+"."+$("#ipfilter_input2").val()+"."+$("#ipfilter_input3").val()+"."+$("#ipfilter_input4").val()

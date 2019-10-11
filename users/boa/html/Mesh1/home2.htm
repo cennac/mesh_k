@@ -14,7 +14,7 @@
 		<!--<link rel="stylesheet" type="text/css" href="css/compiled/theme_styles.css"/>-->
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
-		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
 	</head>
 	<body style="overflow: hidden;">
 		 <div class="main-wrap">
@@ -33,18 +33,18 @@
 			 			<span class="separate">|</span>
 			 			<form action="/boafrm/formLogout" method="POST" name="logout" style="display: inline-block;">
 				 			<a href="#" class="log_logout i18n" name="logout" onclick="return clearAuthData()">&nbsp;&nbsp;&nbsp;</a>
-				 			<input type="hidden" value="/wizard.htm" name="return-url">
+				 			<input type="hidden" value="/Login.html" name="return-url">
 				 		</form>
 			 		</div>
 			 		
 			 	</div>
 			 	<div class="top-nav">
 					<ul class="nav nav-pills nav-justified">
-						<li class="active li_1" ><a href_val="index_mesh.html"><img class="icon_1" src="img/nav_icon_home@2x.png"/><span class="i18n" name="home_page"></span></a></li>
-						<li class="li_2"><a href_val="internet.html"><img class="icon_2" src="img/nav_icon_network@2x.png"/><span class="i18n" name="internet_page"></span></a></li>
-						<li class="li_3"><a href_val="wifiset.html"><img class="icon_3" src="img/nav_icon_wifi@2x.png"/><span class="i18n" name="wifi_page"></span></a></li>
-						<li class="li_4"><a href_val="terminal.html"><img class="icon_4" src="img/nav_icon_terminal@2x.png"/><span class="i18n" name="terminal_page"></span></a></li>
-						<li class="li_5"><a href_val="more.html"><img class="icon_5" src="img/nav_icon_manage@2x.png"/><span class="i18n" name="setting_page"></span></a></li>
+						<li class="active li_1" value="1"><a href_val="index_mesh.html"><img class="icon_1" src="img/nav_icon_home@2x.png"/><span class="i18n" name="home_page"></span></a></li>
+						<li class="li_2" value="2"><a href_val="internet.html"><img class="icon_2" src="img/nav_icon_network@2x.png"/><span class="i18n" name="internet_page"></span></a></li>
+						<li class="li_3" value="3"><a href_val="wifiset.html"><img class="icon_3" src="img/nav_icon_wifi@2x.png"/><span class="i18n" name="wifi_page"></span></a></li>
+						<li class="li_4" value="4"><a href_val="terminal.html"><img class="icon_4" src="img/nav_icon_terminal@2x.png"/><span class="i18n" name="terminal_page"></span></a></li>
+						<li class="li_5" value="5"><a href_val="more.html"><img class="icon_5" src="img/nav_icon_manage@2x.png"/><span class="i18n" name="setting_page"></span></a></li>
 					</ul>
 				</div>
 			</div>
@@ -65,11 +65,13 @@
 	    <!-- 加载语言包文件 -->
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
+	    <script>if(window.top !== window.self){ window.top.location = window.location;}</script>
 		<script>
 			//**********设置iframe宽高***********
 			var top_height=$(".header").height();
 			var bottom_height=$(".footer-wrap").height();
-			var content_height=window.innerHeight-top_height-bottom_height;			
+			var content_height=window.innerHeight-top_height-bottom_height;	
+			var click_value;
 			$(".iframe_holder").height(content_height);
 //			$(".iframe_holder").width(window.outerWidth);
 			//单击导航栏时设置iframe对应页面
@@ -79,7 +81,47 @@
 				$(".iframe_holder").attr("src",iframe_href);
 				$(this).addClass("active");
 				$(this).siblings().removeClass("active");
+				click_value=$(this).attr("value");
+//				document.cookie="nav_value="+value+"";
+//				document.cookie="nav_href="+iframe_href+"";
 			});
+			
+			$(".nav li").each(function(){
+		        var value=$(this).attr("value");
+		        var iframe_href = $(this).find("a").attr("href_val");
+		        if(value==click_value){
+		        	$(this).addClass("active");
+					$(this).siblings().removeClass("active");
+		        }
+		    })
+//			function setting(){
+////				$(".nav li:first-child").addClass("active")
+//				var nav_value=getCookie('nav_value');
+//				var nav_href=getCookie("nav_href");
+//	        	$(".nav li").each(function(){
+//		        	var value=$(this).attr("value");
+//		        	var iframe_href = $(this).find("a").attr("href_val");
+//		        	if(value==nav_value){
+//		        		$(this).addClass("active");
+//						$(this).siblings().removeClass("active");
+//		        	}
+//		        	if(iframe_href==nav_href){
+//		        		$(".iframe_holder").attr("src",nav_href);
+//		        	}
+//		        })
+//			}
+//			
+//	        function getCookie(name) {
+//			  var cookies = document.cookie;
+//			  var list = cookies.split("; ");          // 解析出名/值对列表
+//			      
+//			  for(var i = 0; i < list.length; i++) {
+//			    var arr = list[i].split("=");          // 解析出名和值
+//			    if(arr[0] == name)
+//			      return decodeURIComponent(arr[1]);   // 对cookie值解码
+//			  } 
+//			  return "";
+//			}
 			function clearAuthData(iframe_href)
 			{
 				

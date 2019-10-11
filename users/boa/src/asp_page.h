@@ -11,7 +11,7 @@
 #define MAX_QUERY_TEMP_VAL_SIZE 4096
 #define MAX_BOUNDRY_LEN 64
 
-#define MAX_INNER_REQ_BUFF 2048
+#define MAX_INNER_REQ_BUFF (2048*7)
 
 typedef int (*asp_funcptr)(request * req,  int argc, char **argv);
 typedef void (*form_funcptr)(request * req, char* path, char* query);

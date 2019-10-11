@@ -9,6 +9,7 @@
 		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>	
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
 	</head>
@@ -210,6 +211,18 @@
 			var ip_filter_status='<% getIndex("ipFilterEnabled"); %>';
 			var url_filter_status='<% getIndex("urlFilterEnabled"); %>';
 			var radio_status='<% getIndex("urlFilterMode"); %>';
+			var i18nLanguage=getCookie('userLanguage');
+			function getCookie(name) {
+			  var cookies = document.cookie;
+			  var list = cookies.split("; ");          // 解析出名/值对列表
+			      
+			  for(var i = 0; i < list.length; i++) {
+			    var arr = list[i].split("=");          // 解析出名和值
+			    if(arr[0] == name)
+			      return decodeURIComponent(arr[1]);   // 对cookie值解码
+			  } 
+			  return "";
+			}
 			function Load_Setting(){
 				if ( mac_filter_status=='0' ){
 					document.formFilterAdd.enabled1.checked = false;
@@ -270,7 +283,12 @@
 			
 			  var str = document.formFilterAdd.mac.value;
 			  if ( str.length < 12) {
-				alert("请输入正确的mac地址");
+			  	if(i18nLanguage=='en'){
+			  		alert("Please enter the correct MAC address");
+			  	}else{
+			  		alert("请输入正确的mac地址");
+			  	}
+				
 				document.formFilterAdd.mac.focus();
 				return false;
 			  }
@@ -320,20 +338,36 @@
 			}
 			function deleteClick()
 			{
-			  if ( !confirm("确定删除所选的入口?") ) {
-				return false;
-			  }
-			  else
-				return true;
+				if(i18nLanguage=='en'){
+					if ( !confirm("Make sure to delete the selected entry?") ) {
+						return false;
+				    }
+				  	else
+						return true;
+				}else{
+					if ( !confirm("确定删除所选的入口?") ) {
+						return false;
+				    }
+				  	else
+						return true;
+				}			  
 			}
 			
 			function deleteAllClick()
 			{
-			   if ( !confirm("确定删除所有的入口?") ) {
-				return false;
-			  }
-			  else
-				return true;
+				if(i18nLanguage=='en'){
+					if ( !confirm("Make sure to delete the selected entry?") ) {
+						return false;
+					}
+					else
+						return true;
+				}else{
+					if ( !confirm("确定删除所有的入口?") ) {
+						return false;
+					}
+					else
+						return true;			   
+				}
 			}
 			function urlFilterModeBlack()
 			{

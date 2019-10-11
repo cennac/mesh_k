@@ -7,14 +7,18 @@
 		<meta id="i18n_pagename" content="index-common">
 		<meta name="keywords" content=""/>
 		<meta http-equiv="Access-Control-Allow-Origin" content="*">
+		<link type="image/x-icon" href="favicon.png" rel="shortcut icon"/>
 		<link rel="stylesheet" type="text/css" href="css/libs/font-awesome.css"/>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.min.css"/>
 		<link rel="stylesheet" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
 		<script src="js/jquery.js"></script>
 		<script src="js/jquery.cookie.js"></script>
 	    <!-- 加载语言包文件 -->
 	    <script src="js/jquery.i18n.properties.js"></script>
 	    <script src="js/language.js"></script>
+	    <script src="js/bootstrap.js"></script>
 	    <script>if(window.top !== window.self){ window.top.location = window.location;}</script>
 		<style>
 			body{
@@ -23,20 +27,27 @@
 				background: url(img/login_bg.png) center no-repeat fixed;
 				background-size: cover;
 			}
+			#password_show{
+				background: url(../img/password.png) no-repeat 2% 50%;
+				background-size: 24px 24px;
+			}
 		</style>
 	</head>
 	
-	<body>
+	<body style="overflow: hidden;">
 		<div class="loginmain">
 			<div class="content">
 				<form action="/boafrm/formLogin" method="post" name="loginForm" id="loginForm">
 				<div class="login_logo"><img src="img/KSLINK.png"/></div>
+				<input type="hidden" id="password" name="password"/>
 				<div class="login_ingroup">
-					<div class="name_input"><i class="fa fa-user fa-2x"></i><input type="text" id="username_show" class="i18n-input" selectname="user_name" name="username_show" value="" onkeyup="login_lengthInfo()"/><input type="hidden" id="username" name="username"/></div>
+					<div class="name_input"><label class="i18n login_tips" name="Login_tips"></label></div>
+					<div class="name_input" style="display: none;"><input type="hidden" id="username" name="username" value="<%getIndex("userName");%>"/></div>
 					<!--<div class="tips_div">初始账号为Wi-Fi名称</div>-->
-					<div class="name_input"><i class="fa fa-lock fa-2x"></i><input type="password" id="password_show" class="i18n-input" selectname="user_password" name="password_show" value="" onkeyup="login_lengthInfo()"/><input type="hidden" id="password" name="password"/></div>
+					<div class="name_input"><input type="password" id="password_show"  value="" onkeyup="login_lengthInfo()"/><i id="eye_open_close" class="icon-eye-close glyphicon glyphicon-eye-close"></i></div>
 					<div class="tips_div i18n" name="tips_div_login"></div>
 					<div class="name_input comfirm"><input type="button" class="i18n-input" selectname="user_submit" id="Login_lg" name="save_apply" onclick="loginInfo()"/></div>
+					<div class="name_input" style="margin-top: 10px;"><a  class="i18n Login_fgpw" name="Login_fgpw" data-toggle="popover" data-placement="bottom"></a></div>					
 				</div>
 				<div class="code">
 					<div><span class="i18n" name="login_downLoad"></span></div>
@@ -48,6 +59,7 @@
 		</div>
 		
 		<script>
+			var i18nLanguage=getCookie('userLanguage');
 			document.onkeydown = function(e){ 
 				    var ev = document.all ? window.event : e;
 				    if(ev.keyCode==13) {
@@ -55,44 +67,103 @@
 				     }
 				}
 			$(function(){
-			    $("input[name='username_show']").focus();
+				var window_height=window.innerHeight;
+				if(window_height<720){
+					$(".loginmain").css("margin-top","50px");
+				}
+			    //$("input[name='username_show']").focus();
 			    var myurl=window.document.location.href;
 		   		var login_url=myurl.split("?");
 		   		if(myurl.indexOf("err_code=1")!=-1){
 		   			$(".tips_div").css("display","block");
 		   		}
+		   		$("[data-toggle='popover']" ).popover().on( 'mouseenter', function(){ 
+				  var _this = this; 
+				  
+				   	var i18nLanguage_en,i18nLanguage_zh;
+				   	if(i18nLanguage=='zh-CN'){
+				   		i18nLanguage_en="如忘记密码，请恢复出厂设置。恢复方法：在设备通电的情况下，按住路由器背面的“Reset”按钮直到指示灯闪烁时松开。"
+				   		$(".Login_fgpw").attr("data-content",i18nLanguage_en);
+				   	}else if(i18nLanguage=='en'){
+				   		i18nLanguage_zh="Restore the factory Settings. Recovery method: when the device is powered on, press and hold the Reset button on the back of the router until all indicator lights are on and then release"
+				   		$(".Login_fgpw").attr("data-content",i18nLanguage_zh);
+				   	}
+				  $(this).popover( 'show' ); 
+				  $(this).siblings( '.popover' ).on( 'mouseleave' , function () { 
+				    $(_this).popover( 'hide' ); 
+				  }); 
+				}).on( 'mouseleave', function(){ 
+				  var _this = this; 
+				  setTimeout(function () { 
+				    if (!$( '.popover:hover' ).length) { 
+				      $(_this).popover( 'hide' ) 
+				    }
+				  }, 100); 
+				});
+				$("#eye_open_close").click(function(){
+					if($(this).hasClass("glyphicon-eye-open")){
+						$(this).removeClass("glyphicon-eye-open");
+						$(this).removeClass("icon-eye-open");
+						$(this).addClass("icon-eye-close");
+						$(this).addClass("glyphicon-eye-close");
+						$("#password_show").attr("type","password");
+					}else{
+						$(this).removeClass("glyphicon-eye-close");
+						$(this).removeClass("icon-eye-close");
+						$(this).addClass("icon-eye-open");
+						$(this).addClass("glyphicon-eye-open");
+						$("#password_show").attr("type","text");
+					}					
+				})
+				
+//				function eye_click(id){
+//					var this_v=document.getElementById(id);
+//					var class_v=this_v.getAttribute("class");
+//					if(class_v.indexOf("glyphicon-eye-open")!=-1){
+//						this_v.setAttribute("class","glyphicon-eye-open icon-eye-open glyphicon");
+//					}
+//				}
+				
+				var myurl=window.document.location.href;
+			   	var login_url=myurl.split("?");
+			   	if(myurl.indexOf("err_code=2")!=-1){
+			   		$(".tips_div").css("display","block");
+			   	}
 			});	
-			
-			$("#username_show").click(function(){
-		   		$(this).val("");
-		   	})
 		   	$("#password_show").click(function(){
 		   		$(this).val("");
 		   	})
+		   	
+		   	
 			 function getValue(id) { 
 			 	return document.getElementById(id).value; 		        
 		   }  	
 		   	function login_lengthInfo() {
-		   		//var pwdblank = /\/g;
-			    if(getValue("username_show").length>30){
-			    	alert("账号长度超过30");
-			    	return false;
-			    }
 			    if(getValue("password_show").length>30){
-			    	alert("密码长度超过30");
+			    	if(i18nLanguage=='en'){
+		   				alert("Password length over 30");
+		   			}else{
+		   				alert("密码长度超过30");
+		   			}
+			    	
 			    	return false;
 			    }
-			    if(getValue("username_show").match(/^ +| +$/g)){
-			    	alert("不能包含空格！");
-			    	return false;
-			    }
+			    
 			    if(getValue("password_show").match(/^ +| +$/g)){
-			    	alert("不能包含空格！");
+			    	if(i18nLanguage=='en'){
+		   				alert("Cannot contain Spaces");
+		   			}else{
+		   				alert("不能包含空格！");
+		   			}
+			    	
 			    	return false;
 			    }
 			}
+		   	function set_href_cookie(){
+		   		document.cookie="login_cookie=1"
+		   	}
 		   	function getEncryption() {
-		   		 var str=getValue("username_show");
+		   		 var str=getValue("username");
 		   		 var str2=getValue("password_show");
 				 var base = new Base64();  
 			     var result = base.encode(str); //加密			     
@@ -103,18 +174,46 @@
 				 $("#username").val(result);
 				 $("#password").val(result2);
 			} 
-		   	function loginInfo(){			   		
-		      if(getValue("username_show")=="" || getValue("password_show")==""){
+		   	function loginInfo(){	
+		   		
+		   		if(getValue("password_show").length<6){
+		   			if(i18nLanguage=='en'){
+		   				alert("Password length less than 6");
+		   			}else{
+		   				alert("密码长度小于6");
+		   			}
+			    	
+			    	return false;
+			    }
+		      if(getValue("password_show")==""){
+			   		if(i18nLanguage=='en'){
+			   			alert("Password is empty");
+			   		}else{
+			   			alert("密码为空");
+			   		}
+			   		
+			   		return false;
+		    	}
+		    	if(getValue("password_show")!=""){
 		           var myurl=window.document.location.href;
 			   		var login_url=myurl.split("?");
-			   		if(myurl.indexOf("err_code=1")!=-1){
+			   		if(myurl.indexOf("err_code=2")!=-1){
 			   			$(".tips_div").css("display","block");
 			   		}
-		         $("#username_show").focus();
-		    }else{
+		   	    }
 		    	getEncryption();
 				document.loginForm.submit();
-		 		}
+			}
+		   	function getCookie(name) {
+			  var cookies = document.cookie;
+			  var list = cookies.split("; ");          // 解析出名/值对列表
+			      
+			  for(var i = 0; i < list.length; i++) {
+			    var arr = list[i].split("=");          // 解析出名和值
+			    if(arr[0] == name)
+			      return decodeURIComponent(arr[1]);   // 对cookie值解码
+			  } 
+			  return "";
 			}
 		   	
 			//加密、解密算法封装：

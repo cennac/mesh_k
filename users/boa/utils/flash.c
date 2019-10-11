@@ -6970,8 +6970,8 @@ static int writeDefault(WRITE_DEFAULT_TYPE_T isAll)
 #endif	
 	pMib->ipAddr[0] = 192;
 	pMib->ipAddr[1] = 168;
-	pMib->ipAddr[2] = 1;
-	pMib->ipAddr[3] = 254;
+	pMib->ipAddr[2] = 6;
+	pMib->ipAddr[3] = 1;
 
 	pMib->subnetMask[0] = 255;
 	pMib->subnetMask[1] = 255;
@@ -6980,12 +6980,12 @@ static int writeDefault(WRITE_DEFAULT_TYPE_T isAll)
 
 	pMib->dhcpClientStart[0] = 192;
 	pMib->dhcpClientStart[1] = 168;
-	pMib->dhcpClientStart[2] = 1;
+	pMib->dhcpClientStart[2] = 6;
 	pMib->dhcpClientStart[3] = 100;
 
 	pMib->dhcpClientEnd[0] = 192;
 	pMib->dhcpClientEnd[1] = 168;
-	pMib->dhcpClientEnd[2] = 1;
+	pMib->dhcpClientEnd[2] = 6;
 	pMib->dhcpClientEnd[3] = 200;
 #if defined(CONFIG_DOMAIN_NAME_QUERY_SUPPORT)
 	pMib->dhcp = DHCP_AUTO;
@@ -7614,7 +7614,12 @@ pMib-> repeaterEnabled1 =0;
 	strcpy(pMib->httpRedirectHost, "www.realtek.com");
 #endif
 #endif
+    //customer mib program init here
     pMib->autoWlanEnabled = 0;
+    pMib->firstLogin = 0;
+    strcpy(pMib->restartEnable, "off");
+    pMib->ledEnable = 1;
+    pMib->ledControlDisable = 0;
 
 	data = (char *)pMib;
 #ifdef _LITTLE_ENDIAN_

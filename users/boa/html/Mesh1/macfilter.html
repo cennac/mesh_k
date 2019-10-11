@@ -25,7 +25,8 @@
 						</div>
 					</div>
 					<div class="form-group_smart"><p class="p_tips i18n" name="p_tips_macfilter"></p></div>
-					<div class="form-group_smart firewall"><label class="i18n" name="macaddress_macfilter"></label><input class="form_input" type="text" name="mac"  /></div>
+					<div class="form-group_smart firewall"><label class="i18n" name="macaddress_macfilter"></label><input class="form_input" id="input_mac" type="text" name="mac"  /></div>
+					<div class="form-group_smart firewall macTips" style="text-indent: 15%;color: #DD514C;"><span class="i18n" name="mac_tips"></span></div>
 					<div class="form-group_smart firewall"><label class="i18n" name="mactips_macfilter">&nbsp;</label><input class="form_input" type="text" name="comment"  /></div>
 					<div class="form-group form-group-btn firewall">
 						<button class="i18n" type="submit" value="Save" name="addFilterMac" onClick="return addClick()"></button><button class="i18n" type="submit" value="Save & Apply" name="save_apply" onClick="return addClick()" ></button><button  class="i18n" type="reset" value="Reset" name="reset"></button>
@@ -70,16 +71,27 @@
 							enableTextField(document.formFilterAdd.mac);
 							enableTextField(document.formFilterAdd.comment);
 							$("#checkbox_switch1").val("ON");
+							$(".macTips").css("display","block");
 						} else {
 							disableTextField(document.formFilterAdd.mac);
 							disableTextField(document.formFilterAdd.comment);
 							$("#checkbox_switch1").val("OFF");
+							$(".macTips").css("display","none");
 						}
 					}
 				});
 	    	})
 	    	function addClick()
 			{
+			  var input_value= $("#input_mac").val();
+			  if(input_value.indexOf("-")!=-1||input_value.indexOf(":")!=-1||input_value.indexOf(".")!=-1||input_value.indexOf("：")!=-1){
+				  if(i18nLanguage=='en'){
+				  	alert("Please enter a valid Mac address");
+				  }else{
+				  	alert("请输入有效的Mac地址");
+				  }
+				  return false;
+			  }
 			  if (!document.formFilterAdd.enabled.checked)
 			  	return true;
 			
@@ -170,8 +182,10 @@
 			{
 				if ( mac_filter_status=='0' ){
 					$('[name="enabled"]').bootstrapSwitch('state', false);
+					$(".macTips").css("display","none");
 				}else{
 					$('[name="enabled"]').bootstrapSwitch('state', true);
+					$(".macTips").css("display","block");
 				}
 					
 				updateState();

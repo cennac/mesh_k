@@ -10,6 +10,7 @@
 #include "asp_page.h"
 #include "apmib.h"
 #include "apform.h"
+#include "remoteUpgrade.h"
 
 #ifdef SUPER_NAME_SUPPORT
 #include "auth.h"
@@ -19,6 +20,9 @@ extern int isPackExist;
 temp_mem_t root_temp;
 char *query_temp_var=NULL; 
 char str_boundry[MAX_BOUNDRY_LEN]; //used to store boundry
+extern remoteUpgrade_t;
+extern remoteUpgrade_t remoteUpgradeInfo;
+extern void formRemoteUp(request *wp, char *path, char *query);
 
 
 char *WAN_IF;
@@ -248,6 +252,7 @@ form_name_t root_form[] = {
 	{"formPasswordSetup", formPasswordSetup},
 	{"formLogout", formLogout},
 	{"formUpload", formUpload},
+	{"formRemoteUp", formRemoteUp},
 #if defined(CONFIG_USBDISK_UPDATE_IMAGE)
 	{"formUploadFromUsb", formUploadFromUsb},
 #endif
@@ -480,7 +485,8 @@ form_name_t root_form[] = {
     {"formReboot",formReboot},
     {"formLEDControl",formLEDControl},
     {"formAddMeshNode",formAddMeshNode},
-    {"fromTimerReboot",fromTimerReboot},    
+    {"fromTimerReboot",fromTimerReboot}, 
+    {"formNewWizard",formNewWizard}, 
 	{NULL, NULL}
 };
 
@@ -489,7 +495,7 @@ form_name_t root_form[] = {
 #include <time.h>
 
 #define EXPIRE_TIME					360	// in sec
-#define MAX_TBL_SIZE				4
+#define MAX_TBL_SIZE				8
 
 struct goform_entry {
 	int	valid;		
@@ -542,6 +548,13 @@ void log_boaform(char *form, request *req)
 	int i, oldest_entry=-1;
 	time_t t, oldest_time=	-1;
 
+    DTRACE(DTRACE_ASP_PAGE, "log form name = %s\n", form);
+	int j;
+	for (j= 0; j < MAX_TBL_SIZE; j++)
+	{
+        DTRACE(DTRACE_ASP_PAGE, "---valid: %d, name: %s, hash_id: %d---\n", security_tbl[j].valid, security_tbl[j].name, security_tbl[j].hash_id);
+	}
+                
 	for (i=0; i<MAX_TBL_SIZE; i++) {
 		if (!security_tbl[i].valid ||
 				(security_tbl[i].valid && 
@@ -1101,6 +1114,11 @@ void handleForm(request *req)
 	else {
 		form_name_t *now_form;
 		ptr+=strlen(SCRIPT_ALIAS);
+		if (!strncmp(ptr, "formRemoteUp",12))
+		{   
+		printf("===============%s--%s--%d===========================\n",__FILE__,__FUNCTION__,__LINE__);
+		remoteUpgradeInfo.upgradeConfirm=1;
+		}
 
 		for (i=0; root_form[i].name!=NULL; i++) {
 			now_form = &root_form[i];
@@ -1114,6 +1132,23 @@ void handleForm(request *req)
 					log_boaform(now_form->name,req);	
 				}
 #endif
+                if(strcmp(now_form->name,"formLogout")==0)
+				{
+					log_boaform(now_form->name,req);	
+				}
+
+                 if(strcmp(now_form->name,"formLogin")==0)
+				{
+					log_boaform(now_form->name,req);	
+				}
+                
+				DTRACE(DTRACE_ASP_PAGE, "now_form->name = %s\n", now_form->name);
+				int j;
+				for (j= 0; j < MAX_TBL_SIZE; j++)
+				{
+                    DTRACE(DTRACE_ASP_PAGE, "1---valid: %d, name: %s, hash_id: %d---\n", security_tbl[j].valid, security_tbl[j].name, security_tbl[j].hash_id);
+				}
+	
 				if ( !is_any_log() || !is_valid_boaform(now_form->name, req))	{
 				#if defined(CONFIG_APP_FWD)
 					{
@@ -1129,6 +1164,12 @@ void handleForm(request *req)
 					send_r_forbidden(req);
 					return;					
 				}
+                
+                for (j= 0; j < MAX_TBL_SIZE; j++)
+				{
+                    DTRACE(DTRACE_ASP_PAGE, "2---valid: %d, name: %s, hash_id: %d---\n", security_tbl[j].valid, security_tbl[j].name, security_tbl[j].hash_id);
+				}
+                
 				delete_boaform(now_form->name);				
 #endif			
 #ifdef SUPER_NAME_SUPPORT

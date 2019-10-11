@@ -469,3 +469,4 @@ endif
 endif
 	$(ROMFSINST) enable_rtk_html.sh /bin/enable_rtk_html.sh
 	$(ROMFSINST) boa_rtk.conf /etc/boa/boa_rtk.conf
+	$(ROMFSINST) -s /var/config.dat /web/Mesh1/config.dat

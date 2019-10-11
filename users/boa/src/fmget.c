@@ -22,9 +22,13 @@
 #include "apform.h"
 #include "utility.h"
 #include "deviceProcIf.h"
+#include "cJSON.h"
+#include "remoteUpgrade.h"
 
 #define FW_VERSION	fwVersion
 static struct ifstatRate wanRate;
+extern remoteUpgrade_t;
+extern remoteUpgrade_t remoteUpgradeInfo;
 
 //#define SDEBUG(fmt, args...) printf("[%s %d]"fmt,__FUNCTION__,__LINE__,## args)
 #define SDEBUG(fmt, args...) {}
@@ -41,7 +45,7 @@ static struct ifstatRate wanRate;
 #define WAPI_CERT_CHANGED		"/var/tmp/certSatusChanged"
 #endif
 
-extern char *fwVersion;	// defined in version.c
+
 #ifdef HOME_GATEWAY
 #ifdef VPN_SUPPORT
 extern int getIpsecInfo(IPSECTUNNEL_T *entry);
@@ -467,6 +471,26 @@ void checkwan(char *waninfo)
 
 #endif
 
+cJSON *getRemoteVersionLog()
+{
+ printf("%s:%d\n",__FUNCTION__,__LINE__);
+
+ cJSON *topRoot=NULL;
+ cJSON *root=NULL;
+ cJSON *parameters=NULL;
+ topRoot=cJSON_CreateObject();
+ cJSON_AddItemToObject(topRoot, "remoteUprateInfo",root=cJSON_CreateArray());
+ cJSON_AddItemToArray(root,parameters=cJSON_CreateObject());	
+
+ cJSON_AddStringToObject(parameters,"checkVersionStatus",remoteUpgradeInfo.checkVersionStatus?"1":"0");
+
+ if(remoteUpgradeInfo.checkVersionStatus)
+ {
+  cJSON_AddStringToObject(parameters,"remoteVersionLog",remoteUpgradeInfo.versionUpdateLog);
+ }
+ printf("-------------->getRemoteVersionLog=\n[%s]\n-------------->\n",cJSON_Print(topRoot));
+ return topRoot;
+}
 
 int getInfo(request *wp, int argc, char **argv)
 {
@@ -485,7 +509,8 @@ int getInfo(request *wp, int argc, char **argv)
 	char *iface=NULL;
 	OPMODE_T opmode=-1;
 	int ret = 2;
-	
+	cJSON *root=NULL;
+        char *out=NULL;
 #ifdef RTK_USB3G
 	DHCP_T   wantype = -1;
 #endif
@@ -854,18 +879,16 @@ int getInfo(request *wp, int argc, char **argv)
 	}
 	else if(( !strcmp(name, "wanUplinkRate"))||( !strcmp(name, "wanDownlinkRate"))) {
         wanRate.ifname="eth1";
-		do{
 			ret=getProcIfData(&wanRate);
-		  }while(EXIT_FAILURE==ret);
 
 		//printf("%s:--------->%d:  uplinkRate=%0.2lf  downlink=%0.2lf",__FUNCTION__,__LINE__,wanRate.txRate,wanRate.rxRate);
 		if( !strcmp(name, "wanUplinkRate"))
-		{
-		  return req_format_write(wp, "%dKB",(int)(wanRate.txRate));
+		{ 
+		  return req_format_write(wp, "%dKbps",(int)(wanRate.txRate)*8);
 		}
 		else if( !strcmp(name, "wanDownlinkRate"))
 		{
-		 return req_format_write(wp, "%dKB",(int)(wanRate.rxRate));
+		 return req_format_write(wp, "%dKbps",(int)(wanRate.rxRate)*8);
 		}	
 	}
 	else if( !strcmp(name, "smtpclient_enable")) {
@@ -1743,6 +1766,16 @@ int getInfo(request *wp, int argc, char **argv)
 	}
 	else if ( !strcmp(name, "fwVersion")) {
 		sprintf(buffer, "%s", FW_VERSION );
+   		return req_format_write(wp, buffer);
+	}
+	else if ( !strcmp(name, "checkRemoteFwVersion")) {
+
+		root = getRemoteVersionLog();
+        out = cJSON_Print(root);
+	    cJSON_Delete(root);	
+        free(out);
+		sprintf(buffer, "%s", out);
+
    		return req_format_write(wp, buffer);
 	}
 	// added by rock /////////////////////////////////////////
@@ -8608,6 +8641,13 @@ else if(!strcmp(name, "is_80211r_support"))
 		req_format_write(wp, buffer);
 		return 0;
 	}
+	else if ( !strcmp(name, "parentContrlEnabled")) {
+		if ( !apmib_get( MIB_PARENT_CONTRL_ENABLED, (void *)&val) )
+			return -1;
+		sprintf(buffer, "%d", val);
+		req_format_write(wp, buffer);
+		return 0;
+	}
 	else if ( !strcmp(name, "triggerPortEnabled")) {
 		if ( !apmib_get( MIB_TRIGGERPORT_ENABLED, (void *)&val) )
 			return -1;
@@ -11882,6 +11922,24 @@ else if ( !strcmp(name, "wps_either_ap_or_vxd")) {
 
 		req_format_write(wp, tmpStr);
 		return 0;
+	}
+    else if (!strcmp(name, "userName"))
+	{
+		buffer[0]			= '\0';
+	
+		if (!apmib_get(MIB_USER_NAME, (void *) buffer))
+			return - 1;
+	
+		return req_format_write(wp, "%s", buffer);
+	}
+	else if (!strcmp(name, "userPassword"))
+	{
+		buffer[0]			= '\0';
+	
+		if (!apmib_get(MIB_USER_PASSWORD, (void *) buffer))
+			return - 1;
+	
+		return req_format_write(wp, "%s", buffer);
 	}
 	else
 	{

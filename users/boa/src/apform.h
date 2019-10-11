@@ -11,6 +11,7 @@
 #define _INCLUDE_APFORM_H
 
 #include "apmib.h"
+#include "trace.h"
 #ifndef CSRF_SECURITY_PATCH
 	#define CSRF_SECURITY_PATCH
 #endif
@@ -62,6 +63,8 @@
 
 #define WEB_PAGE_LOGIN	"/Login.html"
 #define WEB_PAGE_HOME   "/home2.htm"
+#define WEB_PAGE_WIZARD "/wizard.htm"
+
 
 
 #define FORM_FW_UPLOAD	"formUpload"
@@ -122,6 +125,8 @@ extern int run_init_script_flag;
 #endif
 
 extern int save_cs_to_file();
+extern int save_cs_to_Mesh1(void);
+
 
 ///////////////////////////////////////////////////////////////////////////
 static bool _is_hex(char c)
@@ -1033,6 +1038,7 @@ void formReboot(request *wp, char *path, char *query);
 void formLEDControl(request *wp, char *path, char *query);
 void formAddMeshNode(request *wp, char *path, char *query);
 void fromTimerReboot(request *wp, char *path, char *query);
+void formNewWizard(request *wp, char *path, char *query);
 
 /* variables exported in main.c */
 extern char *WAN_IF;

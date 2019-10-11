@@ -8786,6 +8786,163 @@ sync();
 }
 //#endif // WEBS
 
+int save_cs_to_Mesh1(void)
+{
+	char *buf, *ptr=NULL;
+	PARAM_HEADER_Tp pHeader;
+	//unsigned char checksum;
+	int len, fh;
+	char tmpBuf[100];
+#ifdef COMPRESS_MIB_SETTING
+#ifdef MIB_TLV
+	int tlv_content_len,compLen;
+	unsigned char *pCompptr;
+	COMPRESS_MIB_HEADER_Tp pcompHeader;
+	char *pbuf;
+#endif
+#endif
+
+
+#ifdef MIB_TLV
+	len=mib_get_setting_len(CURRENT_SETTING)*4;
+#else
+	len = csHeader.len;
+#endif
+
+	len += sizeof(PARAM_HEADER_T);
+	buf = malloc(len);
+	if ( buf == NULL ) {
+		strcpy(tmpBuf, "Allocate buffer failed!");
+		return 0;
+	}
+//	fprintf(stderr,"%s %d\n",__FUNCTION__,__LINE__);
+#ifdef __mips__
+	fh = open("/web/Mesh1/config.dat", O_RDWR|O_CREAT|O_TRUNC);
+#else
+	fh = open("/web/Mesh1/config.dat", O_RDWR|O_CREAT|O_TRUNC);
+#endif
+	if (fh == -1) {
+		printf("Create config file error!\n");
+		free(buf);
+		fprintf(stderr,"%s %d\n",__FUNCTION__,__LINE__);
+		return 0;
+	}
+
+	pHeader = (PARAM_HEADER_Tp)buf;	
+#ifdef MIB_TLV
+	pbuf=malloc(csHeader.len);
+	if(pbuf) {
+		memcpy(pbuf, pMib, csHeader.len-1);
+	} else {
+		printf("%s %d malloc failed\n",__FUNCTION__,__LINE__);
+		return 0;
+	}
+#else
+	len = pHeader->len = csHeader.len;
+	memcpy(&buf[sizeof(PARAM_HEADER_T)], pMib, len-1);
+#endif
+
+#ifdef _LITTLE_ENDIAN_
+#ifdef VOIP_SUPPORT
+	// rock: need swap here 
+	// 1. write to share space (ex: save setting to config file)
+	// 2. read from share space (ex: import config file) 
+	pHeader->len  = WORD_SWAP(pHeader->len);
+#else
+	//pHeader->len  = WORD_SWAP(pHeader->len);
+#endif
+
+#ifdef MIB_TLV
+	swap_mib_word_value(pbuf);
+#else
+	swap_mib_word_value((APMIB_Tp)&buf[sizeof(PARAM_HEADER_T)]);
+#endif
+#endif
+	memcpy(pHeader->signature, csHeader.signature, SIGNATURE_LEN);
+	ptr = (char *)&buf[sizeof(PARAM_HEADER_T)];
+	
+#ifdef COMPRESS_MIB_SETTING
+#ifdef MIB_TLV
+	//fprintf(stderr,"%s %d\n",__FUNCTION__,__LINE__);
+
+	tlv_content_len=0;
+	if(mib_tlv_save(CURRENT_SETTING, (void*)pbuf, (unsigned char *)ptr, (unsigned int *)&tlv_content_len) == 1){
+		if(tlv_content_len >= (mib_get_setting_len(CURRENT_SETTING)*4)){
+			printf("TLV Data len is too long");
+			close(fh);
+			free(buf);
+			free(pbuf);
+			//fprintf(stderr,"%s %d tlv_content_len 0x%x len 0x%x\n",__FUNCTION__,__LINE__,tlv_content_len,len);
+			return 0;
+		}
+		ptr[tlv_content_len] = CHECKSUM((unsigned char *)ptr, tlv_content_len);	
+		pHeader->len=tlv_content_len+1; /*add checksum*/		
+		pHeader->len=HEADER_SWAP(pHeader->len); /*endian*/
+	}
+
+	/*compress*/
+	pCompptr = malloc((WEB_PAGE_OFFSET-CURRENT_SETTING_OFFSET)+sizeof(COMPRESS_MIB_HEADER_T));
+	if(NULL == pCompptr){
+			printf("malloc for Compress buffer failed!! \n");
+			close(fh);
+			free(buf);
+			free(pbuf);
+			//fprintf(stderr,"%s %d\n",__FUNCTION__,__LINE__);
+			return 0;
+	}
+	compLen = Encode((unsigned char *)buf, HEADER_SWAP(pHeader->len)+sizeof(PARAM_HEADER_T), pCompptr+sizeof(COMPRESS_MIB_HEADER_T));
+	pcompHeader=(COMPRESS_MIB_HEADER_Tp)pCompptr;
+	memcpy(pcompHeader->signature,COMP_CS_SIGNATURE,COMP_SIGNATURE_LEN);
+	pcompHeader->compRate = WORD_SWAP((HEADER_SWAP(pHeader->len)/compLen)+1);
+	pcompHeader->compLen =DWORD_SWAP(compLen);
+#endif	
+#endif
+
+#ifdef MIB_TLV
+	//fprintf(stderr,"%s %d compLen %d\n",__FUNCTION__,__LINE__,compLen);
+
+	if ( write(fh, pCompptr, compLen+sizeof(COMPRESS_MIB_HEADER_T)) != compLen+sizeof(COMPRESS_MIB_HEADER_T)) {
+		printf("Write config file error!\n");
+		close(fh);
+		free(pCompptr);
+		free(buf);
+		free(pbuf);
+		fprintf(stderr,"%s %d\n",__FUNCTION__,__LINE__);
+		return 0;
+	}
+	//fprintf(stderr,"%s %d compLen %d\n",__FUNCTION__,__LINE__,compLen);
+#else
+	checksum = CHECKSUM(ptr, len-1);
+	buf[sizeof(PARAM_HEADER_T)+len-1] = checksum;
+
+	ptr = &buf[sizeof(PARAM_HEADER_T)];
+	ENCODE_DATA(ptr, len);
+
+
+	if ( write(fh, buf, len+sizeof(PARAM_HEADER_T)) != len+sizeof(PARAM_HEADER_T)) {
+		printf("Write config file error!\n");
+		close(fh);
+		free(buf);
+		return 0;
+	}
+#endif
+
+	
+	//fprintf(stderr,"%s %d compLen %d\n",__FUNCTION__,__LINE__,compLen);
+close(fh);
+sync();
+
+#ifdef MIB_TLV	
+	if(pCompptr) {
+		free(pCompptr);
+		pCompptr=NULL;
+	}	
+	free(pbuf);
+#endif	
+	free(buf);
+
+	return 1;
+}
 
 #ifdef MIB_TLV
 

@@ -13,8 +13,12 @@
 		<link href="css/bootstrap-switch.min.css" rel="stylesheet" />
 		<link rel="stylesheet" type="text/css" href="css/base.css"/>
 		<link rel="stylesheet" href="css/main.css" />
+		<link type="image/x-icon" href="img/favicon.png" rel="shortcut icon"/>
 		<script src="js/util_gw.js"></script>
-		<script src="js/util_qos.js"></script>
+		<!--<script src="js/util_qos.js"></script>-->
+		<script src="js/jquery.js"></script>
+		<script src="js/bootstrap.js"></script>
+		<script src="js/bootstrap-switch.min.js"></script>
 	</head>
 	<body onload="Load_Setting();">
 		<div class="guest_net">
@@ -55,16 +59,14 @@
 				</div>
 				<div class="form-group form-group-btn">
 					<% getInfo("apply_direct_comment_start");%>
-					<button type="submit" value="Save & Apply" name="save_apply" onclick="return addRuleClick()" class="i18n"></button>
+					<button type="submit" value="1" name="save_apply" id="smartQos_sb_button" onclick="return addRuleClick()" class="i18n"></button>
 					<input type="hidden" value="1" name="addQosFlag">
 					<% getInfo("apply_direct_comment_end");%>
 				</div>
-				
+				<input type="hidden" value="/smartQos.html" name="submit-url">
 			</form>
 		</div>
-		<script src="js/jquery.js"></script>
-		<script src="js/bootstrap.js"></script>
-		<script src="js/bootstrap-switch.min.js"></script>
+		
 		<script src="js/jquery.cookie.js"></script>
 	    <!-- 加载语言包文件 -->
 	    <script src="js/jquery.i18n.properties.js"></script>
@@ -72,6 +74,7 @@
 		<script>
 			var advanced_qos_enable=<%getIndex("advancedIpqosEnable")%>;
 			var qosEnabled_status='<% getIndex("qosEnabled"); %>';
+			var i18nLanguage=getCookie('userLanguage');
 			$(document).ready(function(){
 				//开关按钮
 				$('.checkbox_switch').bootstrapSwitch({
@@ -147,8 +150,27 @@
 				}
 				if ( <% getIndex("qosAutoUplinkSpeed"); %> ){
 				document.formQosAdd.automaticUplinkSpeed.checked = true;
+				if(document.formQosAdd.automaticUplinkSpeed.checked) {
+						disableTextField(document.formQosAdd.manualUplinkSpeed);
+						document.formQosAdd.manualUplinkSpeed.value.visible=false;
+					} else {
+						enableTextField(document.formQosAdd.manualUplinkSpeed);
+						document.formQosAdd.manualUplinkSpeed.value.visible=true;
+					}
 				}	
 				
+			}
+			var ip_qos_upspeed_empty,ip_qos_band_invalid,ip_qos_downspeed_empty,ip_qos_ip_invalid;
+			if(i18nLanguage=='en'){
+				ip_qos_upspeed_empty = 'Manual Uplink Speed cannot be empty or less then 100 when Automatic Uplink Speed is disabled.';
+				ip_qos_downspeed_empty = 'Manual Downlink Speed cannot be empty or less then 100 when Automatic Downlink Speed is disabled.';
+				ip_qos_ip_invalid = 'Invalid IP address';
+				ip_qos_band_invalid = 'Invalid input! It should be the decimal number (0-9).';
+			}else{
+				ip_qos_upspeed_empty='自动上行速度关闭时，手动上行速度不能为空且不能比100小.';
+				ip_qos_downspeed_empty = '自动下行速度关闭时，手动下行速度不能为空且不能比100小.';
+				ip_qos_ip_invalid = '无效的IP地址';
+				ip_qos_band_invalid = '无效的输入!必须为0-9的十进制数.';
 			}
 			function updateLinkState(key){//自动上行下载选项
 				if(key==1){

@@ -155,6 +155,7 @@ auth_form_t auth_form[] = {
 			{"formPasswordSetup", { 1,1 } },
 			{"formLogout", { 1,1 } },
 			{"formUpload", { 1,1 } },
+			{"formRemoteUp", { 1,1 } },
 #if defined(CONFIG_USBDISK_UPDATE_IMAGE)
 			{"formUploadFromUsb", { 1,1 } },
 #endif

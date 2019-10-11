@@ -44,6 +44,7 @@
 #endif
 
 #include "apform.h"
+#include "remoteUpgrade.h"
 #define TUNE_SNDBUF
 /*
 #define USE_TCPNODELAY
@@ -62,6 +63,8 @@ extern int do_ssl;                              /*do ssl sockets??*/
 #endif /*BOA_WITH_OPENSSL*/
 
 static unsigned int sockbufsize = SOCKETBUF_SIZE;
+extern remoteUpgrade_t;
+extern remoteUpgrade_t remoteUpgradeInfo;
 
 /* function prototypes located in this file only */
 static void free_request(request * req);
@@ -1651,17 +1654,58 @@ int process_header_end(request * req)
 #endif
 	//-------------------------
 
+    int mib_val = 0;
+    int access_flg = 0;
+    if(!apmib_get(MIB_FIRST_LOGIN, (void *) &mib_val))
+    {
+        printf("get MIB_FIRST_LOGIN fail.\n");
+    }
+     
+    if(!strstr(req->request_uri, WEB_PAGE_WIZARD))
+    {
+         if(req->request_uri && req->header_referer)
+        {
+            if(strstr(req->header_referer, WEB_PAGE_WIZARD))
+            {
+                access_flg = 1;
+            }
+        }
+
+        //TODO:MIB_FIRST_LOGIN sync from controller
+        int map_configured_band;
+        int map_state;
+    
+        apmib_get(MIB_MAP_CONFIGURED_BAND,(void *)&map_configured_band);
+        apmib_get(MIB_MAP_CONTROLLER, (void *)&map_state);
+
+        if(map_state == 2 && map_configured_band != 3)
+        {
+            if(mib_val == 0 && access_flg == 0)
+            {
+                send_redirect_perm(req, (WEB_PAGE_WIZARD));
+                return 0;   
+            }
+        }
+    } 
+        
 #ifdef LOGIN_URL
 
     int need_auth_flg;
 
-    if((is_valid_user(req) != 1) && (!strstr(req->request_uri, WEB_PAGE_LOGIN))) //not auth and not login page
+    if((is_valid_user(req) != 1) 
+        && (!strstr(req->request_uri, WEB_PAGE_LOGIN))
+        && (!strstr(req->request_uri, WEB_PAGE_WIZARD))) //not auth and not login page or wizard page
     {
         need_auth_flg = 1;
 
         if(req->request_uri && req->header_referer)
         {
             if(strstr(req->header_referer, WEB_PAGE_LOGIN)) //request frome login page,no need auth
+            {
+                need_auth_flg = 0;
+            }
+
+            if(strstr(req->header_referer, WEB_PAGE_WIZARD)) //request frome wizard page,no need auth
             {
                 need_auth_flg = 0;
             }
@@ -1683,8 +1727,19 @@ int process_header_end(request * req)
                 need_auth_flg = 0;
             }
 
+            if(strstr(req->request_uri,"/fonts/glyphicons-halflings-regular.woff"))
+            {
+                need_auth_flg = 0;
+            }
+
+            if(strstr(req->request_uri,"/fonts/glyphicons-halflings-regular.ttf"))
+            {
+                need_auth_flg = 0;
+            }
+
         }
 
+            
         if(need_auth_flg)
         {
             send_redirect_perm(req, (WEB_PAGE_LOGIN));
@@ -1790,6 +1845,11 @@ int process_header_end(request * req)
 				}
 
 				//fprintf(stderr,"####%s:%d req->request_uri=%s req->cgi_type=%d###\n",  __FILE__, __LINE__ , req->request_uri, req->cgi_type);
+                if(strstr(req->request_uri,"softwareup.html"))
+                {
+                 remoteUpgradeInfo.uploadRequest=1;
+				 remoteChekUpgrade();
+                }
 				//fprintf(stderr,"####%s:%d req->host=%s req->header_host=%s default_vhost=%s###\n",  __FILE__, __LINE__ , req->host, req->header_host, default_vhost);
 #ifdef SUPPORT_ASP
 				if (strstr(req->request_uri, ".htm") ||	strstr(req->request_uri, ".asp") ||	strstr(req->request_uri, "navigation.js")) {

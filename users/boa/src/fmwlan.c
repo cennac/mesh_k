@@ -37,14 +37,6 @@
 //#define P2P_DEBUG(fmt, args...) printf("[%s %d]"fmt,__FUNCTION__,__LINE__,## args)
 #define P2P_DEBUG(fmt, args...) {}
 
-//#define DEBUG_FMWLAN
-
-#ifdef DEBUG_FMWLAN
-#define DTRACE(fmt, ...)    printf("[%s:%d] " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
-#else
-#define DTRACE(fmt, ...)
-#endif
-
 
 #if defined(CONFIG_DOMAIN_NAME_QUERY_SUPPORT)
 extern void Stop_Domain_Query_Process(void);
@@ -3654,13 +3646,13 @@ void formWlanSetupAll(request *wp, char *path, char *query)
 		flg = 1;
 	else
 		flg = 0;
-    DTRACE("start set autoWlanEnabled.\n");
+    DTRACE(DTRACE_FMWLAN, "start set autoWlanEnabled.\n");
 	if (apmib_set(MIB_AUTO_WLAN_ENABLED, (void *)&flg) == 0) 
     {
   		strcpy(tmpBuf, ("<script>dw(wlbasic_invalid_mode)</script>"));
 		goto setErr_wlan;
 	}
-    DTRACE("set autoWlanEnabled.\n");
+    DTRACE(DTRACE_FMWLAN, "set autoWlanEnabled.\n");
     old_wlan_idx = wlan_idx;
     old_vwlan_idx = vwlan_idx;
     
@@ -3668,32 +3660,32 @@ void formWlanSetupAll(request *wp, char *path, char *query)
     vwlan_idx = 0;
     if(wlanHandler(wp, tmpBuf, &mode, wlan_idx) < 0)
 		goto setErr_wlan ;
-    DTRACE("wlan_idx = 0 wlanHandler set.\n");
+    DTRACE(DTRACE_FMWLAN, "wlan_idx = 0 wlanHandler set.\n");
     
     if(wpaHandler(wp, tmpBuf, wlan_idx) < 0)
         goto setErr_wlan ;
-    DTRACE("wlan_idx = 0 wpaHandler set.\n");
+    DTRACE(DTRACE_FMWLAN, "wlan_idx = 0 wpaHandler set.\n");
     
     wlan_idx = 1;
     vwlan_idx = 0;
     if(wlanHandler(wp, tmpBuf, &mode, wlan_idx) < 0)
 		goto setErr_wlan ;
-    DTRACE("wlan_idx = 1 wlanHandler set.\n");
+    DTRACE(DTRACE_FMWLAN, "wlan_idx = 1 wlanHandler set.\n");
 
     if(wpaHandler(wp, tmpBuf, wlan_idx) < 0)
         goto setErr_wlan ;
-    DTRACE("wlan_idx = 1 wpaHandler set.\n");
+    DTRACE(DTRACE_FMWLAN, "wlan_idx = 1 wpaHandler set.\n");
     
     apmib_update_web(CURRENT_SETTING);
 
-    DTRACE("apmib_update_web ok.\n");
+    DTRACE(DTRACE_FMWLAN, "apmib_update_web ok.\n");
 
 //    run_init_script("bridge");
     submit_url = req_get_cstream_var(wp, ("wlan-url"), ""); // hidden page	
 	OK_MSG(submit_url);
     wlan_idx = old_wlan_idx;
     vwlan_idx = old_vwlan_idx;
-    DTRACE("return ok.\n");
+    DTRACE(DTRACE_FMWLAN, "return ok.\n");
 	return;
 
 setErr_wlan:
@@ -4100,7 +4092,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 		goto setErr_encrypt;
 	}
 
-    DTRACE("wpaHandler run ok.\n");
+    DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 
 #ifdef WIFI_SIMPLE_CONFIG
 #ifdef MBSSID
@@ -4121,7 +4113,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 		goto setErr_encrypt;
 	}
     
-    DTRACE("wpaHandler run ok.\n");
+    DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
     
 	if (encrypt == ENCRYPT_DISABLED || encrypt == ENCRYPT_WEP) {
 		sprintf(varName, "use1x%d", wlan_id);
@@ -4167,7 +4159,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 		}
 
         
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
     
 		if (encrypt == ENCRYPT_WEP) {
 	 		WEP_T wep;
@@ -4210,7 +4202,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 		}
 #endif
 
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 		
 	}
 #ifdef CONFIG_RTL_WAPI_SUPPORT	
@@ -4319,7 +4311,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 			}
 		}
 
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
         
 	wapi_end:
 		/*save AS IP*/
@@ -4368,7 +4360,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 #endif
 	else {
 		// support nonWPA client
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
         
 		sprintf(varName, "nonWpaSupp%d", wlan_id);
  		strVal = req_get_cstream_var(wp, varName, "");
@@ -4403,7 +4395,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;
 			}
 		}
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 		// WPA authentication
 		sprintf(varName, "wpaAuth%d", wlan_id);
 		strVal = req_get_cstream_var(wp, varName, "");
@@ -4444,7 +4436,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;
 			}
 		}
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 		// cipher suite		
 		// sc_yang write the ciphersuite according to  encrypt for wpa
 		// wpa mixed mode is not implemented yet.
@@ -4502,7 +4494,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;							
 			}				
 		}	
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 #ifdef CONFIG_IEEE80211W
 		{
 			apmib_get(MIB_WLAN_MODE, (void *)&val);
@@ -4565,7 +4557,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 			}
 		}
 #endif	
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 		//if ((encrypt == ENCRYPT_WPA2) || (encrypt == ENCRYPT_WPA2_MIXED)) 
 		{
 			sprintf(varName, "wpa2ciphersuite%d", wlan_id);
@@ -4599,7 +4591,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;							
 			}
 		}
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 //-------------------------------------------------- david, 2005-8-03	
 	
 		if( ((encrypt ==  ENCRYPT_WPA2) || (encrypt == ENCRYPT_WPA2_MIXED)) &&
@@ -4669,7 +4661,7 @@ int wpaHandler(request *wp, char *tmpBuf, int wlan_id)
 				goto setErr_encrypt;
 			}
 		}
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 rekey_time:
 		// group key rekey time
 		reKeyTime = 0;
@@ -4718,7 +4710,7 @@ rekey_time:
 		}
 	}
 
-    DTRACE("wpaHandler run ok.\n");
+    DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 	apmib_set( MIB_WLAN_ENABLE_1X, (void *)&enableRS);			
 	if (enableRS == 1) { // if 1x enabled, get RADIUS server info
 #ifdef CONFIG_RTL_802_1X_CLIENT_SUPPORT
@@ -5145,7 +5137,7 @@ rekey_time:
 				goto setErr_encrypt;
 			}
 		}
-        DTRACE("wpaHandler run ok.\n");
+        DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 get_wepkey:
 		// get 802.1x WEP key length
 		sprintf(varName, "wepKeyLen%d", wlan_id);
@@ -5179,7 +5171,7 @@ get_wepkey:
 #endif
 	}
 
-    DTRACE("wpaHandler run ok.\n");
+    DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 #ifdef WIFI_SIMPLE_CONFIG
 #ifdef MBSSID
 	if (vwlan_idx == 0)
@@ -5194,7 +5186,7 @@ get_wepkey:
 	}
 #endif
 
-    DTRACE("wpaHandler run ok.\n");
+    DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 #if defined(UNIVERSAL_REPEATER) && defined(CONFIG_REPEATER_WPS_SUPPORT)
 	if (vwlan_idx == NUM_VWLAN_INTERFACE)
 	{
@@ -5207,10 +5199,10 @@ get_wepkey:
 	}
 #endif
 
-    DTRACE("wpaHandler run ok.\n");
+    DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 	return 0 ;
 setErr_encrypt:
-    DTRACE("wpaHandler run ok.\n");
+    DTRACE(DTRACE_FMWLAN, "wpaHandler run ok.\n");
 	return -1 ;		
 }	
 
@@ -8055,6 +8047,21 @@ void formWlSiteSurvey(request *wp, char *path, char *query)
 		#else
 			 // wlan0 entering forwarding state need some time
 			sleep(3);
+
+//wisp bug fix (for MAP)
+#ifdef RTK_MULTI_AP
+			int op_mode = 0;
+			int map_controller = 0;
+			apmib_get(MIB_OP_MODE, (void *)&op_mode);
+			if(WISP_MODE == op_mode) {
+				apmib_get(MIB_MAP_CONTROLLER, (void *)&map_controller);
+				if(1 == map_controller){
+					system("iwpriv wlan0-vxd set_mib a4_enable=0");/*set controller vxd a4 disabled*/
+					system("iwpriv wlan1-vxd set_mib a4_enable=0");/*set controller vxd a4 disabled*/
+				}
+			}
+#endif
+//
 
 			_Start_Wlan_Applications();
 		#endif

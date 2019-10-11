@@ -38,20 +38,40 @@
 #define READ_DATA_SIZE	1024
 #define MD5_SIZE		16
 #define MD5_STR_LEN		(MD5_SIZE * 2)
+#define FUNCTION_CONTROLLER_FILE	"/var/run/REMOTE_FUNCTION_ON"
+#define HEAD_OFFSET_SIZE   150
+extern fwVersion;
+#define LOCAL_FW_VERSION	fwVersion
+
 
 char * httpGet(const char *url);
 
 typedef struct 
 {
-    char checkUpgradeUrl[128];  //check where to get upgrade file
-    char downloadUrl[256];      //url to download upgrade file 
+    char checkUpgradeUrl[128];              //check where to get upgrade file
+    char downloadUrl[256];                   //url to download upgrade file 
+    char remoteFwVersion[16];               //url to download upgrade file 
     char md5[64];
-    uint32_t expired;
-	int resultCode;
-    int status;                
-    int totalSize;
-    int currentSize;
-    
+	char versionUpdateLog[128];
+	unsigned int totalSize; 
+	int isRemoteUpgrade;                   // 0---skip remote upgrade  1---ready to update process
+    char remoteUpgradeStatus;             //0---upgrade process done  1---ready to update process
+    int checkVersionStatus;              //0---current version is newer,needn't upgrade  1---current version is older,upgrade is needed
+    int upgradeConfirm;                  //0---user havn't confirm upgrade     1---get confirm request,start to upgrade
+    int firmwareCheckStatus;              // see enum FIRMWARE_CHECK    
+    int uploadRequest;                  //0----none request 1---get request
 }remoteUpgrade_t;
+
+
+ /* firmre check result */
+typedef enum
+{
+	DEFAULT=0,
+	FIRMWARE_VALID=DEFAULT,
+	FIRMWARE_ERROR_NETWORK_UNREACHABLE,
+	FIRMWARE_ERROR_FILE_PATH_NO_FIRMRE,
+}firmreCheck_t;
+
 int computeUpgradeFileMd5(const char *file_path, char *value);
+
 #endif
