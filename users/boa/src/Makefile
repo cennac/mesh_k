@@ -155,8 +155,9 @@ REALTEK_FILES += fmmultiap.c
 endif
 
 ifeq ($(CONFIG_DIGEST_AUTHENTICATION),y)
-REALTEK_FILES += md5.c
+#REALTEK_FILES += md5.c
 endif
+REALTEK_FILES += md5.c
 
 REALTEK_FILES += cJSON.c
 

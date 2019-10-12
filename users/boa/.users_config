@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # RLX Linux builder
-# Wed Aug 21 15:11:01 2019
+# Fri Oct 11 10:41:41 2019
 #
 
 #
@@ -164,7 +164,7 @@ CONFIG_APP_WAPI=y
 CONFIG_APP_RELOAD=y
 CONFIG_APP_ROUTED=y
 # CONFIG_APP_BIRD is not set
-# CONFIG_APP_RTK_CMD is not set
+CONFIG_APP_RTK_CMD=y
 # CONFIG_APP_TCP2DEV is not set
 # CONFIG_APP_RTK_EVENTD_SUPPORT is not set
 # CONFIG_APP_RTK_VOIP is not set
@@ -196,12 +196,11 @@ CONFIG_APP_SCHEDULE=y
 #
 # CONFIG_APP_FLEX is not set
 # CONFIG_LIB_FUSE is not set
-CONFIG_LIB_LIBPCAP=y
-CONFIG_APP_PCAP=y
+# CONFIG_LIB_LIBPCAP is not set
 # CONFIG_LIB_PNG is not set
 # CONFIG_LIB_Z is not set
 CONFIG_LIB_XZ=y
-CONFIG_LIB_TAR=y
+# CONFIG_LIB_TAR is not set
 CONFIG_LIB_OPENSSL_102D=y
 # CONFIG_LIB_LIBSNDFILE is not set
 # CONFIG_APP_BINUTILS is not set

@@ -57,7 +57,6 @@ DEPEND = ./.depend
 
 #------------------------------------------------------------------------------
 APMIB_DIR=../apmib
-BOA_SRC_DIR=../src
 
 #------------------------------------------------------------------------------
 # EXTRA_CFLAGS
@@ -164,6 +163,13 @@ ifeq ($(CONFIG_RTL_P2P_SUPPORT),y)
 REALTEK_SYS_FILES += set_domain_query.c
 endif
 
+
+ifeq ($(CONFIG_APP_MULTI_AP),y)
+REALTEK_SYS_FILES += map_init.c
+REALTEK_TIMELY_CHECK_FILES += map_init.c
+endif
+
+
 ifeq ($(CONFIG_RTL_ULINKER),y)
 REALTEK_SYS_FILES += set_ulinker.c
 ## for pppoe discover
@@ -266,7 +272,7 @@ endif
 all: depend $(TARGET)
 
 $(SYSCONFIG): Makefile $(REALTEK_SYS_OBJS) $(APMIB_DIR)/$(APMIB_LIB)
-	$(CC) -o $@ $(REALTEK_SYS_OBJS) $(LDFLAGS) -L$(BOA_SRC_DIR) -L$(APMIB_DIR) -lapmib
+	$(CC) -o $@ $(REALTEK_SYS_OBJS) $(LDFLAGS) -L$(APMIB_DIR) -lapmib
 	$(STRIP) $@
 
 $(INTERNET_PPP): Makefile $(REALTEK_INTERNET_PPP_OBJS)	$(APMIB_DIR)/$(APMIB_LIB)

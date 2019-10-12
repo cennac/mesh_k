@@ -37,6 +37,7 @@
 
 
 #include "boa.h"
+#include "remoteUpgrade.h"
 
 #ifdef BOA_WITH_OPENSSL
 #include <openssl/ssl.h>
@@ -60,6 +61,9 @@ int req_after_upgrade=0;
 int last_req_after_upgrade=0;
 int confirm_last_req=0;
 extern int reboot_time;
+extern void remoteChekUpgrade();
+extern remoteUpgrade_t;
+extern remoteUpgrade_t remoteUpgradeInfo;
 void loop(int server_s)
 {
 	//printf("<%s:%d>enter\n", __FUNCTION__,__LINE__);
@@ -241,6 +245,15 @@ void loop(int server_s)
 #endif
             {
 			process_requests(server_s);
+            }
+           if((remoteUpgradeInfo.uploadRequest)) 
+		   {
+		   // remoteChekUpgrade();
+		   }
+		  // printf("===================%s:%d-----version_%d confirmware_%d-----<\n",__FUNCTION__,__LINE__,remoteUpgradeInfo.checkVersionStatus,remoteUpgradeInfo.upgradeConfirm);
+		   if((remoteUpgradeInfo.checkVersionStatus)&&(remoteUpgradeInfo.upgradeConfirm))   
+		   {
+		    performUpgrade();
             }
 			continue;
 		}

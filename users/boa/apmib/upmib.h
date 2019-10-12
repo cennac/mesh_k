@@ -44,7 +44,7 @@ UPMIB_T update_mib[] = {
 	{MIB_WLAN_IAPP_DISABLED, "WLAN0_IAPP_DISABLED",            "1"},
 	{MIB_WLAN_IAPP_DISABLED, "DEF_WLAN0_IAPP_DISABLED",        "1"},
 #else
-	{MIB_MIB_VER,           "MIB_VER",              "1", BYTE_T},
+	{MIB_MIB_VER,           "MIB_VER",              "2", BYTE_T},
 #endif
 	{0}
 };
@@ -57,7 +57,8 @@ UPMIB_T new_mib[] = {
 	{MIB_WLAN_MFIWAC_CONFIGURED,           "DEF_WLAN0_MFIWAC_CONFIGURED",              "0"},
 	{MIB_WLAN_MFIWAC_CONFIGURED,           "WLAN0_MFIWAC_CONFIGURED",              "0"},
 #endif
-	{MIB_FIRST_LOGIN, "FIRST_LOGIN", "false"},
+//	{MIB_FIRST_LOGIN, "FIRST_LOGIN", "0"},
+//    {MIB_CUSTOMER_HW_SET_FLG, "CUSTOMER_HW_SET_FLG", "0"},
 	{0}
 };
 

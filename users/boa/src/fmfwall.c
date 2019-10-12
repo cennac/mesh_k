@@ -29,7 +29,9 @@
 #include "utility.h"
 #include "asp_page.h"
 #include "cJSON.h"
-#define  PARENT_CONTRL_SET_COMMAND "sysconf firewall parentControl"
+#define  PARENT_CONTRL_SET_COMMAND    "sysconf firewall addParentControl %d"
+#define  PARENT_CONTRL_DELETE_COMMAND "sysconf firewall deleteParentControl %d"
+
 
 #ifdef QOS_BY_BANDWIDTH
 #if defined (CONFIG_RTL_8198)|| defined (CONFIG_RTL_8198C) || defined (CONFIG_RTL_8367R_SUPPORT) || defined(CONFIG_RTL_83XX_SUPPORT)
